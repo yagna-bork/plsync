@@ -17,5 +17,13 @@ Prototype 1
 Display playlists across yt and spotify and let user track some
 Can't sync two existing playlists at this stage, only one way
 
+UI discussion
+-------------
+plsync (playlist sync)
+plsync init -> does spotify and youtube oauth flows. must be first command and must be successful to continue
+plsync untracked
+plsync track ... [...]
+FOR NOW, I'M NOT GOING TO USE A CLI PARSER LIB
+
 TODO
 ----
