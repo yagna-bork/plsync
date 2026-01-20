@@ -1,6 +1,11 @@
 #include "../include/init.h"
 #include <iostream>
 #include <random>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <ios>
+#include <openssl/sha.h>
 
 std::string generate_code_verifier() {
 	std::string res;
@@ -40,9 +45,22 @@ std::string generate_code_verifier() {
 	return res;
 }
 
-std::string get_code_challange(std::string code_verifier) {
+std::string sha256(const std::string &str) {
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, str.c_str(), str.size());
+	SHA256_Final(digest, &sha256);
+
+	std::stringstream ss;
+	ss << std::hex << std::setfill('0');
+	for (int i = 0; i != SHA256_DIGEST_LENGTH; i++) {
+		ss << static_cast<int>(digest[i]);
+	}
+	return ss.str();
 }
 
 void run_init() {
 	std::string verifier = generate_code_verifier();
+	std::string challenge = sha256(verifier);
 }
