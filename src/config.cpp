@@ -9,6 +9,7 @@ static std::unordered_map<std::string, std::string> CONFIG;
 static std::string CONFIG_PATH = "plsync.cfg";
 
 void load_config() {
+	// TODO raise exception if something anything wrong
 	std::ifstream config(CONFIG_PATH);
 	std::string line, name, val;
 	std::string::iterator sep;

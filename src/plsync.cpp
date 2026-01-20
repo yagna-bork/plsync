@@ -32,6 +32,5 @@ const char *parse_args_init_only(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	const char *command = parse_args_init_only(argc, argv);
-	run_init();
-	return 0;
+	return run_init();
 }
