@@ -1,4 +1,7 @@
 #include "../include/init.h"
+#include "../include/config.h"
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <random>
 #include <string>
@@ -66,7 +69,7 @@ char base64_char(int value) {
 }
 
 // https://en.wikipedia.org/wiki/Base64
-std::string base64url_encode(const std::string &str) {
+std::string base64url_encode(const std::string &str, bool pad = false) {
 	std::string encoded;
 	unsigned short buffer = 0; // 2 char buffer
 	int unread_bits = 0;
@@ -92,6 +95,9 @@ std::string base64url_encode(const std::string &str) {
 	}
 
 	// padding
+	if (!pad) {
+		return encoded;
+	}
 	if (str.size() % 3 == 1) {
 		encoded.push_back('=');
 		encoded.push_back('=');
@@ -104,4 +110,18 @@ std::string base64url_encode(const std::string &str) {
 void run_init() {
 	std::string verifier = generate_code_verifier();
 	std::string challenge = base64url_encode(sha256(verifier));
+	std::string client_id = get_setting("youtube_client_id");
+	std::string redirect_url = get_setting("oauth_redirect_url") + ":" 
+							 + get_setting("oauth_redirect_port");
+	std::string scopes = get_setting("youtube_scopes");
+	std::replace(scopes.begin(), scopes.end(), ',', '+');
+	std::string oauth_url = get_setting("youtube_oauth_url");
+
+	// TODO make more platform independent
+	char command[500];
+	snprintf(command, 500, "open '%s?client_id=%s&redirect_uri=%s&response_type=code"
+				  	   	   "&scope=%s&code_challenge=%s&code_challenge_method=S256'", 
+			oauth_url.c_str(), client_id.c_str(), redirect_url.c_str(), 
+			scopes.c_str(), challenge.c_str());
+	system(command);
 }
