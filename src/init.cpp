@@ -1,6 +1,7 @@
 #include "../include/init.h"
 #include "../include/config.h"
 #include "../include/httplib.h"
+#include <ctime>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -11,8 +12,10 @@
 #include <iostream>
 #include <random>
 #include <string>
-#include <openssl/sha.h>
 #include <iterator>
+#include <openssl/sha.h>
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
 
 const int SERVER_BACKLOG = 5;
 
@@ -188,7 +191,7 @@ bool get_youtube_auth_code(std::string &code) {
 
 	status = getaddrinfo(NULL, port.c_str(), &hints, &svr_info);
 	if (status != 0) {
-		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+		std::cerr << std::endl << "Couldn't get host network information: " << gai_strerror(status) << std::endl;
 		return false;
 	}
 
@@ -208,17 +211,17 @@ bool get_youtube_auth_code(std::string &code) {
 	}
 
 	if (p == nullptr) {
-		std::cerr << "Couldn't connect listener socket" << std::endl;
+		std::cerr << std::endl << "Couldn't connect listener socket" << std::endl;
 		return false;
 	}
 	if (listen(listenfd, SERVER_BACKLOG) == -1) {
-		std::cerr << "Couldn't listen for connections" << std::endl;
+		std::cerr << std::endl << "Couldn't listen for connections" << std::endl;
 		return false;
 	}
 	
 	sockfd = accept(listenfd, (struct sockaddr *)&client_addr, &addr_len);
 	if (sockfd == -1) {
-		std::cerr << "Server crashed" << std::endl;
+		std::cerr << std::endl << "Server crashed" << std::endl;
 		return false;
 	}
 
@@ -242,7 +245,7 @@ bool get_youtube_auth_code(std::string &code) {
 		res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nError occured: " 
 						  + params["error"] + ". Please return to terminal and try again";
 		send(sockfd, res.c_str(), res.size(), 0);
-		std::cerr << params["error"] << std::endl;
+		std::cerr << std::endl << params["error"] << std::endl;
 		return false;
 	}
 	
@@ -255,12 +258,54 @@ bool get_youtube_auth_code(std::string &code) {
 		res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nRequired scopes not granted. " 
 						  "Please return to terminal and try again";
 		send(sockfd, res.c_str(), res.size(), 0);
-		std::cerr << "Scope '" + scope + "' required" << std::endl;
+		std::cerr << std::endl << "Scope '" + scope + "' required" << std::endl;
 		return false;
 	}
 	res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nSuccess! Return to terminal to continue";
 	send(sockfd, res.c_str(), res.size(), 0);
 	code = params["code"];
+	return true;
+}
+
+size_t write_callback(char *ptr, size_t size, size_t nmemb, void *data) {
+	std::string *datap = (std::string *)data;
+	copy(ptr, ptr + nmemb, back_inserter(*datap));
+	return nmemb;
+}
+
+bool get_youtube_auth_tokens(char url[], const std::string &auth_code, std::string &access_tkn, 
+							 std::string &access_expiry, std::string &refresh_tkn, 
+							 std::string &refresh_expiry
+) {
+	std::string res;
+	CURL *handle = curl_easy_init();
+	if (!handle) {
+		std::cerr << "Failed to setup easy curl" << std::endl;
+		return false;
+	}
+	
+	curl_mime *mime = curl_mime_init(handle); // empty post body
+	curl_easy_setopt(handle, CURLOPT_URL, url);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &res);
+	curl_easy_setopt(handle, CURLOPT_MIMEPOST, mime);
+
+	if(curl_easy_perform(handle) != CURLE_OK) {
+		std::cerr << "Failed to access google auth server" << std::endl;
+		return false;
+	}
+	curl_easy_cleanup(handle);
+
+	nlohmann::json jres = nlohmann::json::parse(res);
+	access_tkn = jres["access_token"];
+	access_expiry = std::to_string(time(nullptr) + jres.value<long>("expires_in", 0));
+	refresh_tkn = jres["refresh_token"];
+	refresh_expiry = "-1";
+	if (jres.contains("refresh_token_expires_in")) {
+		refresh_expiry = std::to_string(
+			time(nullptr) + jres.value<long>("refresh_token_expires_in", 0)
+		);
+	}
 	return true;
 }
 
@@ -272,23 +317,37 @@ int run_init() {
 	std::string redirect_url = get_setting("auth_redirect_url");
 	std::string redirect_port = get_setting("auth_redirect_port");
 	std::string scopes = get_setting("youtube_scopes");
-	std::string auth_url = get_setting("youtube_auth_url");
 	std::string full_redirect_url = "http://" + redirect_url + ":" + redirect_port;
 	std::replace(scopes.begin(), scopes.end(), ',', '+');
 
 	// TODO make more platform independent
-	char command[512];
-	snprintf(command, 500, "open '%s?client_id=%s&redirect_uri=%s&response_type=code"
-				  	   	   "&scope=%s&code_challenge=%s&code_challenge_method=S256'", 
-			auth_url.c_str(), client_id.c_str(), full_redirect_url.c_str(), 
-			scopes.c_str(), challenge.c_str());
-	system(command);
+	size_t buff_sz = 512;
+	char buff[buff_sz];
+	snprintf(buff, buff_sz, 
+		"open 'https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code"
+		"&scope=%s&code_challenge=%s&code_challenge_method=S256'", 
+		client_id.c_str(), full_redirect_url.c_str(), scopes.c_str(), challenge.c_str()
+	);
+	system(buff);
 
-	std::cout << "Waiting for Youtube authentication code..." << std::endl;
+	std::cout << "Waiting for Youtube authentication code... ";
 	std::string auth_code;
 	if (!get_youtube_auth_code(auth_code)) {
 		std::cout << "Unable to complete Youtube OAuth flow. Please try again" << std::endl;
 		return 1;
 	}
+	std::cout << "Got it!" << std::endl;
+
+	// TODO make more platform independent
+	std::string access_tkn, access_expiry, refresh_tkn, refresh_expiry;
+	std::string client_secret = get_setting("client_secret");
+	snprintf(buff, buff_sz, 
+		"https://oauth2.googleapis.com/token?client_id=%s&code=%s"
+	    "&code_verifier=%s&grant_type=authorization_code&redirect_uri=%s&client_secret=%s",
+		client_id.c_str(), auth_code.c_str(), verifier.c_str(), full_redirect_url.c_str(),
+		client_secret.c_str()
+	);
+	get_youtube_auth_tokens(/*url=*/buff, auth_code, access_tkn, access_expiry, 
+							refresh_tkn, refresh_expiry);
 	return 0;
 }

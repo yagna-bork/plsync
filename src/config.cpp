@@ -1,4 +1,5 @@
 #include "../include/config.h"
+#include "../include/client_secret.h"
 #include <unordered_map>
 #include <fstream>
 #include <string>
@@ -19,6 +20,8 @@ void load_config() {
 		val = std::string(sep+1, line.end());
 		CONFIG[name] = val;
 	}
+	// fucking google...
+	CONFIG["client_secret"] = CLIENT_NOT_SO_SECRET;
 }
 
 std::string get_setting(const std::string &name) {

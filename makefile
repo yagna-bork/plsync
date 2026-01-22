@@ -1,5 +1,5 @@
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx
-LIBS = -L$(VCPKG)/lib -lcred `pkg-config --libs openssl`
+LIBS = -L$(VCPKG)/lib -lcred `pkg-config --libs openssl libcurl`
 CXX = -std=c++11
 
 # link everything together
