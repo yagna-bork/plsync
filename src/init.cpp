@@ -16,6 +16,7 @@
 #include <openssl/sha.h>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <libcred.hpp>
 
 const int SERVER_BACKLOG = 5;
 
@@ -349,5 +350,24 @@ int run_init() {
 	);
 	get_youtube_auth_tokens(/*url=*/buff, auth_code, access_tkn, access_expiry, 
 							refresh_tkn, refresh_expiry);
+
+	// now store the tokens
+	std::string err;
+	libcred::LIBCRED_RESULT status = libcred::set_password(
+		"plsync-token-service", "access-token", access_tkn + ":" + access_expiry, &err
+	);
+	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
+		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
+		return 1;
+	}
+
+	status = libcred::set_password(
+		"plsync-token-service", "refresh-token", refresh_tkn + ":" + refresh_expiry, &err
+	);
+	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
+		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
+		return 1;
+	}
+	std::cout << "Success! Initialisation completed (well done)" << std::endl;
 	return 0;
 }
