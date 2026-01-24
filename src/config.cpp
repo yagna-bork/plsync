@@ -21,7 +21,7 @@ void load_config() {
 		CONFIG[name] = val;
 	}
 	// fucking google...
-	CONFIG["client_secret"] = CLIENT_NOT_SO_SECRET;
+	CONFIG["yt_client_secret"] = CLIENT_NOT_SO_SECRET;
 }
 
 std::string get_setting(const std::string &name) {
@@ -29,6 +29,7 @@ std::string get_setting(const std::string &name) {
 		load_config();
 	}
 	if (!CONFIG.count(name)) {
+		// TODO should raise exception instead
 		return "";
 	}
 	return CONFIG[name];
