@@ -1,10 +1,11 @@
-CXX = -std=c++11
+CXX = -std=c++14
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl`
+OBJS = obj/plsync.o obj/init.o obj/config.o obj/httplib.o obj/util.o
 
 # link everything together
-plsync bin/plsync: obj/plsync.o obj/init.o obj/config.o obj/httplib.o
-	clang++ -o bin/plsync $(LIBS) obj/plsync.o obj/init.o obj/config.o obj/httplib.o
+plsync bin/plsync: $(OBJS)
+	clang++ -o bin/plsync $(LIBS) $(OBJS)
 	# for prod need to make vcpkg install within project
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/plsync
 	chmod u+x bin/plsync
@@ -21,6 +22,9 @@ obj/config.o: src/config.cpp include/config.h
 
 obj/httplib.o: src/httplib.cpp include/httplib.h
 	clang++ -o obj/httplib.o -c $(CXX) src/httplib.cpp
+
+obj/util.o: src/util.cpp include/util.h
+	clang++ -o obj/util.o -c $(CXX) src/util.cpp
 
 clean:
 	rm -rf obj bin
