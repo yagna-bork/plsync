@@ -2,6 +2,7 @@
 #include "../include/config.h"
 #include "../include/httplib.h"
 #include "../include/util.h"
+#include "../include/token_store.h"
 #include <cassert>
 #include <ctime>
 #include <cctype>
@@ -179,8 +180,8 @@ size_t write_callback(char *ptr, size_t size, size_t nmemb, void *data) {
  */
 bool get_access_tokens(
 	const std::string &platform, const std::string &auth_code, const std::string &verifier,
-	std::string &access_tkn, std::string &access_expiry, 
-	std::string &refresh_tkn, std::string &refresh_expiry
+	std::string &access_tkn, std::time_t &access_duration, 
+	std::string &refresh_tkn, std::time_t &refresh_duration
 ) {
 	std::string url = get_setting("access_tkn_url", platform);
 	std::string platform_title = (platform == "yt") ? "Youtube" : "Spotify";
@@ -236,14 +237,9 @@ bool get_access_tokens(
 	}
 
 	access_tkn = jres["access_token"];
-	access_expiry = std::to_string(time(nullptr) + jres.value<long>("expires_in", 0));
+	access_duration = jres.value<std::time_t>("expires_in", 0);
 	refresh_tkn = jres["refresh_token"];
-	refresh_expiry = "-1";
-	if (jres.contains("refresh_token_expires_in")) {
-		refresh_expiry = std::to_string(
-			time(nullptr) + jres.value<long>("refresh_token_expires_in", 0)
-		);
-	}
+	refresh_duration = jres.value<std::time_t>("refresh_token_expires_in", -1);
 	return true;
 }
 
@@ -283,10 +279,11 @@ bool get_user_permissions(const std::string &platform) {
 	}
 	std::cout << "Got it!\n";
 
-	std::string access_tkn, access_expiry, refresh_tkn, refresh_expiry;
+	std::string access_tkn, refresh_tkn;
+	std::time_t access_duration, refresh_duration;
 	bool success = get_access_tokens(
 		platform, auth_code, verifier, 
-		access_tkn, access_expiry, refresh_tkn, refresh_expiry
+		access_tkn, access_duration, refresh_tkn, refresh_duration
 	);
 	if (!success) {
 		std::cerr << "Something went wrong. Please try again" << std::endl;
@@ -294,25 +291,15 @@ bool get_user_permissions(const std::string &platform) {
 	}
 
 	// now store the tokens
-	 platform_title[0] = tolower(platform_title[0]);
-	std::string err;
-	libcred::LIBCRED_RESULT status = libcred::set_password(
-		"plsync-token-service", platform_title+"-access-token", access_tkn + ":" + access_expiry, &err
-	);
-	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
+	if (!save_access_tkn(platform, access_tkn, access_duration)) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
 		return false;
 	}
-
-	status = libcred::set_password(
-		"plsync-token-service", platform_title+"-refresh-token", refresh_tkn + ":" + refresh_expiry, &err
-	);
-	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
+	if (!save_refresh_tkn(platform, refresh_tkn, refresh_duration)) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
 		return false;
 	}
-	platform_title[0] = toupper(platform_title[0]);
-	std::cout << "Success! " << platform_title << " authentication completed" << std::endl;
+	std::cout << "Success! " << platform_title << " authentication completed" << '\n';
 	return true;
 }
 

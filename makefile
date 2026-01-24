@@ -1,7 +1,7 @@
 CXX = -std=c++14
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl`
-OBJS = obj/plsync.o obj/init.o obj/config.o obj/httplib.o obj/util.o
+OBJS = obj/plsync.o obj/init.o obj/config.o obj/httplib.o obj/util.o obj/token_store.o
 
 # link everything together
 plsync bin/plsync: $(OBJS)
@@ -25,6 +25,9 @@ obj/httplib.o: src/httplib.cpp include/httplib.h
 
 obj/util.o: src/util.cpp include/util.h
 	clang++ -o obj/util.o -c $(CXX) src/util.cpp
+
+obj/token_store.o: src/token_store.cpp include/token_store.h
+	clang++ -o obj/token_store.o -c $(CXX) src/token_store.cpp
 
 clean:
 	rm -rf obj bin
