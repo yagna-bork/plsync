@@ -1,9 +1,11 @@
 #include "../include/config.h"
 #include "../include/client_secret.h"
+#include <cassert>
 #include <unordered_map>
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 
 static std::unordered_map<std::string, std::string> CONFIG;
 // TODO change for prod
@@ -12,6 +14,9 @@ static std::string CONFIG_PATH = "plsync.cfg";
 void load_config() {
 	// TODO raise exception if something anything wrong
 	std::ifstream config(CONFIG_PATH);
+	if (!config) {
+		throw std::runtime_error("Config file not found. Reinstall plsync");
+	}
 	std::string line, name, val;
 	std::string::iterator sep;
 	while(std::getline(config, line)) {
@@ -24,13 +29,13 @@ void load_config() {
 	CONFIG["yt_client_secret"] = CLIENT_NOT_SO_SECRET;
 }
 
-std::string get_setting(const std::string &name) {
+std::string get_setting(std::string name, const std::string &platform) {
 	if (CONFIG.empty()) {
 		load_config();
 	}
-	if (!CONFIG.count(name)) {
-		// TODO should raise exception instead
-		return "";
+	if (!platform.empty()) {
+		name = platform + "_" + name;
 	}
+	assert(CONFIG.count(name) != 0);
 	return CONFIG[name];
 }

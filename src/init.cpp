@@ -2,6 +2,7 @@
 #include "../include/config.h"
 #include "../include/httplib.h"
 #include "../include/util.h"
+#include <cassert>
 #include <ctime>
 #include <cctype>
 #include <cstdio>
@@ -177,45 +178,50 @@ size_t write_callback(char *ptr, size_t size, size_t nmemb, void *data) {
  * Will have to refactor somehow.
  */
 bool get_access_tokens(
-	const std::string &url, const std::string &client_id, 
-	const std::string &auth_code, const std::string &verifier, const std::string &redirect_url, 
-	const std::string &client_secret, const std::string &platform, const std::string &scope,
+	const std::string &platform, const std::string &auth_code, const std::string &verifier,
 	std::string &access_tkn, std::string &access_expiry, 
 	std::string &refresh_tkn, std::string &refresh_expiry
 ) {
+	std::string url = get_setting("access_tkn_url", platform);
+	std::string platform_title = (platform == "yt") ? "Youtube" : "Spotify";
+	std::string client_id = get_setting("client_id", platform);
+	std::string redirect_url = get_setting("auth_redirect_url") + ":" 
+							   + get_setting("redirect_port", platform);
+	std::string client_secret = (platform == "sp") ? "" : get_setting("yt_client_secret");
+	std::string scope = get_setting("scopes", platform);
 	std::string res;
-	CURL *handle = curl_easy_init();
-	if (!handle) {
-		std::cerr << "Failed to setup easy curl" << std::endl;
-		return false;
-	}
 
+	char *form = BUFF; size_t form_sz = BUFFSZ; 
 	int write_sz = snprintf(
-		BUFF, BUFFSZ, "client_id=%s&code=%s&code_verifier=%s&grant_type=authorization_code&"
+		form, form_sz, "client_id=%s&code=%s&code_verifier=%s&grant_type=authorization_code&"
 					 "redirect_uri=%s",
 		client_id.c_str(), auth_code.c_str(), verifier.c_str(), 
 		redirect_url.c_str()
 	);
 	if (!client_secret.empty()) {
-		snprintf(BUFF+write_sz, BUFFSZ-write_sz, "&client_secret=%s", client_secret.c_str());
+		snprintf(form+write_sz, form_sz-write_sz, "&client_secret=%s", client_secret.c_str());
 	}
 
+	CURL *handle = curl_easy_init();
+	if (!handle) {
+		std::cerr << "Failed to setup easy curl" << std::endl;
+		return false;
+	}
 	curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &res);
 	curl_easy_setopt(handle, CURLOPT_POST, 1);
-	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, BUFF);
-
+	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, form);
 	CURLcode status = curl_easy_perform(handle);
 	curl_easy_cleanup(handle);
 	if(status != CURLE_OK) {
-		std::cerr << "Failed to access " << platform << " auth server" << std::endl;
+		std::cerr << "Failed to access " << platform_title << " auth server" << std::endl;
 		return false;
 	}
 
 	nlohmann::json jres = nlohmann::json::parse(res, /*cb=*/nullptr, /*allow_exceptions=*/false);
 	if (jres.is_discarded()) {
-		std::cerr << "Couldn't process " << platform << " authentication token response\n";
+		std::cerr << "Couldn't process " << platform_title << " authentication token response\n";
 		return false;
 	}
 
@@ -241,17 +247,22 @@ bool get_access_tokens(
 	return true;
 }
 
-bool get_user_permissions(
-	std::string platform, const std::string &client_id, const std::string &scopes, 
-	const std::string &auth_url, const std::string &access_tkn_url, 
-	const std::string &redirect_port, const std::string client_secret = ""
-) {
+bool get_user_permissions(const std::string &platform) {
+	assert(platform == "yt" || platform == "sp");
+	std::string platform_title = (platform == "yt") ? "Youtube" : "Spotify";
+	std::string client_id = get_setting("client_id", platform);
+	std::string scopes = get_setting("scopes", platform);
+	std::string auth_url = get_setting("auth_url", platform);
+	std::string access_tkn_url = get_setting("access_tkn_url", platform);
+	std::string redirect_port = get_setting("redirect_port", platform);
+	std::string client_secret = (platform == "sp") ? "" 
+								: get_setting("yt_client_secret");
+	
 	std::string verifier = generate_code_verifier();
 	std::string challenge = base64url_encode(sha256(verifier));
 	std::string state = generate_state();
 	std::string redirect_url = get_setting("auth_redirect_url");
 	std::string full_redirect_url = redirect_url + ":" + redirect_port;
-	platform[0] = toupper(platform[0]);
 
 	std::string fmt_scopes;
 	std::replace_copy(scopes.begin(), scopes.end(), std::back_inserter(fmt_scopes), ',', '+');
@@ -263,19 +274,19 @@ bool get_user_permissions(
 		challenge.c_str(), state.c_str()
 	);
 	system(BUFF);
+	std::cout << "Waiting for " << platform_title << " authentication code... " << std::flush;
 
-	std::cout << "Waiting for " << platform << " authentication code... ";
 	std::string auth_code;
 	if (!get_auth_code(auth_code, state, redirect_port)) {
-		std::cout << "Unable to complete " << platform << " authentication. Please try again" << std::endl;
+		std::cout << "Unable to complete " << platform_title << " authentication. Please try again" << std::endl;
 		return false;
 	}
 	std::cout << "Got it!\n";
 
 	std::string access_tkn, access_expiry, refresh_tkn, refresh_expiry;
 	bool success = get_access_tokens(
-		access_tkn_url, client_id, auth_code, verifier, full_redirect_url, 
-		client_secret, platform, scopes, access_tkn, access_expiry, refresh_tkn, refresh_expiry
+		platform, auth_code, verifier, 
+		access_tkn, access_expiry, refresh_tkn, refresh_expiry
 	);
 	if (!success) {
 		std::cerr << "Something went wrong. Please try again" << std::endl;
@@ -283,10 +294,10 @@ bool get_user_permissions(
 	}
 
 	// now store the tokens
-	platform[0] = tolower(platform[0]);
+	 platform_title[0] = tolower(platform_title[0]);
 	std::string err;
 	libcred::LIBCRED_RESULT status = libcred::set_password(
-		"plsync-token-service", platform+"-access-token", access_tkn + ":" + access_expiry, &err
+		"plsync-token-service", platform_title+"-access-token", access_tkn + ":" + access_expiry, &err
 	);
 	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
@@ -294,31 +305,17 @@ bool get_user_permissions(
 	}
 
 	status = libcred::set_password(
-		"plsync-token-service", platform+"-refresh-token", refresh_tkn + ":" + refresh_expiry, &err
+		"plsync-token-service", platform_title+"-refresh-token", refresh_tkn + ":" + refresh_expiry, &err
 	);
 	if (status != libcred::LIBCRED_RESULT::SUCCESS) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
 		return false;
 	}
-	platform[0] = toupper(platform[0]);
-	std::cout << "Success! " << platform << " authentication completed" << std::endl;
+	platform_title[0] = toupper(platform_title[0]);
+	std::cout << "Success! " << platform_title << " authentication completed" << std::endl;
 	return true;
 }
 
 int run_init() {
-	bool success = get_user_permissions(
-		"youtube", get_setting("yt_client_id"), get_setting("yt_scopes"), get_setting("yt_auth_url"), 
-		get_setting("yt_access_tkn_url"), get_setting("yt_redirect_port"), get_setting("yt_client_secret")
-	);
-	if (!success) {
-		return 1;
-	}
-	success = get_user_permissions(
-		"spotify", get_setting("sp_client_id"), get_setting("sp_scopes"), get_setting("sp_auth_url"), 
-		get_setting("sp_access_tkn_url"), get_setting("sp_redirect_port")
-	);
-	if (!success) {
-		return 1;
-	}
-	return 0;
+	return get_user_permissions("yt") && get_user_permissions("sp");
 }
