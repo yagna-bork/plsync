@@ -20,7 +20,6 @@
 #include <utility>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
-#include <libcred.hpp>
 
 const size_t BUFFSZ = 1024;
 char BUFF[BUFFSZ];
@@ -98,7 +97,7 @@ bool get_auth_code(std::string &code, const std::string &state, const std::strin
 
 	status = getaddrinfo(NULL, port.c_str(), &hints, &svr_info);
 	if (status != 0) {
-		std::cerr << std::endl << "Couldn't get host network information: " << gai_strerror(status) << std::endl;
+		std::cerr << '\n' << "Couldn't get host network information: " << gai_strerror(status) << '\n';
 		return false;
 	}
 
@@ -118,18 +117,18 @@ bool get_auth_code(std::string &code, const std::string &state, const std::strin
 	}
 
 	if (p == nullptr) {
-		std::cerr << std::endl << "Couldn't connect listener socket" << std::endl;
+		std::cerr << '\n' << "Couldn't connect listener socket" << '\n';
 		return false;
 	}
 	if (listen(listenfd, SERVER_BACKLOG) == -1) {
-		std::cerr << std::endl << "Couldn't listen for connections" << std::endl;
+		std::cerr << '\n' << "Couldn't listen for connections" << '\n';
 		return false;
 	}
 	
 	sockfd = accept(listenfd, (struct sockaddr *)&client_addr, &addr_len);
 	close(listenfd);
 	if (sockfd == -1) {
-		std::cerr << std::endl << "Server crashed" << std::endl;
+		std::cerr << '\n' << "Server crashed" << '\n';
 		return false;
 	}
 
@@ -153,12 +152,12 @@ bool get_auth_code(std::string &code, const std::string &state, const std::strin
 		res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nError occured: " 
 						  + params["error"] + ". Please return to terminal and try again";
 		send(sockfd, res.c_str(), res.size(), 0);
-		std::cerr << std::endl << params["error"] << std::endl;
+		std::cerr << '\n' << params["error"] << '\n';
 		return false;
 	}
 
 	if (!params.count("state") || params["state"] != state) {
-		std::cout << "Blocked cross-site request forgery attempt" << std::endl;
+		std::cerr << "Blocked cross-site request forgery attempt" << '\n';
 		return false;
 	}
 	res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nSuccess! Return to terminal to continue";
@@ -205,7 +204,7 @@ bool get_access_tokens(
 
 	CURL *handle = curl_easy_init();
 	if (!handle) {
-		std::cerr << "Failed to setup easy curl" << std::endl;
+		std::cerr << "Failed to setup easy curl" << '\n';
 		return false;
 	}
 	curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
@@ -216,7 +215,7 @@ bool get_access_tokens(
 	CURLcode status = curl_easy_perform(handle);
 	curl_easy_cleanup(handle);
 	if(status != CURLE_OK) {
-		std::cerr << "Failed to access " << platform_title << " auth server" << std::endl;
+		std::cerr << "Failed to access " << platform_title << " auth server" << '\n';
 		return false;
 	}
 
@@ -232,7 +231,7 @@ bool get_access_tokens(
 		if (std::find(permitted.begin(), permitted.end(), sc) != permitted.end()) {
 			continue;
 		}
-		std::cerr << std::endl << "Scope '" + sc + "' required" << std::endl;
+		std::cerr << '\n' << "Scope '" + sc + "' required" << '\n';
 		return false;
 	}
 
@@ -274,7 +273,7 @@ bool get_user_permissions(const std::string &platform) {
 
 	std::string auth_code;
 	if (!get_auth_code(auth_code, state, redirect_port)) {
-		std::cout << "Unable to complete " << platform_title << " authentication. Please try again" << std::endl;
+		std::cout << "Unable to complete " << platform_title << " authentication. Please try again" << '\n';
 		return false;
 	}
 	std::cout << "Got it!\n";
@@ -286,17 +285,17 @@ bool get_user_permissions(const std::string &platform) {
 		access_tkn, access_duration, refresh_tkn, refresh_duration
 	);
 	if (!success) {
-		std::cerr << "Something went wrong. Please try again" << std::endl;
+		std::cerr << "Something went wrong. Please try again" << '\n';
 		return false;
 	}
 
 	// now store the tokens
 	if (!save_access_tkn(platform, access_tkn, access_duration)) {
-		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
+		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
 	if (!save_refresh_tkn(platform, refresh_tkn, refresh_duration)) {
-		std::cerr << "Couldn't store tokens in keychain. Please try again" << std::endl;
+		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
 	std::cout << "Success! " << platform_title << " authentication completed" << '\n';

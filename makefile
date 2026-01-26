@@ -6,7 +6,7 @@ OBJS = obj/plsync.o obj/init.o obj/config.o obj/httplib.o obj/util.o obj/token_s
 # link everything together
 plsync bin/plsync: $(OBJS)
 	clang++ -o bin/plsync $(LIBS) $(OBJS)
-	# for prod need to make vcpkg install within project
+	# TODO for prod need to make vcpkg install within project
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/plsync
 	chmod u+x bin/plsync
 
@@ -14,7 +14,7 @@ plsync bin/plsync: $(OBJS)
 obj/plsync.o: src/plsync.cpp include/init.h
 	clang++ -o obj/plsync.o -c $(CXX) src/plsync.cpp
 
-obj/init.o: src/init.cpp include/init.h include/config.h include/httplib.h
+obj/init.o: src/init.cpp include/init.h include/config.h include/httplib.h include/token_store.h
 	clang++ -o obj/init.o -c $(CXX) src/init.cpp
 
 obj/config.o: src/config.cpp include/config.h
@@ -28,6 +28,12 @@ obj/util.o: src/util.cpp include/util.h
 
 obj/token_store.o: src/token_store.cpp include/token_store.h
 	clang++ -o obj/token_store.o -c $(CXX) src/token_store.cpp
+
+# tests
+tests bin/test: test/* obj/token_store.o
+	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) obj/token_store.o
+	# TODO for prod need to make vcpkg install within project
+	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/test
 
 clean:
 	rm -rf obj bin
