@@ -18,13 +18,13 @@ bool save_tkn(const std::string &acc, const std::string &tkn, std::time_t durati
 	return libcred::set_password(SERVICE, acc, pass, &err) == libcred::SUCCESS;
 }
 
-bool save_access_tkn(const std::string &platform, const std::string &tkn, std::time_t duration) {
-	std::string acc = std::string(platform=="yt" ? "youtube" : "spotify") + "-access-token";
+bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t duration) {
+	std::string acc = platform::title_lower(platform) + "-access-token";
 	return save_tkn(acc, tkn, duration);
 }
 
-bool save_refresh_tkn(const std::string &platform, const std::string &tkn, std::time_t duration) {
-	std::string acc = std::string(platform=="yt" ? "youtube" : "spotify") + "-refresh-token";
+bool save_refresh_tkn(Platform platform, const std::string &tkn, std::time_t duration) {
+	std::string acc = platform::title_lower(platform) + "-refresh-token";
 	return save_tkn(acc, tkn, duration);
 }
 
@@ -53,12 +53,12 @@ bool fetch_tkn(const std::string &acc, std::string &tkn, std::time_t &expiry) {
 	return true;
 }
 
-bool fetch_access_tkn(const std::string &platform, std::string &tkn, std::time_t &expiry) {
-	std::string acc = std::string(platform == "yt" ? "youtube" : "spotify") + "-access-token";
+bool fetch_access_tkn(Platform platform, std::string &tkn, std::time_t &expiry) {
+	std::string acc = platform::title_lower(platform) + "-access-token";
 	return fetch_tkn(acc, tkn, expiry);
 }
 
-bool fetch_refresh_tkn(const std::string &platform, std::string &tkn, std::time_t &expiry) {
-	std::string acc = std::string(platform == "yt" ? "youtube" : "spotify") + "-refresh-token";
+bool fetch_refresh_tkn(Platform platform, std::string &tkn, std::time_t &expiry) {
+	std::string acc = platform::title_lower(platform) + "-refresh-token";
 	return fetch_tkn(acc, tkn, expiry);
 }

@@ -1,5 +1,6 @@
 #include "../include/config.h"
 #include "../include/client_secret.h"
+#include "../include/platform.h"
 #include <cassert>
 #include <unordered_map>
 #include <fstream>
@@ -29,13 +30,19 @@ void load_config() {
 	CONFIG["yt_client_secret"] = CLIENT_NOT_SO_SECRET;
 }
 
-std::string get_setting(std::string name, const std::string &platform) {
+std::string get_setting(std::string name, const std::string prefix) {
 	if (CONFIG.empty()) {
 		load_config();
 	}
-	if (!platform.empty()) {
-		name = platform + "_" + name;
-	}
+	name = prefix + name;
 	assert(CONFIG.count(name) != 0);
 	return CONFIG[name];
+}
+
+std::string get_setting(std::string name) {
+	return get_setting(name, /*prefix=*/"");
+}
+
+std::string get_setting(std::string name, Platform platform) {
+	return get_setting(name, platform::abbrev(platform) + "_");
 }

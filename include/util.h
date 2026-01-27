@@ -31,4 +31,7 @@ ForwardIt find_range(ForwardIt first1, ForwardIt last1, ForwardIt first2, Forwar
 }
 
 std::vector<std::string> split(const std::string &st, const std::string &subst);
+
+/* Pass to curl WRITE_FUNCTION opt */
+size_t write_callback(char *, size_t, size_t, void *);
 #endif

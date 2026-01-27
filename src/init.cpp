@@ -1,6 +1,5 @@
 #include "../include/init.h"
 #include "../include/config.h"
-#include "../include/httplib.h"
 #include "../include/util.h"
 #include "../include/token_store.h"
 #include <cassert>
@@ -167,27 +166,20 @@ bool get_auth_code(std::string &code, const std::string &state, const std::strin
 	return true;
 }
 
-size_t write_callback(char *ptr, size_t size, size_t nmemb, void *data) {
-	std::string *datap = (std::string *)data;
-	copy(ptr, ptr + nmemb, back_inserter(*datap));
-	return nmemb;
-}
-
 /*
  * Monsterous parameter list ik ik. 
  * Will have to refactor somehow.
  */
 bool get_access_tokens(
-	const std::string &platform, const std::string &auth_code, const std::string &verifier,
+	Platform platform, const std::string &auth_code, const std::string &verifier,
 	std::string &access_tkn, std::time_t &access_duration, 
 	std::string &refresh_tkn, std::time_t &refresh_duration
 ) {
 	std::string url = get_setting("access_tkn_url", platform);
-	std::string platform_title = (platform == "yt") ? "Youtube" : "Spotify";
 	std::string client_id = get_setting("client_id", platform);
 	std::string redirect_url = get_setting("auth_redirect_url") + ":" 
 							   + get_setting("redirect_port", platform);
-	std::string client_secret = (platform == "sp") ? "" : get_setting("yt_client_secret");
+	std::string client_secret = (platform == Platform::SPOTIFY) ? "" : get_setting("client_secret", platform);
 	std::string scope = get_setting("scopes", platform);
 	std::string res;
 
@@ -215,13 +207,13 @@ bool get_access_tokens(
 	CURLcode status = curl_easy_perform(handle);
 	curl_easy_cleanup(handle);
 	if(status != CURLE_OK) {
-		std::cerr << "Failed to access " << platform_title << " auth server" << '\n';
+		std::cerr << "Failed to access " << platform::title(platform) << " auth server" << '\n';
 		return false;
 	}
 
 	nlohmann::json jres = nlohmann::json::parse(res, /*cb=*/nullptr, /*allow_exceptions=*/false);
 	if (jres.is_discarded()) {
-		std::cerr << "Couldn't process " << platform_title << " authentication token response\n";
+		std::cerr << "Couldn't process " << platform::title(platform) << " authentication token response\n";
 		return false;
 	}
 
@@ -242,16 +234,14 @@ bool get_access_tokens(
 	return true;
 }
 
-bool get_user_permissions(const std::string &platform) {
-	assert(platform == "yt" || platform == "sp");
-	std::string platform_title = (platform == "yt") ? "Youtube" : "Spotify";
+bool get_user_permissions(Platform platform) {
 	std::string client_id = get_setting("client_id", platform);
 	std::string scopes = get_setting("scopes", platform);
 	std::string auth_url = get_setting("auth_url", platform);
 	std::string access_tkn_url = get_setting("access_tkn_url", platform);
 	std::string redirect_port = get_setting("redirect_port", platform);
-	std::string client_secret = (platform == "sp") ? "" 
-								: get_setting("yt_client_secret");
+	std::string client_secret = (platform == Platform::SPOTIFY) ? "" 
+								: get_setting("client_secret", platform);
 	
 	std::string verifier = generate_code_verifier();
 	std::string challenge = base64url_encode(sha256(verifier));
@@ -269,11 +259,11 @@ bool get_user_permissions(const std::string &platform) {
 		challenge.c_str(), state.c_str()
 	);
 	system(BUFF);
-	std::cout << "Waiting for " << platform_title << " authentication code... " << std::flush;
+	std::cout << "Waiting for " << platform::title(platform) << " authentication code... " << std::flush;
 
 	std::string auth_code;
 	if (!get_auth_code(auth_code, state, redirect_port)) {
-		std::cout << "Unable to complete " << platform_title << " authentication. Please try again" << '\n';
+		std::cout << "Unable to complete " << platform::title(platform) << " authentication. Please try again" << '\n';
 		return false;
 	}
 	std::cout << "Got it!\n";
@@ -298,10 +288,10 @@ bool get_user_permissions(const std::string &platform) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
-	std::cout << "Success! " << platform_title << " authentication completed" << '\n';
+	std::cout << "Success! " << platform::title(platform) << " authentication completed" << '\n';
 	return true;
 }
 
 int run_init() {
-	return get_user_permissions("yt") && get_user_permissions("sp");
+	return get_user_permissions(Platform::YOUTUBE) && get_user_permissions(Platform::SPOTIFY);
 }

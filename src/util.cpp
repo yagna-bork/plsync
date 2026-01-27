@@ -74,3 +74,9 @@ std::vector<std::string> split(const std::string &s, const std::string &ss) {
 	}
 	return res;
 }
+
+size_t write_callback(char *ptr, size_t size, size_t nmemb, void *p) {
+	std::string *data = static_cast<std::string *>(p);
+	copy(ptr, ptr + nmemb, back_inserter(*data));
+	return nmemb;
+}

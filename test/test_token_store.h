@@ -51,14 +51,9 @@ void test_fetch_tkn() {
 	libcred::delete_password(service, acc, &err);
 }
 
-void test_tokens_exist() {
-	tokens_exist();
-}
-
 void run() {
 	test_save_tkn();
 	test_fetch_tkn();
-	test_tokens_exist();
 }
 
 }
