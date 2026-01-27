@@ -2,7 +2,8 @@ CXX = -std=c++17
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl`
 OBJS = obj/init.o obj/config.o obj/util.o \
-			obj/token_store.o obj/token_refresher.o obj/platform.o
+			obj/token_store.o obj/token_refresher.o obj/platform.o \
+			obj/untracked.o
 
 # link everything together
 plsync bin/plsync: obj/plsync.o $(OBJS)
@@ -10,6 +11,7 @@ plsync bin/plsync: obj/plsync.o $(OBJS)
 	# TODO for prod need to make vcpkg install within project
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/plsync
 	chmod u+x bin/plsync
+
 
 # object files
 obj/plsync.o: src/plsync.cpp include/init.h
@@ -32,6 +34,10 @@ obj/token_refresher.o: src/token_refresher.cpp include/token_refresher.h include
 
 obj/platform.o: src/platform.cpp include/platform.h
 	clang++ -o obj/platform.o -c $(CXX) src/platform.cpp
+
+obj/untracked.o: src/untracked.cpp include/untracked.h
+	clang++ -o obj/untracked.o -c $(CXX) src/untracked.cpp
+	
 
 # tests
 tests bin/test: test/* obj/token_store.o obj/token_refresher.o
