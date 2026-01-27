@@ -1,10 +1,11 @@
+#include "../include/init.h"
+#include "../include/token_refresher.h"
 #include <cstring>
 #include <iostream>
 #include <iterator>
 #include <algorithm>
 #include <string>
 #include <vector>
-#include "../include/init.h"
 
 const std::vector<const char *> COMMANDS = {"init"};
 
@@ -31,6 +32,12 @@ const char *parse_args_init_only(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-	const char *command = parse_args_init_only(argc, argv);
-	return run_init();
+	YoutubeTokenRefresher ytref;
+	bool yt_valid = ytref.refresh_tkn_valid();
+	SpotifyTokenRefresher spref;
+	bool sp_valid = spref.refresh_tkn_valid();
+	if (!yt_valid || !sp_valid) {
+		parse_args_init_only(argc, argv);
+		return run_init(yt_valid, sp_valid);
+	}
 }

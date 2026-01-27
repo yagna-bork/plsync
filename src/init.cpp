@@ -292,6 +292,12 @@ bool get_user_permissions(Platform platform) {
 	return true;
 }
 
-int run_init() {
-	return get_user_permissions(Platform::YOUTUBE) && get_user_permissions(Platform::SPOTIFY);
+int run_init(bool init_youtube, bool init_spotify) {
+	if (init_youtube && !get_user_permissions(Platform::YOUTUBE)) {
+		return 1;
+	}
+	if (init_spotify && !get_user_permissions(Platform::SPOTIFY)) {
+		return 1;
+	}
+	return 0;
 }
