@@ -17,6 +17,14 @@ Prototype 1
 Display playlists across yt and spotify and let user track some
 Can't sync two existing playlists at this stage, only one way
 
+API calls
+---------
+Youtube
+untracked - playlist,mine=true,id,etag,snipper(publishedAt,title),status.privacyStatus,contentDetails.itemCount
+
+Spotify
+untracked
+
 UI discussion
 -------------
 plsync (playlist sync)

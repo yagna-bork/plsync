@@ -1,17 +1,40 @@
 #include "../include/util.h"
+#include <cassert>
 #include <string>
-#include <openssl/sha.h>
+#include <random>
+#include <fstream>
+#include <openssl/evp.h>
 
-std::string sha256(const std::string &s) {
-	unsigned char digest[SHA256_DIGEST_LENGTH];
-	SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, s.c_str(), s.size());
-	SHA256_Final(digest, &sha256);
-	return std::string(digest, digest+SHA256_DIGEST_LENGTH);
+// https://docs.openssl.org/master/man7/ossl-guide-libcrypto-introduction/#using-algorithms-in-applications
+bool sha256(const std::string &s, std::string &res) {
+	std::unique_ptr<EVP_MD_CTX, void(&)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    if (!ctx) {
+		return false;
+	}
+    std::unique_ptr<EVP_MD, void(&)(EVP_MD*)> sha256(EVP_MD_fetch(nullptr, "SHA256", nullptr), EVP_MD_free);
+    if (!sha256) {
+		return false;
+	}
+	if (!EVP_DigestInit_ex(ctx.get(), sha256.get(), nullptr)) {
+		return false;
+	}
+    if (!EVP_DigestUpdate(ctx.get(), s.data(), s.size())) {
+		return false;
+	}
+
+	int digest_len = EVP_MD_get_size(sha256.get());
+	unsigned char digest[digest_len];
+    if (!EVP_DigestFinal_ex(ctx.get(), digest, nullptr)) {
+		return false;
+	}
+
+	size_t pad_len = std::max(size_t(0), digest_len - res.size());
+	std::fill_n(std::back_inserter(res), pad_len, 0);
+	std::copy(digest, digest+digest_len, res.begin());
+	return true;
 }
 
-char base64_char(int value) {
+char getb64char(int value) {
 	if (value < 26) {
 		return 'A' + value;
 	} else if (value < 52) {
@@ -26,29 +49,29 @@ char base64_char(int value) {
 }
 
 // https://en.wikipedia.org/wiki/Base64
-std::string base64url_encode(const std::string &s, bool pad) {
+std::string urlencode64(const std::string &s, bool pad) {
 	std::string encoded;
 	unsigned short buffer = 0; // 2 char buffer
 	int unread_bits = 0;
-	unsigned char b64_mask = 0x3F;
-	unsigned char b64_bits = 6;
-	unsigned char b64_val, b64_char; 
+	unsigned char b64mask = 0x3F;
+	unsigned char b64bits = 6;
+	unsigned char b64val, b64char; 
 
 	for (unsigned char c: s) {
 		buffer = (buffer << 8) + c;
 		unread_bits += 8;
-		while (unread_bits >= b64_bits) {
-			b64_val = (buffer >> (unread_bits - 6)) & b64_mask;
-			encoded.push_back(base64_char(b64_val));
-			unread_bits -= b64_bits;
+		while (unread_bits >= b64bits) {
+			b64val = (buffer >> (unread_bits - 6)) & b64mask;
+			encoded.push_back(getb64char(b64val));
+			unread_bits -= b64bits;
 		}
 	}
 	if (unread_bits) {
 		unsigned char mask = 0xFF >> (8 - unread_bits);
-		b64_val = (buffer & mask); 
-		// make it b64_bits long by padding with 0s
-		b64_val <<= (6 - unread_bits); 
-		encoded.push_back(base64_char(b64_val));
+		b64val = (buffer & mask); 
+		// make it b64bits long by padding with 0s
+		b64val <<= (6 - unread_bits); 
+		encoded.push_back(getb64char(b64val));
 	}
 
 	// padding
@@ -75,8 +98,35 @@ std::vector<std::string> split(const std::string &s, const std::string &ss) {
 	return res;
 }
 
-size_t write_callback(char *ptr, size_t size, size_t nmemb, void *p) {
-	std::string *data = static_cast<std::string *>(p);
+size_t curl_write_cb(char *ptr, size_t size, size_t nmemb, void *data_p) {
+	std::string *data = static_cast<std::string *>(data_p);
 	copy(ptr, ptr + nmemb, back_inserter(*data));
 	return nmemb;
+}
+
+size_t curl_fwrite_cb(char *st, size_t size, size_t nmemb, void *file_p) {
+	std::ofstream *file = static_cast<std::ofstream *>(file_p);
+	size_t nbyte = size * nmemb;
+	return file->write(st, nbyte) ? nbyte : 0;
+}
+
+std::string rndstr(size_t size) {
+	assert(size % 8 == 0);
+	std::string res;
+	res.reserve(size);
+	std::random_device rd;
+	std::mt19937_64 gen64(rd());
+	unsigned long long rnd_num;
+	unsigned char byte;
+
+	
+	for (int i = 0; i != (size / 8); i++) {
+		rnd_num = gen64();
+		for (int j = 0; j != 8; j++) {
+			byte = static_cast<unsigned char>(rnd_num);
+			res.push_back(byte);
+			rnd_num >>= 8;
+		}
+	}
+	return res;
 }

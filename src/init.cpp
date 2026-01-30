@@ -62,26 +62,6 @@ std::string generate_code_verifier() {
 	return res;
 }
 
-std::string generate_state() {
-	size_t state_sz = 128;
-	std::string state;
-	state.reserve(state_sz);
-	std::random_device rd;
-	std::mt19937_64 gen64(rd());
-	unsigned long long rnd_num;
-	unsigned char byte;
-
-	for (int i = 0; i != (state_sz / 8); i++) {
-		rnd_num = gen64();
-		for (int j = 0; j != 8; j++) {
-			byte = static_cast<unsigned char>(rnd_num);
-			state.push_back(byte);
-			rnd_num >>= 8;
-		}
-	}
-	return base64url_encode(state);
-}
-
 bool get_auth_code(std::string &code, const std::string &state, const std::string &port) {
 	int status, listenfd, sockfd, yes = 1;
 	struct addrinfo hints, *svr_info, *p;
@@ -200,7 +180,7 @@ bool get_access_tokens(
 		return false;
 	}
 	curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curl_write_cb);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &res);
 	curl_easy_setopt(handle, CURLOPT_POST, 1);
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, form);
@@ -244,8 +224,12 @@ bool get_user_permissions(Platform platform) {
 								: get_setting("client_secret", platform);
 	
 	std::string verifier = generate_code_verifier();
-	std::string challenge = base64url_encode(sha256(verifier));
-	std::string state = generate_state();
+	std::string digest;
+	if (!sha256(verifier, digest)) {
+		return false;
+	}
+	std::string challenge = urlencode64(digest);
+	std::string state = urlencode64(rndstr(128));
 	std::string redirect_url = get_setting("auth_redirect_url");
 	std::string full_redirect_url = redirect_url + ":" + redirect_port;
 

@@ -2,3 +2,4 @@ bin/
 obj/
 plsync.cfg
 include/client_secret.h
+setup_env.zsh

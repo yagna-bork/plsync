@@ -78,7 +78,7 @@ bool TokenRefresher::refresh() {
 	}
 	std::string res;
 	curl_easy_setopt(curl, CURLOPT_URL, refresh_url.c_str());
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
 	curl_easy_setopt(curl, CURLOPT_POST, 1);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fields.c_str());
