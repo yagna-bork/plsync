@@ -1,13 +1,14 @@
-#ifndef GUARD_TEST_YOUTUBE_API_H
-#define GUARD_TEST_YOUTUBE_API_H
+#ifndef GUARD_TEST_API_H
+#define GUARD_TEST_API_H
 #include "../include/youtube_api.h"
+#include "../include/spotify_api.h"
 #include <cstdlib>
 #include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <curl/curl.h>
 
-namespace TestYoutubeAPI {
+namespace TestAPI {
 
 void test_get_video() {
 	const char *key = std::getenv("YT_API_KEY");
@@ -47,8 +48,43 @@ void test_get_video() {
 	}
 }
 
+void test_get_track() {
+	std::shared_ptr<CURL> curl(curl_easy_init(), curl_easy_cleanup);
+	const char *access_tkn = std::getenv("SP_ACCESS_TKN");
+	assert(access_tkn != nullptr);
+	SpotifyAPI spotapi(curl, access_tkn);
+	long status_code;
+	nlohmann::json res;
+
+	try {
+		status_code = spotapi.GET("v1/tracks/0BxE4FqsDD1Ot4YuBXwAPp", res);
+	} catch (const std::runtime_error &e) {
+		std::cout << "test_get_track(): FAILED\n";
+		return;
+	}
+	if (status_code != 200) {
+		std::cout << status_code << '\n';
+		std::cout << res << '\n';
+		std::cout << "test_get_track(): FAILED\n";
+		return;
+	}
+	
+	bool match = (
+		res.contains("album") && res.contains("artists") && res.contains("name") &&
+		res["album"].value("name", "") == "Favourite Worst Nightmare" &&
+		res["artists"][0].value("name", "") == "Arctic Monkeys" &&
+		res["name"] == "505"
+	);
+	if (match) {
+		std::cout << "test_get_track(): PASSED\n";
+	} else {
+		std::cout << "test_get_track(): FAILED\n";
+	}
+}
+
 void run() {
 	test_get_video();
+	test_get_track();
 }
 
 }

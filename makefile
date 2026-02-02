@@ -50,8 +50,11 @@ obj/untracked.o: src/untracked.cpp include/untracked.h
 obj/api.o: src/api.cpp include/api.h include/util.h
 	clang++ -o obj/api.o -c $(CXX) src/api.cpp $(DEBUG_OR_PROD)
 
-obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h
+obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h include/api.h
 	clang++ -o obj/youtube_api.o -c $(CXX) src/youtube_api.cpp $(DEBUG_OR_PROD)
+
+obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
+	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
 # tests
 # TODO for prod need to make vcpkg install within project

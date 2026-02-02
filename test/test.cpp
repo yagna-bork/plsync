@@ -1,6 +1,6 @@
 #include "test_token_store.h"
 #include "test_token_refresher.h"
-#include "test_youtube_api.h"
+#include "test_api.h"
 #include <iostream>
 
 int main() {
@@ -14,6 +14,6 @@ int main() {
 
 	std::cout << "\n\nYoutube API tests\n";
 	std::cout << "-----------------\n";
-	TestYoutubeAPI::run();
+	TestAPI::run();
 	return 0;
 }
