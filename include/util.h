@@ -15,19 +15,44 @@ bool sha256(const std::string &s, std::string &digest);
 
 std::string urlencode64(const std::string &s, bool pad = false);
 
-// TODO implement KMF
-template <class ForwardIt>
-ForwardIt find_range(ForwardIt first1, ForwardIt last1, ForwardIt first2, ForwardIt last2) {
-	ForwardIt j, k;
-	for (ForwardIt i = first1; i != last1; i++) {
-		j = i;
-		k = first2;
-		while(k != last2 && j != last1 && *j == *k) {
-			j++;
-			k++;
+template <class RndIt> 
+RndIt find_range(RndIt first1, RndIt last1, RndIt first2, RndIt last2) {
+	if (first1 == last1) {
+		return last1;
+	}
+	if (first2 == last2) {
+		return first1;
+	}
+	int size1 = last1 - first1;
+	int size2 = last2 - first2;
+	if (size2 > size1) {
+		return last1;
+	}
+
+	// pre-processing
+	std::vector<int> fallback(size2);
+	fallback[0] = -1;
+	for (int pos = 1, cnd = 0; pos != size2; pos++, cnd++) {
+		if (first2[pos] == first2[cnd]) {
+			fallback[pos] = fallback[cnd];
+		} else {
+			fallback[pos] = cnd;
+			while (cnd >= 0 && first2[pos] != first2[cnd]) {
+				cnd = fallback[cnd];
+			}
 		}
-		if (k == last2) {
-			return i;
+	}
+
+	// post-pre-processing :)
+	for (int pos = 0, cnd = 0; pos != size1; pos++, cnd++) {
+		if (first1[pos] == first2[cnd]) {
+			if (cnd == size2 - 1) {
+				return first1 + pos - cnd;
+			}
+		} else {
+			while (cnd >= 0 && first1[pos] != first2[cnd]) {
+				cnd = fallback[cnd];
+			}
 		}
 	}
 	return last1;
