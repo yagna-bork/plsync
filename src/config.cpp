@@ -44,5 +44,5 @@ std::string get_setting(std::string name) {
 }
 
 std::string get_setting(std::string name, Platform platform) {
-	return get_setting(name, platform::abbrev(platform) + "_");
+	return get_setting(name, abbrev(platform) + "_");
 }

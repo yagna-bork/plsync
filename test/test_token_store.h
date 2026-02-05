@@ -1,59 +1,57 @@
 #ifndef GUARD_TEST_TOKEN_STORE_H
 #define GUARD_TEST_TOKEN_STORE_H
 #include "../include/token_store.h"
+#include "../include/platform.h"
+#include "../include/util.h"
 #include <string>
+#include <iterator>
 #include <iostream>
+#include <stdexcept>
 #include <libcred.hpp>
 
-// types not included in token_store.h
-bool save_tkn(const std::string&, const std::string&, std::time_t);
-bool fetch_tkn(const std::string&, std::string&, std::time_t&);
+static const std::string TOKEN = "test-token";
 
 namespace TestTokenStorage {
 
-const std::string service = "plsync-token-service";
-const std::string acc = "test-tkn";
-const std::string pwd = "test-password";
-
-void test_save_tkn() {
-	bool success = save_tkn(acc, pwd, -1);
-	std::string saved, err, expected = pwd + ":-1";
-	libcred::get_password(service, acc, &saved, &err);
-
-	if (!success) {
-		std::cout << "test_save_token(): FAILED" << '\n';
-	} else if (saved == expected) {
-		std::cout << "test_save_token(): PASSED" << '\n';
-	} else {
-		std::cout << "test_save_token(): FAILED" << '\n';
-		std::cout << "Expected: " << expected << '\n';
-		std::cout << "Actual: " << saved << '\n';
+void test_save_and_fetch_access_tkn(Platform platform) {
+	std::time_t now = std::time(nullptr);
+	if (!save_access_tkn(platform, TOKEN, 1000)) {
+		std::cout << "test_save_and_fetch_access_tkn(): FAILED\n";
+		return;
 	}
-	libcred::delete_password(service, acc, &err);
+	std::string tkn;
+	std::time_t expiry;
+	if (!fetch_access_tkn(platform, tkn, expiry)) {
+		std::cout << "test_save_and_fetch_access_tkn(): FAILED\n";
+		return;
+	}
+	if (tkn != TOKEN || expiry != now+1000) {
+		std::cout << "test_save_and_fetch_access_tkn(): FAILED\n";
+	} else {
+		std::cout << "test_save_and_fetch_access_tkn(): PASSED\n";
+	}
 }
 
-void test_fetch_tkn() {
-	std::string tkn, err;
-	std::time_t expiry, expected_expiry = 1000;
-	libcred::set_password(service, acc, pwd+":"+std::to_string(expected_expiry), &err);
-
-	if (!fetch_tkn(acc, tkn, expiry)) {
-		std::cout << "test_fetch_tkn(): FAILED\n";
-	} else if (tkn != pwd) {
-		std::cout << "test_fetch_tkn(): FAILED\n" << "Expected token: " 
-				  << pwd << "\nActual: " << tkn << '\n';
-	} else if (expiry != expected_expiry) {
-		std::cout << "test_fetch_tkn(): FAILED\n" << "Expected expiry: " << expected_expiry 
-				  << "\nActual: " << expiry << '\n';
-	} else {
-		std::cout << "test_fetch_tkn(): PASSED\n";
+void test_save_and_fetch_refresh_tkn(Platform platform) {
+	if (!save_refresh_tkn(platform, TOKEN)) {
+		std::cout << "test_save_and_fetch_refresh_tkn(): FAILED\n";
+		return;
 	}
-	libcred::delete_password(service, acc, &err);
+	std::string tkn;
+	if (!fetch_refresh_tkn(platform, tkn)) {
+		std::cout << "test_save_and_fetch_refresh_tkn(): FAILED\n";
+		return;
+	}
+	if (tkn != TOKEN) {
+		std::cout << "test_save_and_fetch_refresh_tkn(): FAILED\n";
+	} else {
+		std::cout << "test_save_and_fetch_refresh_tkn(): PASSED\n";
+	}
 }
 
-void run() {
-	test_save_tkn();
-	test_fetch_tkn();
+void run(Platform overwrite_platform) {
+	test_save_and_fetch_access_tkn(overwrite_platform);
+	test_save_and_fetch_refresh_tkn(overwrite_platform);
 }
 
 }

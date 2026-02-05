@@ -30,19 +30,6 @@ SpotifyTokenRefresher::SpotifyTokenRefresher()
 {
 }
 
-bool TokenRefresher::refresh_tkn_valid() {
-	std::string _;
-	std::time_t expiry;
-	if(!fetch_refresh_tkn(platform, _, expiry)) {
-		// not in keychain
-		return false;
-	}
-	if (expiry == -1) {
-		return true;
-	}
-	return expiry > time(nullptr);
-}
-
 bool TokenRefresher::access_tkn_valid() {
 	std::string _;
 	std::time_t expiry;
@@ -53,12 +40,15 @@ bool TokenRefresher::access_tkn_valid() {
 	return expiry > time(nullptr);
 }
 
+bool TokenRefresher::refresh_tkn_valid() {
+	std::string _;
+	return fetch_refresh_tkn(platform, _);
+}
+
 bool TokenRefresher::refresh() {
 	// store post fields in buff
-	assert(refresh_tkn_valid());
-	std::time_t _;
 	std::string refresh_tkn;
-	fetch_refresh_tkn(platform, refresh_tkn, _);
+	fetch_refresh_tkn(platform, refresh_tkn);
 	size_t fields_sz = 512;
 	std::string fields(fields_sz, 0);
 	int nbyte = snprintf(
@@ -93,12 +83,12 @@ bool TokenRefresher::refresh() {
 	nlohmann::json jres = nlohmann::json::parse(res, /*cb=*/nullptr, /*allow_except=*/false);
 	if (jres.is_discarded()) {
 		// TODO remove
-		std::cerr << "Couldn't process " << platform::title(platform) << " refresh response\n";
+		std::cerr << "Couldn't process " << title(platform) << " refresh response\n";
 		return false;
 	}
 	if (jres.contains("error")) {
 		std::cerr << res << '\n';
-		std::cerr << "Refreshing " << platform::title(platform) << " token failed\n";
+		std::cerr << "Refreshing " << title(platform) << " token failed\n";
 		return false;
 	}
 
@@ -106,10 +96,7 @@ bool TokenRefresher::refresh() {
 		return false;
 	}
 	if (jres.contains("refresh_token")) {
-		bool success = save_refresh_tkn(
-			platform, jres["refresh_token"], jres.value("refresh_token_expires_in", -1)
-		);
-		if (!success) {
+		if (!save_refresh_tkn(platform, jres["refresh_token"])) {
 			return false;
 		}
 	}

@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <filesystem>
 #include <curl/curl.h>
 #include <zlib.h>
 
@@ -60,6 +61,8 @@ RndIt find_range(RndIt first1, RndIt last1, RndIt first2, RndIt last2) {
 
 std::vector<std::string> split(const std::string &st, const std::string &subst);
 
+bool contains(const std::string &s, const std::string &ss);
+
 /* Pass to curl WRITE_FUNCTION opt */
 size_t curl_write_cb(char *, size_t, size_t, void *);
 
@@ -98,4 +101,6 @@ struct fileDeleter {
 
 /* size must be a multiple of 8 */
 std::string rndstr(size_t size);
+
+bool ensure_tmpdir(std::filesystem::path &tmpdir);
 #endif

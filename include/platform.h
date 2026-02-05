@@ -5,11 +5,9 @@
 
 enum Platform { YOUTUBE = 0, SPOTIFY = 1 };
 
-namespace platform {
-	std::string title(Platform p);
+std::string title(Platform p);
 
-	std::string title_lower(Platform p);
+std::string title_lower(Platform p);
 
-	std::string abbrev(Platform p);
-}
+std::string abbrev(Platform p);
 #endif

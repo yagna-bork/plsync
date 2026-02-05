@@ -3,6 +3,7 @@
 #include <string>
 #include <random>
 #include <fstream>
+#include <filesystem>
 #include <openssl/evp.h>
 
 // https://docs.openssl.org/master/man7/ossl-guide-libcrypto-introduction/#using-algorithms-in-applications
@@ -98,6 +99,10 @@ std::vector<std::string> split(const std::string &s, const std::string &ss) {
 	return res;
 }
 
+bool contains(const std::string &s, const std::string &ss) {
+	return find_range(s.begin(), s.end(), ss.begin(), ss.end()) != s.end();
+}
+
 size_t curl_write_cb(char *ptr, size_t size, size_t nmemb, void *data_p) {
 	std::string *data = static_cast<std::string *>(data_p);
 	copy(ptr, ptr + nmemb, back_inserter(*data));
@@ -129,4 +134,16 @@ std::string rndstr(size_t size) {
 		}
 	}
 	return res;
+}
+
+bool ensure_tmpdir(std::filesystem::path &tmpdir) {
+	tmpdir = std::filesystem::temp_directory_path() / "plsync";
+	if (std::filesystem::exists(tmpdir)) {
+		return true;
+	}
+	if (!std::filesystem::create_directory(tmpdir)) {
+		tmpdir.clear();
+		return false;
+	}
+	return true;
 }
