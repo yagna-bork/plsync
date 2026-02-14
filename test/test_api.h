@@ -22,7 +22,7 @@ void test_get_video() {
 
 	try {
 		status_code = ytapi.GET(endpoint, res);
-	} catch (const std::runtime_error &e) {
+	} catch (const YoutubeAPI::RequestError &e) {
 		std::cout << "test_get_video(): FAILED\n";
 		return;
 	}
@@ -57,14 +57,12 @@ void test_get_track() {
 	nlohmann::json res;
 
 	try {
-		status_code = spotapi.GET("v1/tracks/0BxE4FqsDD1Ot4YuBXwAPp", res);
-	} catch (const std::runtime_error &e) {
+		status_code = spotapi.GET("tracks/0BxE4FqsDD1Ot4YuBXwAPp", res);
+	} catch (const SpotifyAPI::RequestError &e) {
 		std::cout << "test_get_track(): FAILED\n";
 		return;
 	}
 	if (status_code != 200) {
-		std::cout << status_code << '\n';
-		std::cout << res << '\n';
 		std::cout << "test_get_track(): FAILED\n";
 		return;
 	}

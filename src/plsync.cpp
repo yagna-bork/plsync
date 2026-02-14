@@ -52,6 +52,8 @@ const char *parse_args(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+	const char *command = parse_args(argc, argv);
+
 	YoutubeTokenRefresher ytref;
 	bool yt_valid = ytref.refresh_tkn_valid();
 	SpotifyTokenRefresher spref;
@@ -61,7 +63,6 @@ int main(int argc, char *argv[]) {
 		return run_init(yt_valid, sp_valid);
 	}
 
-	const char *command = parse_args(argc, argv);
 	if (strcmp(command, "init") == 0) {
 		return run_init(true, true);
 	} else if (strcmp(command, "untracked") == 0) {

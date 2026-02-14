@@ -3,14 +3,14 @@ VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib`
 OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/token_refresher.o obj/platform.o \
-			obj/untracked.o
+			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o
 TEST_OBJS = obj/token_store.o obj/token_refresher.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
-# TODO enable NDEBUG to ignore asserts and ignore DEBUG_SYM
-DEBUG_OR_PROD = $(DEBUG_SYM)
+# TODO in prod enable NDEBUG to ignore asserts and ignore DEBUG_SYM
+DEBUG_OR_PROD = #$(DEBUG_SYM)
 
 
 # TODO for prod need to make vcpkg install within project
@@ -26,7 +26,8 @@ plsync bin/plsync: obj/plsync.o $(OBJS)
 obj/plsync.o: src/plsync.cpp include/init.h
 	clang++ -o obj/plsync.o -c $(CXX) src/plsync.cpp $(DEBUG_OR_PROD)
 
-obj/init.o: src/init.cpp include/init.h include/config.h include/token_store.h include/util.h
+obj/init.o: src/init.cpp include/init.h include/config.h include/token_store.h \
+			include/util.h include/youtube_api.h include/spotify_api.h
 	clang++ -o obj/init.o -c $(CXX) src/init.cpp $(DEBUG_OR_PROD)
 
 obj/config.o: src/config.cpp include/config.h include/platform.h include/client_secret.h

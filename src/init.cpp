@@ -2,6 +2,9 @@
 #include "../include/config.h"
 #include "../include/util.h"
 #include "../include/token_store.h"
+#include "../include/api.h"
+#include "../include/youtube_api.h"
+#include "../include/spotify_api.h"
 #include <cassert>
 #include <ctime>
 #include <cctype>
@@ -146,75 +149,7 @@ bool get_auth_code(std::string &code, const std::string &state, const std::strin
 	return true;
 }
 
-/*
- * Monsterous parameter list ik ik. 
- * Will have to refactor somehow.
- */
-bool get_access_tokens(
-	Platform platform, const std::string &auth_code, const std::string &verifier,
-	std::string &access_tkn, std::time_t &access_duration, 
-	std::string &refresh_tkn, std::time_t &refresh_duration
-) {
-	std::string url = get_setting("access_tkn_url", platform);
-	std::string client_id = get_setting("client_id", platform);
-	std::string redirect_url = get_setting("auth_redirect_url") + ":" 
-							   + get_setting("redirect_port", platform);
-	std::string client_secret = (platform == Platform::SPOTIFY) ? "" : get_setting("client_secret", platform);
-	std::string scope = get_setting("scopes", platform);
-	std::string res;
-
-	char *form = BUFF; size_t form_sz = BUFFSZ; 
-	int write_sz = snprintf(
-		form, form_sz, "client_id=%s&code=%s&code_verifier=%s&grant_type=authorization_code&"
-					 "redirect_uri=%s",
-		client_id.c_str(), auth_code.c_str(), verifier.c_str(), 
-		redirect_url.c_str()
-	);
-	if (!client_secret.empty()) {
-		snprintf(form+write_sz, form_sz-write_sz, "&client_secret=%s", client_secret.c_str());
-	}
-
-	CURL *handle = curl_easy_init();
-	if (!handle) {
-		std::cerr << "Failed to setup easy curl" << '\n';
-		return false;
-	}
-	curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curl_write_cb);
-	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &res);
-	curl_easy_setopt(handle, CURLOPT_POST, 1);
-	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, form);
-	CURLcode status = curl_easy_perform(handle);
-	curl_easy_cleanup(handle);
-	if(status != CURLE_OK) {
-		std::cerr << "Failed to access " << platform::title(platform) << " auth server" << '\n';
-		return false;
-	}
-
-	nlohmann::json jres = nlohmann::json::parse(res, /*cb=*/nullptr, /*allow_exceptions=*/false);
-	if (jres.is_discarded()) {
-		std::cerr << "Couldn't process " << platform::title(platform) << " authentication token response\n";
-		return false;
-	}
-
-	std::vector<std::string> scopes = split(scope, ",");
-	std::vector<std::string> permitted = split(jres["scope"], " ");
-	for (const std::string &sc: scopes) {
-		if (std::find(permitted.begin(), permitted.end(), sc) != permitted.end()) {
-			continue;
-		}
-		std::cerr << '\n' << "Scope '" + sc + "' required" << '\n';
-		return false;
-	}
-
-	access_tkn = jres["access_token"];
-	access_duration = jres.value<std::time_t>("expires_in", 0);
-	refresh_tkn = jres["refresh_token"];
-	refresh_duration = jres.value<std::time_t>("refresh_token_expires_in", -1);
-	return true;
-}
-
-bool get_user_permissions(Platform platform) {
+bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
 	std::string client_id = get_setting("client_id", platform);
 	std::string scopes = get_setting("scopes", platform);
 	std::string auth_url = get_setting("auth_url", platform);
@@ -230,7 +165,7 @@ bool get_user_permissions(Platform platform) {
 	}
 	std::string challenge = urlencode64(digest);
 	std::string state = urlencode64(rndstr(128));
-	std::string redirect_url = get_setting("auth_redirect_url");
+	std::string redirect_url = get_setting("redirect_url");
 	std::string full_redirect_url = redirect_url + ":" + redirect_port;
 
 	std::string fmt_scopes;
@@ -243,44 +178,50 @@ bool get_user_permissions(Platform platform) {
 		challenge.c_str(), state.c_str()
 	);
 	system(BUFF);
-	std::cout << "Waiting for " << platform::title(platform) << " authentication code... " << std::flush;
+	std::cout << "Waiting for " << title(platform) << " authentication code... " << std::flush;
 
 	std::string auth_code;
 	if (!get_auth_code(auth_code, state, redirect_port)) {
-		std::cout << "Unable to complete " << platform::title(platform) << " authentication. Please try again" << '\n';
+		std::cout << "Unable to complete " << title(platform) << " authentication. Please try again" << '\n';
 		return false;
 	}
 	std::cout << "Got it!\n";
 
-	std::string access_tkn, refresh_tkn;
-	std::time_t access_duration, refresh_duration;
-	bool success = get_access_tokens(
-		platform, auth_code, verifier, 
-		access_tkn, access_duration, refresh_tkn, refresh_duration
-	);
-	if (!success) {
-		std::cerr << "Something went wrong. Please try again" << '\n';
+	std::unique_ptr<BaseAuthAPI> api;
+	if (platform == Platform::YOUTUBE) {
+		api = std::make_unique<YoutubeAuthAPI>(curl);
+	} else {
+		api = std::make_unique<SpotifyAuthAPI>(curl);
+	}
+
+	BaseAuthAPI::TokenResponse tkn_resp;
+	try {
+		tkn_resp = api->exchange_auth_code(auth_code, verifier);
+	} catch (const BaseAuthAPI::RequestError &e) {
+		std::cerr << e.what() << '\n';
+		std::cerr << "Something went wrong. Please try again\n";
 		return false;
 	}
 
 	// now store the tokens
-	if (!save_access_tkn(platform, access_tkn, access_duration)) {
+	if (!save_access_tkn(platform, tkn_resp.access_tkn, tkn_resp.access_duration)) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
-	if (!save_refresh_tkn(platform, refresh_tkn, refresh_duration)) {
+	if (!save_refresh_tkn(platform, tkn_resp.refresh_tkn)) {
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
-	std::cout << "Success! " << platform::title(platform) << " authentication completed" << '\n';
+	std::cout << "Success! " << title(platform) << " authentication completed" << '\n';
 	return true;
 }
 
 int run_init(bool init_youtube, bool init_spotify) {
-	if (init_youtube && !get_user_permissions(Platform::YOUTUBE)) {
+	std::shared_ptr<CURL> curl(curl_easy_init(), curl_easy_cleanup);
+	if (init_youtube && !get_user_permissions(Platform::YOUTUBE, curl)) {
 		return 1;
 	}
-	if (init_spotify && !get_user_permissions(Platform::SPOTIFY)) {
+	if (init_spotify && !get_user_permissions(Platform::SPOTIFY, curl)) {
 		return 1;
 	}
 	return 0;
