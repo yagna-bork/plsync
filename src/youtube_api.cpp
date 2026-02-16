@@ -24,3 +24,18 @@ BaseAuthAPI::TokenResponse YoutubeAuthAPI::exchange_auth_code() {
 	validate_scopes(resp["scope"]);
 	return TokenResponse(std::move(resp));
 }
+
+BaseAuthAPI::AccessTokenResponse YoutubeAuthAPI::refresh_access_tkn(const std::string &refresh_tkn) {
+	std::vector<std::pair<std::string, std::string>> fields = {
+		{"client_id", get_setting("client_id", platform)}, 
+		{"grant_type", "refresh_token"},
+		{"refresh_token", refresh_tkn},
+		{"client_secret", get_setting("client_secret", platform)}
+	};
+	
+	nlohmann::json resp;
+	if(POST(/*endpoint=*/"token", fields, resp) != 200) {
+		throw RequestError("invalid token response from google");
+	}
+	return AccessTokenResponse(std::move(resp));
+}

@@ -102,30 +102,30 @@ public:
 	public:
 		SequenceError(const char *msg) : std::logic_error(msg) {}
 	};
-	
-	struct TokenResponse {
-		TokenResponse() {}
-		TokenResponse(nlohmann::json &&resp) 
+
+	struct AccessTokenResponse {
+		std::string access_tkn;
+		std::time_t access_duration;
+
+		AccessTokenResponse() = default;
+		
+		AccessTokenResponse(nlohmann::json &&resp)
 			: access_tkn(std::move(resp["access_token"])), 
-			  access_duration(std::move(resp["expires_in"])),
+			  access_duration(std::move(resp["expires_in"]))
+		{
+		}
+	};
+	
+	struct TokenResponse : public AccessTokenResponse {
+		std::string refresh_tkn;
+
+		TokenResponse() = default;
+
+		TokenResponse(nlohmann::json &&resp) 
+			: AccessTokenResponse(std::move(resp)),
 			  refresh_tkn(std::move(resp["refresh_token"]))
 		{
 		}
-		
-		TokenResponse(const TokenResponse &other) = delete;
-		TokenResponse(TokenResponse &&other) = delete;
-	
-		TokenResponse &operator=(const TokenResponse &rhs) = delete;
-		TokenResponse &operator=(TokenResponse &&rhs) {
-			access_tkn = std::move(rhs.access_tkn);
-			access_duration = std::move(rhs.access_duration);
-			refresh_tkn = std::move(rhs.refresh_tkn);
-			return *this;
-		}
-	
-		std::string access_tkn;
-		std::time_t access_duration;
-		std::string refresh_tkn;
 	};
 
 	std::string get_auth_url();
@@ -134,6 +134,8 @@ public:
 	bool collect_auth_code();
 
 	virtual TokenResponse exchange_auth_code() = 0;
+
+	virtual AccessTokenResponse refresh_access_tkn(const std::string &refresh_tkn) = 0;
 
 	virtual ~BaseAuthAPI() = default;
 

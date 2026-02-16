@@ -19,13 +19,15 @@ private:
 
 class SpotifyAuthAPI : public BaseAuthAPI {
 public:
-	SpotifyAuthAPI(std::shared_ptr<CURL> curl) 
+	SpotifyAuthAPI(std::shared_ptr<CURL> curl)
 		: BaseAuthAPI(Platform::SPOTIFY, spotify_auth_url, curl, spotify_scopes,
 					  auth_svr_url, redirect_port)
 	{
 	}
 	
 	virtual TokenResponse exchange_auth_code();
+
+	virtual AccessTokenResponse refresh_access_tkn(const std::string &refresh_tkn);
 
 private:
 	static inline const std::string spotify_auth_url = "https://accounts.spotify.com/api";

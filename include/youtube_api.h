@@ -26,6 +26,8 @@ public:
 
 	virtual TokenResponse exchange_auth_code();
 
+	virtual AccessTokenResponse refresh_access_tkn(const std::string &refresh_tkn);
+
 private:
 	static inline const std::string youtube_auth_url = "https://oauth2.googleapis.com";
 	static inline const std::vector<std::string> youtube_scopes = {"https://www.googleapis.com/auth/youtube"};

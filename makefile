@@ -2,10 +2,10 @@ CXX = -std=c++17
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib`
 OBJS = obj/init.o obj/config.o obj/util.o \
-			obj/token_store.o obj/token_refresher.o obj/platform.o \
+			obj/token_store.o obj/platform.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o
-TEST_OBJS = obj/token_store.o obj/token_refresher.o obj/platform.o \
-			obj/api.o obj/youtube_api.o obj/config.o obj/util.o
+TEST_OBJS = obj/token_store.o obj/platform.o \
+			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
@@ -38,9 +38,6 @@ obj/util.o: src/util.cpp include/util.h
 
 obj/token_store.o: src/token_store.cpp include/token_store.h
 	clang++ -o obj/token_store.o -c $(CXX) src/token_store.cpp $(DEBUG_OR_PROD)
-
-obj/token_refresher.o: src/token_refresher.cpp include/token_refresher.h include/token_store.h
-	clang++ -o obj/token_refresher.o -c $(CXX) src/token_refresher.cpp $(DEBUG_OR_PROD)
 
 obj/platform.o: src/platform.cpp include/platform.h
 	clang++ -o obj/platform.o -c $(CXX) src/platform.cpp $(DEBUG_OR_PROD)

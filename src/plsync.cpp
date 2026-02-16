@@ -1,6 +1,7 @@
 #include "../include/init.h"
-#include "../include/token_refresher.h"
+#include "../include/token_store.h"
 #include "../include/untracked.h"
+#include "../include/platform.h"
 #include <cstring>
 #include <iostream>
 #include <iterator>
@@ -52,17 +53,14 @@ const char *parse_args(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-	const char *command = parse_args(argc, argv);
-
-	YoutubeTokenRefresher ytref;
-	bool yt_valid = ytref.refresh_tkn_valid();
-	SpotifyTokenRefresher spref;
-	bool sp_valid = spref.refresh_tkn_valid();
-	if (!yt_valid || !sp_valid) {
+	bool is_yt_init = is_refresh_tkn_valid(Platform::YOUTUBE);
+	bool is_sp_init = is_refresh_tkn_valid(Platform::SPOTIFY);
+	if (!is_yt_init || !is_sp_init) {
 		parse_args_init_only(argc, argv);
-		return run_init(yt_valid, sp_valid);
+		return run_init(!is_yt_init, !is_sp_init);
 	}
 
+	const char *command = parse_args(argc, argv);
 	if (strcmp(command, "init") == 0) {
 		return run_init(true, true);
 	} else if (strcmp(command, "untracked") == 0) {
