@@ -5,27 +5,31 @@
 #include <string>
 #include <curl/curl.h>
 
-const std::string YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3";
-const std::string YOUTUBE_AUTH_URL = "https://oauth2.googleapis.com";
-const std::vector<std::string> YOUTUBE_SCOPES = {"https://www.googleapis.com/auth/youtube"};
-
 class YoutubeAPI : public BaseDataAPI {
 public:
 	YoutubeAPI(std::shared_ptr<CURL> curl, const std::string &access_tkn = "")
-		: BaseDataAPI(Platform::YOUTUBE, YOUTUBE_API_URL, curl, access_tkn)
+		: BaseDataAPI(Platform::YOUTUBE, youtube_api_url, curl, access_tkn)
 	{
 	}
+
+private:
+	static inline const std::string youtube_api_url = "https://www.googleapis.com/youtube/v3";
 };
 
 class YoutubeAuthAPI : public BaseAuthAPI {
 public:
 	YoutubeAuthAPI(std::shared_ptr<CURL> curl)
-		: BaseAuthAPI(Platform::YOUTUBE, YOUTUBE_AUTH_URL, curl, YOUTUBE_SCOPES)
+		: BaseAuthAPI(Platform::YOUTUBE, youtube_auth_url, curl, 
+					  youtube_scopes, auth_svr_url, redirect_port)
 	{
 	}
 
-	virtual TokenResponse exchange_auth_code(
-		const std::string &auth_code, const std::string &verifier
-	);
+	virtual TokenResponse exchange_auth_code();
+
+private:
+	static inline const std::string youtube_auth_url = "https://oauth2.googleapis.com";
+	static inline const std::vector<std::string> youtube_scopes = {"https://www.googleapis.com/auth/youtube"};
+	static inline const std::string auth_svr_url = "https://accounts.google.com/o/oauth2/v2/auth";
+	static const int redirect_port = 8000;
 };
 #endif

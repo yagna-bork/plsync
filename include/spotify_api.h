@@ -6,32 +6,36 @@
 #include <memory>
 #include <curl/curl.h>
 
-const std::string SPOTIFY_API_URL = "https://api.spotify.com/v1";
-const std::string SPOTIFY_AUTH_URl = "https://accounts.spotify.com/api";
-const std::vector<std::string> SPOTIFY_SCOPES = {
-	"playlist-read-private",
-	"playlist-read-collaborative",
-	"playlist-modify-private",
-	"playlist-modify-public"
-};
-
 class SpotifyAPI : public BaseDataAPI {
 public:
 	SpotifyAPI(std::shared_ptr<CURL> curl, const std::string &access_tkn = "")
-		: BaseDataAPI(Platform::SPOTIFY, SPOTIFY_API_URL, curl, access_tkn) 
+		: BaseDataAPI(Platform::SPOTIFY, spotify_api_url, curl, access_tkn) 
 	{
 	}
+
+private:
+	static inline const std::string spotify_api_url = "https://api.spotify.com/v1";
 };
 
 class SpotifyAuthAPI : public BaseAuthAPI {
 public:
 	SpotifyAuthAPI(std::shared_ptr<CURL> curl) 
-		: BaseAuthAPI(Platform::SPOTIFY, SPOTIFY_AUTH_URl, curl, SPOTIFY_SCOPES)
+		: BaseAuthAPI(Platform::SPOTIFY, spotify_auth_url, curl, spotify_scopes,
+					  auth_svr_url, redirect_port)
 	{
 	}
 	
-	virtual TokenResponse exchange_auth_code(
-		const std::string &auth_code, const std::string &verifier
-	);
+	virtual TokenResponse exchange_auth_code();
+
+private:
+	static inline const std::string spotify_auth_url = "https://accounts.spotify.com/api";
+	static inline const std::vector<std::string> spotify_scopes = {
+		"playlist-read-private",
+		"playlist-read-collaborative",
+		"playlist-modify-private",
+		"playlist-modify-public"
+	};
+	static inline const std::string auth_svr_url = "https://accounts.spotify.com/authorize";
+	static const int redirect_port = 8001;
 };
 #endif

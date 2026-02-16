@@ -61,6 +61,8 @@ RndIt find_range(RndIt first1, RndIt last1, RndIt first2, RndIt last2) {
 
 std::vector<std::string> split(const std::string &st, const std::string &subst);
 
+std::string join(const std::vector<std::string> &strs, const std::string &sep);
+
 bool contains(const std::string &s, const std::string &ss);
 
 /* Pass to curl WRITE_FUNCTION opt */

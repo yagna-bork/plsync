@@ -99,6 +99,17 @@ std::vector<std::string> split(const std::string &s, const std::string &ss) {
 	return res;
 }
 
+std::string join(const std::vector<std::string> &strs, const std::string &sep) {
+	std::string joined;
+	for (std::size_t i = 0; i != strs.size(); i++) {
+		if (i != 0) {
+			joined.append(sep);
+		}
+		joined.append(strs[i]);
+	}
+	return joined;
+}
+
 bool contains(const std::string &s, const std::string &ss) {
 	return find_range(s.begin(), s.end(), ss.begin(), ss.end()) != s.end();
 }

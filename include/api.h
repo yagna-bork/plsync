@@ -16,8 +16,12 @@
  */
 class BaseAPI {
 public:
-	typedef std::runtime_error RequestError;
+	class RequestError : public std::runtime_error {
+	public:
+		RequestError(const char *msg) : std::runtime_error(msg) {}
+	};
 
+public:
 	/*
 	 * TODO figure out how to test without making public
 	 * Performs a POST request at the specified endpoint.
@@ -94,6 +98,11 @@ private:
  */
 class BaseAuthAPI : public BaseAPI {
 public:
+	class SequenceError : public std::logic_error {
+	public:
+		SequenceError(const char *msg) : std::logic_error(msg) {}
+	};
+	
 	struct TokenResponse {
 		TokenResponse() {}
 		TokenResponse(nlohmann::json &&resp) 
@@ -119,24 +128,37 @@ public:
 		std::string refresh_tkn;
 	};
 
-	virtual TokenResponse exchange_auth_code(
-		const std::string &auth_code, const std::string &verifier
-	) = 0;
+	std::string get_auth_url();
+
+	/* returns whether it succeeded */
+	bool collect_auth_code();
+
+	virtual TokenResponse exchange_auth_code() = 0;
 
 	virtual ~BaseAuthAPI() = default;
 
 protected:
 	BaseAuthAPI(
 		Platform p, const std::string &url, std::shared_ptr<CURL> curl,
-		const std::vector<std::string> &scopes
-	): BaseAPI(p, url, curl), scopes(scopes)
+		const std::vector<std::string> &scopes, const std::string &auth_svr_url, 
+		int redirect_port
+	): BaseAPI(p, url, curl), scopes(scopes), auth_svr_url(auth_svr_url), 
+	   redirect_port(redirect_port)
 	{
 	}
 	
 	/* throws RequestError if user didn't grant some scopes */
 	void validate_scopes(const std::string &granted);
 
+	std::string verifier;
+	std::string auth_code;
+
 private:
 	std::vector<std::string> scopes;
+	std::string state;
+	std::string auth_svr_url;
+	int redirect_port;
+
+	std::string generate_code_verifier();
 };
 #endif

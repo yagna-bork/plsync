@@ -4,9 +4,7 @@
 #include <string>
 #include <utility>
 
-BaseAuthAPI::TokenResponse YoutubeAuthAPI::exchange_auth_code(
-	const std::string &auth_code, const std::string &verifier
-) {
+BaseAuthAPI::TokenResponse YoutubeAuthAPI::exchange_auth_code() {
 	std::vector<std::pair<std::string, std::string>> fields = {
 		{"client_id", get_setting("client_id", platform)}, 
 		{"code", auth_code},

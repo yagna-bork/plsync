@@ -75,7 +75,6 @@ bool TokenRefresher::refresh() {
 	CURLcode status = curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
 	if(status != CURLE_OK) {
-		// TODO platform.h
 		std::cerr << "Failed to refresh " << platform << " token" << '\n';
 		return false;
 	}
