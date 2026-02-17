@@ -24,7 +24,7 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
-bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
+static bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
 	std::unique_ptr<BaseAuthAPI> api;
 	if (platform == Platform::YOUTUBE) {
 		api = std::make_unique<YoutubeAuthAPI>(curl);

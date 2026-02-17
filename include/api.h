@@ -64,6 +64,14 @@ private:
  */
 class BaseDataAPI : public BaseAPI {
 public:
+	struct Playlist {
+		std::string id;
+		std::string etag;
+		std::string title;
+		bool is_private;
+		std::size_t items;
+	};
+	
 	/* 
 	 * TODO figure out how to test without making public
 	 * Performs a GET request at the specified endpoint.
@@ -73,6 +81,8 @@ public:
 	 * If you provide an etag status code can also be 304.
 	 */
 	long GET(const std::string &endpoint, nlohmann::json &resp, const std::string &etag = "");
+
+	virtual long get_playlists(std::vector<Playlist> &playlists) = 0;
 
 protected:
 	BaseDataAPI(

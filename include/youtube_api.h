@@ -12,6 +12,8 @@ public:
 	{
 	}
 
+	virtual long get_playlists(std::vector<Playlist> &playlists);
+
 private:
 	static inline const std::string youtube_api_url = "https://www.googleapis.com/youtube/v3";
 };
