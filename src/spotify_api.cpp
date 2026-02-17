@@ -3,6 +3,13 @@
 #include <string>
 
 SpotifyAuthAPI::TokenResponse SpotifyAuthAPI::exchange_auth_code() {
+	if (verifier.empty()) {
+		throw SequenceError("verifier not initialised");
+	}
+	if (auth_code.empty()) {
+		throw SequenceError("auth_code not initialised");
+	}
+
 	std::vector<std::pair<std::string, std::string>> fields = {
 		{"client_id", get_setting("client_id", platform)}, 
 		{"code", auth_code},

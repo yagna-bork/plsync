@@ -98,6 +98,10 @@ private:
  */
 class BaseAuthAPI : public BaseAPI {
 public:
+	/* 
+	 * Used when error occurs due to an auth flow step being 
+	 * invovked without invoking the prerequisite steps first
+     */
 	class SequenceError : public std::logic_error {
 	public:
 		SequenceError(const char *msg) : std::logic_error(msg) {}

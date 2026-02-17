@@ -197,6 +197,10 @@ std::string BaseAuthAPI::get_auth_url() {
 }
 
 bool BaseAuthAPI::collect_auth_code() {
+	if (state.empty()) {
+		throw SequenceError("state not initialised");
+	}
+	
 	int status, listenfd, sockfd, yes = 1;
 	struct addrinfo hints, *svr_info, *p;
 	struct sockaddr_storage client_addr;
