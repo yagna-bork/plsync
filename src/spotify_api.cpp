@@ -1,10 +1,68 @@
 #include "../include/spotify_api.h"
 #include "../include/config.h"
+#include <cstdint>
 #include <string>
 
+long SpotifyAPI::paginated_GET(
+	const std::string &endpoint, nlohmann::json &initial_page, Params &params, std::string &etag
+) {
+	std::size_t limit = 20, offset = 0;
+	params.emplace_back("limit", std::to_string(limit));
+	params.emplace_back("offset", std::to_string(offset));
+	
+	long status_code = GET(endpoint, initial_page, params, access_tkn, etag);
+	if (status_code != 200) {
+		return status_code;
+	}
+	etag = initial_page.value("snapshot_id", "");
+	std::size_t total = initial_page["total"];
+
+	for (offset = limit; offset < total; offset += limit) {
+		params.back().second = std::to_string(offset);
+		nlohmann::json next_page;
+		status_code = GET(endpoint, next_page, params, access_tkn);
+		if (status_code != 200) {
+			return status_code;
+		}
+		std::move(next_page["items"].begin(), next_page["items"].end(), std::back_inserter(initial_page["items"]));
+	}
+	return 200L;
+}
+
+const std::string &SpotifyAPI::get_user_id() {
+	if (user_id.empty()) {
+		nlohmann::json resp;
+		if(GET("me", resp, Params(), access_tkn) != 200) {
+			throw RequestError("Invalid response from spotify");
+		}
+		user_id = resp["id"];
+	}
+	return user_id;
+}
+
 bool SpotifyAPI::get_playlists(std::vector<Playlist> &playlists, std::string &etag) {
-	throw std::runtime_error("Not yet implemented");
-	return false;
+	auto user_id = get_user_id();
+	Params params = {};
+	nlohmann::json resp;
+	if(paginated_GET("/me/playlists", resp, params, etag) != 200L) {
+		throw RequestError("Invalid response from spotify");
+	}
+	
+	for (auto &plist: resp["items"]) {
+		// Ignore playlists followed by user, reserve that for a 
+		// different method to be consistent across platforms
+		if (plist["owner"]["id"] != user_id) {
+			continue;
+		}
+		playlists.emplace_back(
+			std::move(plist["id"]), 
+			std::move(plist["snapshot_id"]), 
+			std::move(plist["name"]),
+			!plist["public"],
+			plist["items"].size()
+		);
+	}
+	return true;
 }
 
 SpotifyAuthAPI::TokenResponse SpotifyAuthAPI::exchange_auth_code() {

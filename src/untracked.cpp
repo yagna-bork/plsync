@@ -46,8 +46,10 @@ int run_untracked(int argc, char *argv[]) {
 	std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(platform, curl, tkn);
 
 	std::vector<BaseDataAPI::Playlist> playlists;
+	// TODO is this etag even relevant?
+	std::string etag;
 	try {
-		api->get_playlists(playlists);
+		api->get_playlists(playlists, etag);
 	} catch (const BaseAPI::RequestError &e) {
 		std::cerr << "Something went wrong. Try again.\n";
 		return 1;
@@ -56,5 +58,7 @@ int run_untracked(int argc, char *argv[]) {
 	for (const auto &pl: playlists) {
 		std::cout << pl.title << " " << (pl.is_private ? "private" : "public") << " " << pl.items << '\n';
 	}
+
+	
 	return 0;
 }

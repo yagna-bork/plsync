@@ -16,6 +16,16 @@ public:
 	virtual bool get_playlists(std::vector<Playlist> &playlists, std::string &etag);
 
 private:
+	/* Throws RequestError on failure to obtain user_id */
+	const std::string &get_user_id();
+
+	long paginated_GET(
+		const std::string &endpoint, nlohmann::json &resp, Params &params, std::string &etag
+	);
+
+private:
+	std::string user_id;
+
 	static inline const std::string spotify_api_url = "https://api.spotify.com/v1";
 };
 
