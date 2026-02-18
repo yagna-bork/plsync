@@ -12,7 +12,14 @@ public:
 	{
 	}
 
-	virtual long get_playlists(std::vector<Playlist> &playlists);
+	virtual bool get_playlists(std::vector<Playlist> &playlists, std::string &etag);
+
+private:
+	long paginated_GET(const std::string &endpoint, nlohmann::json &resp, Params &params);
+
+	long paginated_GET(
+		const std::string &endpoint, nlohmann::json &resp, Params &params, std::string &etag
+	);
 
 private:
 	static inline const std::string youtube_api_url = "https://www.googleapis.com/youtube/v3";

@@ -1,5 +1,8 @@
 #include "../include/untracked.h"
 #include "../include/platform.h"
+#include "../include/util.h"
+#include "../include/api.h"
+#include "../include/token_store.h"
 #include <iostream>
 
 static void print_usage() {
@@ -34,5 +37,24 @@ static Platform parse_args(int argc, char *argv[]) {
 
 int run_untracked(int argc, char *argv[]) {
 	Platform platform = parse_args(argc, argv);
+	std::string tkn;
+	std::shared_ptr<CURL> curl = get_curl();
+	if (!get_or_fetch_access_tkn(platform, curl, tkn)) {
+		std::cerr << "Couldn't get access token. Please try again\n";
+		return 1;
+	}
+	std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(platform, curl, tkn);
+
+	std::vector<BaseDataAPI::Playlist> playlists;
+	try {
+		api->get_playlists(playlists);
+	} catch (const BaseAPI::RequestError &e) {
+		std::cerr << "Something went wrong. Try again.\n";
+		return 1;
+	}
+	
+	for (const auto &pl: playlists) {
+		std::cout << pl.title << " " << (pl.is_private ? "private" : "public") << " " << pl.items << '\n';
+	}
 	return 0;
 }

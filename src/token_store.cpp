@@ -1,7 +1,5 @@
 #include "../include/token_store.h"
 #include "../include/api.h"
-#include "../include/youtube_api.h"
-#include "../include/spotify_api.h"
 #include <ctime>
 #include <cassert>
 #include <string>
@@ -52,6 +50,16 @@ static bool get_access_tkn(Platform platform, std::string &tkn, std::time_t &exp
 	return true;
 }
 
+static bool get_access_tkn(Platform platform, std::string &tkn) {
+	std::time_t _;
+	return get_access_tkn(platform, tkn, _);
+}
+
+static bool get_access_tkn(Platform platform, std::time_t &expiry) {
+	std::string  _;
+	return get_access_tkn(platform, _, expiry);
+}
+
 bool get_refresh_tkn(Platform platform, std::string &tkn) {
 	std::string acc = title_lower(platform) + "-refresh-token";
 	std::string err;
@@ -59,9 +67,8 @@ bool get_refresh_tkn(Platform platform, std::string &tkn) {
 }
 
 static bool is_access_tkn_valid(Platform platform) {
-	std::string _;
 	std::time_t expiry;
-	if(!get_access_tkn(platform, _, expiry)) {
+	if(!get_access_tkn(platform, expiry)) {
 		// not in keychain
 		return false;
 	}
@@ -75,29 +82,22 @@ bool is_refresh_tkn_valid(Platform platform) {
 
 bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl, std::string &tkn) {
 	if (is_access_tkn_valid(platform)) {
-		std::time_t _;
-		get_access_tkn(platform, tkn, _);
-		return true;
+		return get_access_tkn(platform, tkn);
 	}
 
-	assert(is_refresh_tkn_valid(platform));
 	std::string refresh_tkn;
-	get_refresh_tkn(platform, refresh_tkn);
-
-	std::unique_ptr<BaseAuthAPI> api;
-	if (platform == Platform::YOUTUBE) {
-		api = std::make_unique<YoutubeAuthAPI>(curl);
-	} else {
-		api = std::make_unique<SpotifyAuthAPI>(curl);
+	if (!get_refresh_tkn(platform, refresh_tkn)) {
+		return false;
 	}
 
+	std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
 	BaseAuthAPI::AccessTokenResponse resp;
 	try {
 		resp = api->refresh_access_tkn(refresh_tkn);
 	} catch (const BaseAuthAPI::RequestError &e) { 
-		std::cerr << "Failed to refresh access token\n";
 		return false;
 	}
+
 	save_access_tkn(platform, resp.access_tkn, resp.access_duration);
 	tkn = std::move(resp.access_tkn);
 	return true;

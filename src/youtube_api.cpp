@@ -3,6 +3,74 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <nlohmann/json.hpp>
+
+long YoutubeAPI::paginated_GET(const std::string &endpoint, nlohmann::json &initial_page, Params &params) {
+	nlohmann::json next_page;
+	long status_code = GET(endpoint, next_page, params, access_tkn);
+	if (status_code != 200L) {
+		return status_code;
+	}
+
+	std::move(next_page["items"].begin(), next_page["items"].end(), std::back_inserter(initial_page["items"]));
+
+	if (next_page.contains("nextPageToken")) {
+		params.back().second = next_page["nextPageToken"];
+		return paginated_GET(endpoint, initial_page, params);
+	} else {
+		return status_code;
+	}
+}
+
+long YoutubeAPI::paginated_GET(
+	const std::string &endpoint, nlohmann::json &initial_page, Params &params, std::string &etag
+) {
+	long status_code = GET(endpoint, initial_page, params, access_tkn, etag);
+	if(status_code != 200L) {
+		return status_code;
+	}
+	etag = initial_page.value("etag", "");
+	if (initial_page.contains("nextPageToken")) {
+		params.emplace_back("pageToken", initial_page["nextPageToken"]);
+		return paginated_GET(endpoint, initial_page, params);
+	} else {
+		return status_code;
+	}
+}
+
+bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &etag) {
+	Params params = {
+		{"mine", "true"},
+		{"part", "id,snippet,status,contentDetails"},
+		{
+			"fields", 
+			"etag,nextPageToken,items("
+				"id,etag,snippet/title,status/privacyStatus,contentDetails/itemCount"
+			")"
+		},
+	};
+	nlohmann::json resp;
+	std::string etag_copy = etag;
+	long status_code = paginated_GET("playlists", resp, params, etag_copy);
+
+	if (status_code == 304L) {
+		return false;
+	} else if (status_code == 200L) {
+		etag = etag_copy;
+		for (nlohmann::json &playlist: resp["items"]) {
+			playlists.emplace_back(
+				playlist["id"], 
+				playlist["etag"], 
+				playlist["snippet"]["title"], 
+				playlist["status"]["privacyStatus"] == "private", 
+				playlist["contentDetails"]["itemCount"]
+			);
+		}
+		return true;
+	} else {
+		throw RequestError("Invalid response from youtube");
+	}
+}
 
 BaseAuthAPI::TokenResponse YoutubeAuthAPI::exchange_auth_code() {
 	if (verifier.empty()) {

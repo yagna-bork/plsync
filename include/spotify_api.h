@@ -13,7 +13,7 @@ public:
 	{
 	}
 
-	virtual long get_playlists(std::vector<Playlist> &playlists);
+	virtual bool get_playlists(std::vector<Playlist> &playlists, std::string &etag);
 
 private:
 	static inline const std::string spotify_api_url = "https://api.spotify.com/v1";

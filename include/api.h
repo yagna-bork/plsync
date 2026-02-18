@@ -21,6 +21,9 @@ public:
 		RequestError(const char *msg) : std::runtime_error(msg) {}
 	};
 
+	typedef std::vector<std::pair<std::string, std::string>> Fields;
+	typedef std::vector<std::pair<std::string, std::string>> Params;
+
 public:
 	/*
 	 * TODO figure out how to test without making public
@@ -30,11 +33,25 @@ public:
 	 * If response is JSON then it's saved in `resp`
      * and returns the http response status code.
      */
-	long POST(
-		const std::string &endpoint, 
-		const std::vector<std::pair<std::string, std::string>> &fields, 
-		nlohmann::json &resp
+	long POST(const std::string &endpoint, const Fields &fields, nlohmann::json &resp);
+
+	/* 
+	 * TODO figure out how to test without making public
+	 * Performs a GET request at the specified endpoint.
+     * Throws RequestError if the request couldn't be made.
+	 * If response is JSON then it's saved in `resp`
+     * and returns the http response status code.
+	 * If you provide an etag status code can also be 304.
+	 * You can provide an access token to make an 
+	 * authenticated request.
+	 */
+	long GET(
+		const std::string &endpoint, nlohmann::json &resp, 
+		const Params &params = {}, const std::string &access_tkn = "", 
+		const std::string &etag = ""
 	);
+
+	virtual ~BaseAPI() = default;
 
 protected:
 	BaseAPI(
@@ -43,8 +60,11 @@ protected:
 	{
 	}
 
-	/* concat url and endpoint with %s/%s format */
-	std::string full_url(const std::string &endpoint);
+	Platform platform;
+
+private:
+	/* concat url, endpoint & query parameters with {url}/{endpoint}?{key}={val}&... format */
+	std::string full_url(const std::string &endpoint, const Fields &fields = Fields());
 
 	/* throws RequestError if indeterminable */
 	long status_code();
@@ -52,11 +72,12 @@ protected:
 	/* throws RequestError if indeterminable */
 	bool is_response_json();
 
-	Platform platform;
-	std::shared_ptr<CURL> curl;
+	/* throws RequestError on failure */
+	std::string decompress_gzip(std::filesystem::path file_path);
 
 private:
 	const std::string url;
+	std::shared_ptr<CURL> curl;
 };
 
 /* 
@@ -65,6 +86,15 @@ private:
 class BaseDataAPI : public BaseAPI {
 public:
 	struct Playlist {
+		Playlist() {}
+
+		Playlist(
+			std::string &&id, std::string &&etag, std::string &&title, bool is_private, std::size_t items
+		) : id(std::move(id)), etag(std::move(etag)), title(std::move(title)), 
+			is_private(is_private), items(items)
+		{
+		}
+		
 		std::string id;
 		std::string etag;
 		std::string title;
@@ -72,17 +102,12 @@ public:
 		std::size_t items;
 	};
 	
-	/* 
-	 * TODO figure out how to test without making public
-	 * Performs a GET request at the specified endpoint.
-     * Throws RequestError if the request couldn't be made.
-	 * If response is JSON then it's saved in `resp`
-     * and returns the http response status code.
-	 * If you provide an etag status code can also be 304.
-	 */
-	long GET(const std::string &endpoint, nlohmann::json &resp, const std::string &etag = "");
-
-	virtual long get_playlists(std::vector<Playlist> &playlists) = 0;
+	/* returns whether users playlists have changed according to etag */
+	virtual bool get_playlists(std::vector<Playlist> &playlists, std::string &etag) = 0;
+	
+	static std::unique_ptr<BaseDataAPI> get_api(
+		Platform platform, std::shared_ptr<CURL> curl, const std::string &access_tkn
+	);
 
 protected:
 	BaseDataAPI(
@@ -92,11 +117,8 @@ protected:
 	{
 	}
 
-private:
+protected:
 	const std::string access_tkn;
-
-	/* throws RequestError on failure */
-	std::string decompress_gzip(std::filesystem::path file_path);
 };
 
 /* 
@@ -142,6 +164,7 @@ public:
 		}
 	};
 
+public:
 	std::string get_auth_url();
 
 	/* returns whether it succeeded */
@@ -151,7 +174,7 @@ public:
 
 	virtual AccessTokenResponse refresh_access_tkn(const std::string &refresh_tkn) = 0;
 
-	virtual ~BaseAuthAPI() = default;
+	static std::unique_ptr<BaseAuthAPI> get_api(Platform platform, std::shared_ptr<CURL> curl);
 
 protected:
 	BaseAuthAPI(

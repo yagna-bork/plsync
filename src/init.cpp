@@ -3,8 +3,6 @@
 #include "../include/util.h"
 #include "../include/token_store.h"
 #include "../include/api.h"
-#include "../include/youtube_api.h"
-#include "../include/spotify_api.h"
 #include <cassert>
 #include <ctime>
 #include <cctype>
@@ -25,12 +23,7 @@
 #include <nlohmann/json.hpp>
 
 static bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
-	std::unique_ptr<BaseAuthAPI> api;
-	if (platform == Platform::YOUTUBE) {
-		api = std::make_unique<YoutubeAuthAPI>(curl);
-	} else {
-		api = std::make_unique<SpotifyAuthAPI>(curl);
-	}
+	auto api = BaseAuthAPI::get_api(platform, curl);
 
 	// direct user to permission screen
 	std::ostringstream cmd;
@@ -69,7 +62,7 @@ static bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) 
 }
 
 int run_init(bool init_youtube, bool init_spotify) {
-	std::shared_ptr<CURL> curl(curl_easy_init(), curl_easy_cleanup);
+	auto curl = get_curl();
 	if (init_youtube && !get_user_permissions(Platform::YOUTUBE, curl)) {
 		return 1;
 	}

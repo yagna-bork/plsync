@@ -1,12 +1,16 @@
 #include "../include/api.h"
 #include "../include/util.h"
 #include "../include/config.h"
+#include "../include/platform.h"
+#include "../include/youtube_api.h"
+#include "../include/spotify_api.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <climits>
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 #include <string>
 #include <stdexcept>
 #include <algorithm>
@@ -19,14 +23,17 @@
 #include <zlib.h>
 #include <nlohmann/json.hpp>
 
-std::string BaseAPI::full_url(const std::string &endpoint) {
-	std::string full_url = url;
-	full_url.push_back('/');
-	full_url.append(endpoint);
-	return full_url;
+std::string BaseAPI::full_url(const std::string &endpoint, const Params &params) {
+	std::ostringstream full_url;
+	full_url << url << '/' << endpoint;
+	for (std::size_t i = 0; i != params.size(); i++) {
+		char sep = (i == 0) ? '?' : '&';
+		full_url << sep << params[i].first << '=' << params[i].second;
+	}
+	return full_url.str();
 }
 
-std::string BaseDataAPI::decompress_gzip(std::filesystem::path file) {
+std::string BaseAPI::decompress_gzip(std::filesystem::path file) {
 	std::unique_ptr<gzFile_s, gzDeleter> gzf(gzopen(file.c_str(), "rb"));
 	if (!gzf) {
 		throw RequestError("couldn't open gzip file");
@@ -62,16 +69,19 @@ bool BaseAPI::is_response_json() {
 	return std::equal(app_json, app_json+std::strlen(app_json), content_type);
 }
 
-long BaseDataAPI::GET(const std::string &endpoint, nlohmann::json &jresp, const std::string &etag) {
+long BaseAPI::GET(
+	const std::string &endpoint, nlohmann::json &jresp, const Params &params, 
+	const std::string &token, const std::string &etag
+) {
 	curl_easy_reset(curl.get());
-	curl_easy_setopt(curl.get(), CURLOPT_URL, full_url(endpoint).c_str());
+	curl_easy_setopt(curl.get(), CURLOPT_URL, full_url(endpoint, params).c_str());
 	
 	curl_slist_raii headers;
 	headers.append("If-None-Match: " + etag);
 	headers.append("Accept-Encoding: gzip");
 	headers.append("User-Agent: plsync (gzip)");
-	if (!access_tkn.empty()) {
-		headers.append("Authorization: Bearer " + access_tkn);
+	if (!token.empty()) {
+		headers.append("Authorization: Bearer " + token);
 	}
 	curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers.get());
 
@@ -104,11 +114,7 @@ long BaseDataAPI::GET(const std::string &endpoint, nlohmann::json &jresp, const 
 	return status_code();
 }
 
-long BaseAPI::POST(
-	const std::string &endpoint, 
-	const std::vector<std::pair<std::string, std::string>> &fields, 
-	nlohmann::json &jresp
-) {
+long BaseAPI::POST(const std::string &endpoint, const Fields &fields, nlohmann::json &jresp) {
 	curl_easy_reset(curl.get());
 	std::string fields_str;
 	for (int i = 0; i != fields.size(); i++) {
@@ -133,6 +139,16 @@ long BaseAPI::POST(
 		jresp = nlohmann::json::parse(resp);
 	}
 	return status_code();
+}
+
+std::unique_ptr<BaseDataAPI> BaseDataAPI::get_api(
+	Platform platform, std::shared_ptr<CURL> curl, const std::string &access_tkn
+) {
+	if (platform == Platform::YOUTUBE) {
+		return std::make_unique<YoutubeAPI>(curl, access_tkn);
+	} else {
+		return std::make_unique<SpotifyAPI>(curl, access_tkn);
+	}
 }
 
 std::string BaseAuthAPI::generate_code_verifier() {
@@ -284,6 +300,14 @@ bool BaseAuthAPI::collect_auth_code() {
 	close(sockfd);
 	auth_code = params["code"];
 	return true;
+}
+
+std::unique_ptr<BaseAuthAPI> BaseAuthAPI::get_api(Platform platform, std::shared_ptr<CURL> curl) {
+	if (platform == Platform::YOUTUBE) {
+		return std::make_unique<YoutubeAuthAPI>(curl);
+	} else {
+		return std::make_unique<SpotifyAuthAPI>(curl);
+	}
 }
 
 void BaseAuthAPI::validate_scopes(const std::string &granted) {

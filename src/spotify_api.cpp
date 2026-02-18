@@ -2,6 +2,11 @@
 #include "../include/config.h"
 #include <string>
 
+bool SpotifyAPI::get_playlists(std::vector<Playlist> &playlists, std::string &etag) {
+	throw std::runtime_error("Not yet implemented");
+	return false;
+}
+
 SpotifyAuthAPI::TokenResponse SpotifyAuthAPI::exchange_auth_code() {
 	if (verifier.empty()) {
 		throw SequenceError("verifier not initialised");
