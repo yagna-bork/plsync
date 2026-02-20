@@ -1,11 +1,13 @@
 CXX = -std=c++17
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
-LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib`
+LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf`
 OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/platform.o \
-			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o
+			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
+			obj/meta_cache.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
-			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
+			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o \
+			obj/meta_cache.o obj/cache.pb.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
@@ -54,10 +56,16 @@ obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h 
 obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
+obj/meta_cache.o: src/meta_cache.cpp include/cache.h include/models.h include/config.h include/models.h include/platform.h
+	clang++ -o obj/meta_cache.o -c $(CXX) src/meta_cache.cpp $(DEBUG_OR_PROD)
+
+obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
+	clang++ -o obj/cache.pb.o -c $(CXX) src/cache.pb.cc $(DEBUG_OR_PROD)
+
 # tests
 # TODO for prod need to make vcpkg install within project
 tests bin/test: test/* $(TEST_OBJS)
-	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(TEST_OBJS) $(DEBUG_OR_PROD)
+	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(TEST_OBJS)
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/test
 
 all:

@@ -2,6 +2,7 @@
 #define GUARD_SPOTIFY_API_H
 #include "api.h"
 #include "platform.h"
+#include "models.h"
 #include <string>
 #include <memory>
 #include <curl/curl.h>

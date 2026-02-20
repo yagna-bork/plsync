@@ -1,0 +1,16 @@
+edition = "2024";
+
+message MetaCacheEntry {
+	string id = 1;
+	string etag = 2;
+	string title = 3;
+	bool is_private = 4;
+	int32 items = 5;
+	bytes id_hash = 6;
+}
+
+message MetaCacheNode {
+	MetaCacheEntry entry = 1;
+	string prev = 2;
+	string next = 3;
+}

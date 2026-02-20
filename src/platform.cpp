@@ -1,7 +1,17 @@
 #include "../include/platform.h"
 
-static const std::vector<std::string> titles = {"YouTube", "Spotify"};
-static const std::vector<std::string> abbrevs = {"yt", "sp"};
+static const std::vector<std::string> titles = {
+	"YouTube", "Spotify" 
+#ifndef NDEBUG
+	,"Test"
+#endif
+};
+static const std::vector<std::string> abbrevs = {
+	"yt", "sp"
+#ifndef NDEBUG
+	,"tt"
+#endif
+};
 
 std::string title(Platform p) { return titles[p]; };
 

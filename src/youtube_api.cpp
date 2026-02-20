@@ -1,5 +1,6 @@
 #include "../include/youtube_api.h"
 #include "../include/config.h"
+#include "../include/models.h"
 #include <vector>
 #include <string>
 #include <utility>

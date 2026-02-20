@@ -15,15 +15,15 @@ namespace TestTokenStorage {
 const std::string pwd = "test-token";
 const std::string TOKEN = "test-token";
 
-void test_save_and_get_access_tkn(Platform platform) {
+void test_save_and_get_access_tkn() {
 	std::time_t now = std::time(nullptr);
-	if (!save_access_tkn(platform, TOKEN, 1000)) {
+	if (!save_access_tkn(Platform::TEST, TOKEN, 1000)) {
 		std::cout << "test_save_and_get_access_tkn(): FAILED\n";
 		return;
 	}
 	std::string tkn;
 	std::shared_ptr<CURL> curl(curl_easy_init(), curl_easy_cleanup);
-	if (!get_or_fetch_access_tkn(platform, curl, tkn)) {
+	if (!get_or_fetch_access_tkn(Platform::TEST, curl, tkn)) {
 		std::cout << "test_save_and_get_access_tkn(): FAILED\n";
 		return;
 	}
@@ -34,13 +34,13 @@ void test_save_and_get_access_tkn(Platform platform) {
 	}
 }
 
-void test_save_and_get_refresh_tkn(Platform platform) {
-	if (!save_refresh_tkn(platform, TOKEN)) {
+void test_save_and_get_refresh_tkn() {
+	if (!save_refresh_tkn(Platform::TEST, TOKEN)) {
 		std::cout << "test_save_and_get_refresh_tkn(): FAILED\n";
 		return;
 	}
 	std::string tkn;
-	if (!get_refresh_tkn(platform, tkn)) {
+	if (!get_refresh_tkn(Platform::TEST, tkn)) {
 		std::cout << "test_save_and_get_refresh_tkn(): FAILED\n";
 		return;
 	}
@@ -51,9 +51,9 @@ void test_save_and_get_refresh_tkn(Platform platform) {
 	}
 }
 
-void run(Platform overwrite_platform) {
-	test_save_and_get_access_tkn(overwrite_platform);
-	test_save_and_get_refresh_tkn(overwrite_platform);
+void run() {
+	test_save_and_get_access_tkn();
+	test_save_and_get_refresh_tkn();
 }
 
 }

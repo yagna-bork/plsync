@@ -1,6 +1,7 @@
 #ifndef GUARD_API_H
 #define GUARD_API_H
 #include "platform.h"
+#include "models.h"
 #include <ctime>
 #include <string>
 #include <filesystem>
@@ -85,23 +86,6 @@ private:
  */
 class BaseDataAPI : public BaseAPI {
 public:
-	struct Playlist {
-		Playlist() {}
-
-		Playlist(
-			std::string &&id, std::string &&etag, std::string &&title, bool is_private, std::size_t items
-		) : id(std::move(id)), etag(std::move(etag)), title(std::move(title)), 
-			is_private(is_private), items(items)
-		{
-		}
-		
-		std::string id;
-		std::string etag;
-		std::string title;
-		bool is_private;
-		std::size_t items;
-	};
-	
 	/* returns whether users playlists have changed according to etag */
 	virtual bool get_playlists(std::vector<Playlist> &playlists, std::string &etag) = 0;
 	
