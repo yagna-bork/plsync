@@ -65,7 +65,7 @@ obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 # tests
 # TODO for prod need to make vcpkg install within project
 tests bin/test: test/* $(TEST_OBJS)
-	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(TEST_OBJS)
+	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(TEST_OBJS) $(DEBUG_OR_PROD)
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/test
 
 all:

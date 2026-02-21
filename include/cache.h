@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <ios>
 #include <fstream>
-#include "absl/strings/string_view.h"
+#include <string_view>
 #include "absl/strings/str_cat.h"
 
 class Cache {
@@ -29,17 +29,17 @@ protected:
 
 class MetaCache: public Cache {
 public:
-	// std::vector<Playlist> get_playlists();
-
-	// std::vector<Playlist> get_playlists_sorted();
-
 	void update(const std::vector<Playlist> &playlists);
+
+	std::vector<Playlist> get_playlists();
+
+	std::vector<Playlist> get_playlists_sorted();
 
 protected:
 	MetaCache(Platform platform, const std::string &name); 
 
 private:
-	void set_entry(MetaCacheEntry *entry, const Playlist &pl);
+	void set_entry(MetaCacheEntry *entry, const Playlist &pl, bool set_id_hash = true);
 	
 	/* Get the name of the file where node is stored */
 	inline std::string get_file_name(const MetaCacheNode &node) { 
@@ -54,14 +54,20 @@ private:
 		node.set_prev(get_file_name(prev)); 
 	}
 
-	inline MetaCacheNode read_node(const std::string &name) {
-		return read_node(subdir / name);
+	inline void read_node(const std::string_view &name, MetaCacheNode &node) {
+		read_node_from_path(subdir/name, node);
 	}
 
-	MetaCacheNode read_node(std::filesystem::path p);
+	/* Clears node if p doesn't exist */
+	void read_node_from_path(std::filesystem::path p, MetaCacheNode &node);
 
 	/* Saves the contents of node into the correct file */
 	void save_node(const MetaCacheNode &node);
+
+	/* Persist whether cache is sorted by title in ascending order or not */
+	void set_is_sorted(bool val);
+
+	bool is_sorted();
 	
 private:
 	/*
@@ -75,7 +81,7 @@ private:
 	 * The file pointing to the first
 	 * element of the linked list
 	 */
-	std::filesystem::path head;
+	std::filesystem::path head_path;
 };
 
 class UntrackedCache : public MetaCache {

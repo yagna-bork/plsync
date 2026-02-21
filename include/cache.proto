@@ -14,3 +14,8 @@ message MetaCacheNode {
 	string prev = 2;
 	string next = 3;
 }
+
+// extra fields to store important info about the entire cache 
+message MetaCacheHead {
+	bool is_sorted = 100;
+}
