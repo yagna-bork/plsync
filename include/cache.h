@@ -35,6 +35,8 @@ public:
 
 	std::vector<Playlist> get_playlists_sorted();
 
+	~PlaylistCache();
+
 protected:
 	PlaylistCache(Platform platform, const std::string &name); 
 
@@ -59,11 +61,6 @@ private:
 
 	/* Saves the contents of node into the correct file */
 	void save_node(const PlaylistCacheNode &node);
-
-	/* Persist whether cache is sorted by title in ascending order or not */
-	void set_is_sorted(bool val);
-
-	bool is_sorted();
 	
 private:
 	/*
@@ -78,6 +75,8 @@ private:
 	 * element of the linked list
 	 */
 	std::filesystem::path head_path;
+
+	bool is_sorted;
 };
 
 class UntrackedCache : public PlaylistCache {

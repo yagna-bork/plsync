@@ -11,6 +11,10 @@ PlaylistCache::PlaylistCache(Platform platform, const std::string &name)
 {
 	std::filesystem::create_directory(subdir);
 	if (std::filesystem::exists(head_path)) {
+		std::ifstream f(head_path, std::ios::binary);
+		PlaylistCacheHead head;
+		head.ParseFromIstream(&f);
+		is_sorted = head.is_sorted();
 		return;
 	}
 
@@ -21,7 +25,14 @@ PlaylistCache::PlaylistCache(Platform platform, const std::string &name)
 	head.mutable_entry()->set_id("HEAD");
 	save_node(head);
 	// empty list is always sorted
-	set_is_sorted(true);
+	is_sorted = true;
+}
+
+PlaylistCache::~PlaylistCache() {
+	PlaylistCacheHead head;
+	head.set_is_sorted(is_sorted);
+	std::ofstream f(head_path, std::ios::binary);
+	head.SerializeToOstream(&f);
 }
 
 void PlaylistCache::read_node_from_path(std::filesystem::path p, PlaylistCacheNode &node) {
@@ -54,21 +65,6 @@ void PlaylistCache::set_entry(PlaylistCacheEntry *entry, const Playlist &pl, boo
 	entry->set_id_hash(id_hash);
 }
 
-void PlaylistCache::set_is_sorted(bool val) {
-	PlaylistCacheHead head;
-	std::fstream f(head_path, std::ios::binary);
-	head.ParseFromIstream(&f);
-	head.set_is_sorted(val);
-	head.SerializeToOstream(&f);
-}
-
-bool PlaylistCache::is_sorted() {
-	PlaylistCacheHead head;
-	std::ifstream f(head_path, std::ios::binary);
-	head.ParseFromIstream(&f);
-	return head.is_sorted();
-}
-
 void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true); // instead of std::vector<bool>
@@ -79,7 +75,6 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 		id_to_idx[playlists[i].id] = i;
 	}
 
-	bool order_changed = false;
 	PlaylistCacheNode prev, curr;
 	read_node_from_path(head_path, prev);
 	read_node(prev.next(), curr);
@@ -106,7 +101,7 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 			);
 			save_node(curr);
 			if (title_changed) {
-				order_changed = true;
+				is_sorted = false;
 			}
 
 			prev.CopyFrom(curr);
@@ -118,7 +113,7 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 		// delete from cache
 		prev.set_next(curr.next());
 		save_node(prev);
-		order_changed = true;
+		is_sorted = false;
 		std::filesystem::remove(subdir / get_file_name(curr));
 		read_node(curr.next(), curr);
 	}
@@ -137,7 +132,7 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 		save_node(curr);
 		set_next(prev, curr);
 		save_node(prev);
-		order_changed = true;
+		is_sorted = false;
 
 		// maintain invariant
 		prev.CopyFrom(curr);
@@ -146,9 +141,7 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 
 	// empty cache is still sorted
 	if (playlists.empty()) {
-		set_is_sorted(true);
-	} else if (order_changed) { 
-		set_is_sorted(false);
+		is_sorted = true;
 	}
 }
 
@@ -204,7 +197,7 @@ std::vector<Playlist> PlaylistCache::get_playlists() {
 }
 
 std::vector<Playlist> PlaylistCache::get_playlists_sorted() {
-	if (is_sorted()) {
+	if (is_sorted) {
 		return get_playlists();
 	}
 
@@ -228,6 +221,6 @@ std::vector<Playlist> PlaylistCache::get_playlists_sorted() {
 		save_node(curr);
 		prev.CopyFrom(curr);
 	}
-	set_is_sorted(true);
+	is_sorted = true;
 	return get_playlists();
 }

@@ -162,6 +162,7 @@ void test_update_untracked_delete() {
 }
 
 void test_get_playlists() {
+	auto cache_dir = std::filesystem::path(get_setting("cache_dir"));
 	std::vector<Playlist> expected_playlists = {
 		{"id1", "etag1", "title1", true, 1, hex_to_bin("f3")},
 		{"id2", "etag2", "title2", false, 10, hex_to_bin("b4")},
@@ -176,9 +177,11 @@ void test_get_playlists() {
 	} else {
 		std::cout << "test_get_playlists(): FAILED\n";
 	}
+	std::filesystem::remove_all(cache_dir);
 }
 
 void test_get_playlists_sorted() {
+	auto cache_dir = std::filesystem::path(get_setting("cache_dir"));
 	std::vector<Playlist> unsorted_playlists = {
 		{"id3", "etag3", "title3", true, 20},
 		{"id2", "etag2", "title2", false, 10},
@@ -198,6 +201,7 @@ void test_get_playlists_sorted() {
 	} else {
 		std::cout << "test_get_sorted_playlists(): FAILED\n";
 	}
+	std::filesystem::remove_all(cache_dir);
 }
 
 void run() {
