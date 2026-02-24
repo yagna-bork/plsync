@@ -27,7 +27,7 @@ protected:
 	std::filesystem::path parent_dir;
 };
 
-class MetaCache: public Cache {
+class PlaylistCache: public Cache {
 public:
 	void update(const std::vector<Playlist> &playlists);
 
@@ -36,33 +36,29 @@ public:
 	std::vector<Playlist> get_playlists_sorted();
 
 protected:
-	MetaCache(Platform platform, const std::string &name); 
+	PlaylistCache(Platform platform, const std::string &name); 
 
 private:
-	void set_entry(MetaCacheEntry *entry, const Playlist &pl, bool set_id_hash = true);
+	void set_entry(PlaylistCacheEntry *entry, const Playlist &pl, bool set_id_hash = true);
 	
 	/* Get the name of the file where node is stored */
-	inline std::string get_file_name(const MetaCacheNode &node) { 
+	inline std::string get_file_name(const PlaylistCacheNode &node) { 
 		return absl::StrCat(node.entry().id(), ".pb");
 	}
 
-	inline void set_next(MetaCacheNode &node, const MetaCacheNode &next) { 
+	inline void set_next(PlaylistCacheNode &node, const PlaylistCacheNode &next) { 
 		node.set_next(get_file_name(next)); 
 	}
 
-	inline void set_prev(MetaCacheNode &node, const MetaCacheNode &prev) { 
-		node.set_prev(get_file_name(prev)); 
-	}
-
-	inline void read_node(const std::string_view &name, MetaCacheNode &node) {
+	inline void read_node(const std::string_view &name, PlaylistCacheNode &node) {
 		read_node_from_path(subdir/name, node);
 	}
 
 	/* Clears node if p doesn't exist */
-	void read_node_from_path(std::filesystem::path p, MetaCacheNode &node);
+	void read_node_from_path(std::filesystem::path p, PlaylistCacheNode &node);
 
 	/* Saves the contents of node into the correct file */
-	void save_node(const MetaCacheNode &node);
+	void save_node(const PlaylistCacheNode &node);
 
 	/* Persist whether cache is sorted by title in ascending order or not */
 	void set_is_sorted(bool val);
@@ -84,14 +80,14 @@ private:
 	std::filesystem::path head_path;
 };
 
-class UntrackedCache : public MetaCache {
+class UntrackedCache : public PlaylistCache {
 public:
-	UntrackedCache(Platform platform) : MetaCache(platform, "untracked") {}
+	UntrackedCache(Platform platform) : PlaylistCache(platform, "untracked") {}
 };
 
-class PlaylistCacheDiff {
+class PlaylistItemsDiff {
 };
 
-class PlaylistCache {
+class PlaylistItemsCache {
 };
 #endif

@@ -1,7 +1,4 @@
 #include "../include/cache.h"
-#include "../include/models.h"
-#include "../include/config.h"
-#include "../include/cache.pb.h"
 #include "../include/util.h"
 #include <deque>
 #include <ios>
@@ -9,7 +6,7 @@
 #include <unordered_map>
 #include <utility>
 
-MetaCache::MetaCache(Platform platform, const std::string &name) 
+PlaylistCache::PlaylistCache(Platform platform, const std::string &name) 
 	: Cache(platform), subdir(parent_dir/name), head_path(parent_dir/name/"HEAD.pb") 
 {
 	std::filesystem::create_directory(subdir);
@@ -20,14 +17,14 @@ MetaCache::MetaCache(Platform platform, const std::string &name)
 	// set entry.id to 'HEAD' for head so save_node() and read_node()
 	// can correctly identify its location by way of get_file_name()
 	// i.e. subdir/HEAD.pb
-	MetaCacheNode head;
+	PlaylistCacheNode head;
 	head.mutable_entry()->set_id("HEAD");
 	save_node(head);
 	// empty list is always sorted
 	set_is_sorted(true);
 }
 
-void MetaCache::read_node_from_path(std::filesystem::path p, MetaCacheNode &node) {
+void PlaylistCache::read_node_from_path(std::filesystem::path p, PlaylistCacheNode &node) {
 	if (!std::filesystem::exists(p)) {
 		node.Clear();
 		return;
@@ -37,12 +34,12 @@ void MetaCache::read_node_from_path(std::filesystem::path p, MetaCacheNode &node
 }
 
 /* Saves the contents of node into the correct file */
-void MetaCache::save_node(const MetaCacheNode &node) {
+void PlaylistCache::save_node(const PlaylistCacheNode &node) {
 	std::ofstream f(subdir / get_file_name(node), std::ios::binary);
 	node.SerializeToOstream(&f);
 }
 
-void MetaCache::set_entry(MetaCacheEntry *entry, const Playlist &pl, bool set_id_hash) {
+void PlaylistCache::set_entry(PlaylistCacheEntry *entry, const Playlist &pl, bool set_id_hash) {
 	entry->set_id(pl.id);
 	entry->set_etag(pl.etag);
 	entry->set_title(pl.title);
@@ -57,22 +54,22 @@ void MetaCache::set_entry(MetaCacheEntry *entry, const Playlist &pl, bool set_id
 	entry->set_id_hash(id_hash);
 }
 
-void MetaCache::set_is_sorted(bool val) {
-	MetaCacheHead head;
+void PlaylistCache::set_is_sorted(bool val) {
+	PlaylistCacheHead head;
 	std::fstream f(head_path, std::ios::binary);
 	head.ParseFromIstream(&f);
 	head.set_is_sorted(val);
 	head.SerializeToOstream(&f);
 }
 
-bool MetaCache::is_sorted() {
-	MetaCacheHead head;
+bool PlaylistCache::is_sorted() {
+	PlaylistCacheHead head;
 	std::ifstream f(head_path, std::ios::binary);
 	head.ParseFromIstream(&f);
 	return head.is_sorted();
 }
 
-void MetaCache::update(const std::vector<Playlist> &playlists) {
+void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true); // instead of std::vector<bool>
 	std::unordered_map<std::string, std::size_t> etag_to_idx;
@@ -83,7 +80,7 @@ void MetaCache::update(const std::vector<Playlist> &playlists) {
 	}
 
 	bool order_changed = false;
-	MetaCacheNode prev, curr;
+	PlaylistCacheNode prev, curr;
 	read_node_from_path(head_path, prev);
 	read_node(prev.next(), curr);
 	while (curr.has_entry()) {
@@ -137,7 +134,6 @@ void MetaCache::update(const std::vector<Playlist> &playlists) {
 			continue;
 		}
 		set_entry(curr.mutable_entry(), playlists[i]);
-		set_prev(curr, prev);
 		save_node(curr);
 		set_next(prev, curr);
 		save_node(prev);
@@ -156,10 +152,10 @@ void MetaCache::update(const std::vector<Playlist> &playlists) {
 	}
 }
 
-std::vector<Playlist> MetaCache::get_playlists() {
+std::vector<Playlist> PlaylistCache::get_playlists() {
 	std::vector<Playlist> playlists;
 	std::vector<std::string> id_hashes;
-	MetaCacheNode node;
+	PlaylistCacheNode node;
 	read_node_from_path(head_path, node);
 	read_node(node.next(), node);
 
@@ -207,12 +203,12 @@ std::vector<Playlist> MetaCache::get_playlists() {
 	return playlists;
 }
 
-std::vector<Playlist> MetaCache::get_playlists_sorted() {
+std::vector<Playlist> PlaylistCache::get_playlists_sorted() {
 	if (is_sorted()) {
 		return get_playlists();
 	}
 
-	MetaCacheNode node;
+	PlaylistCacheNode node;
 	read_node_from_path(head_path, node);
 	read_node(node.next(), node);
 	std::vector<std::pair<std::string, std::string>> titles_nodes;
@@ -222,12 +218,11 @@ std::vector<Playlist> MetaCache::get_playlists_sorted() {
 	}
 	std::sort(titles_nodes.begin(), titles_nodes.end());
 
-	MetaCacheNode prev, curr;
+	PlaylistCacheNode prev, curr;
 	read_node_from_path(head_path, prev);
 	for (const auto &title_node: titles_nodes)  {
 		read_node(title_node.second, curr);
 		set_next(prev, curr);
-		set_prev(curr, prev);
 		curr.clear_next();
 		save_node(prev);
 		save_node(curr);

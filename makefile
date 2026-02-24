@@ -4,10 +4,10 @@ LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf`
 OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/platform.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
-			obj/meta_cache.o
+			obj/playlist_cache.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o \
-			obj/meta_cache.o obj/cache.pb.o
+			obj/playlist_cache.o obj/cache.pb.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
@@ -56,8 +56,8 @@ obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h 
 obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
-obj/meta_cache.o: src/meta_cache.cpp include/cache.h include/models.h include/config.h include/models.h include/platform.h
-	clang++ -o obj/meta_cache.o -c $(CXX) src/meta_cache.cpp $(DEBUG_OR_PROD)
+obj/playlist_cache.o: src/playlist_cache.cpp include/cache.h include/models.h include/config.h include/models.h include/platform.h
+	clang++ -o obj/playlist_cache.o -c $(CXX) src/playlist_cache.cpp $(DEBUG_OR_PROD)
 
 obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 	clang++ -o obj/cache.pb.o -c $(CXX) src/cache.pb.cc $(DEBUG_OR_PROD)

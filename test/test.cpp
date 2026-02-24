@@ -1,6 +1,6 @@
 #include "test_token_store.h"
 #include "test_api.h"
-#include "test_meta_cache.h"
+#include "test_playlist_cache.h"
 #include "../include/platform.h"
 #include <iostream>
 #include <string>
@@ -14,8 +14,8 @@ int main() {
 	std::cout << "-----------------\n";
 	TestAPI::run();
 
-	std::cout << "\n\nMeta cache tests\n";
+	std::cout << "\n\nPlaylist cache tests\n";
 	std::cout << "-----------------\n";
-	TestMetaCache::run();
+	TestPlaylistCache::run();
 	return 0;
 }

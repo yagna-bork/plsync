@@ -28,7 +28,7 @@ inline bool operator!=(const Playlist &lhs, const Playlist &rhs) {
 	return !(lhs == rhs);
 }
 
-namespace TestMetaCache {
+namespace TestPlaylistCache {
 
 
 void print_playlists(const std::vector<Playlist> &playlists, const std::string &name) {
@@ -38,7 +38,7 @@ void print_playlists(const std::vector<Playlist> &playlists, const std::string &
 }
 
 std::vector<Playlist> parse_playlists_from_cache(std::filesystem::path cache_dir) {
-	MetaCacheNode node;
+	PlaylistCacheNode node;
 	{
 		std::ifstream f(cache_dir/"HEAD.pb");
 		node.ParseFromIstream(&f);

@@ -1,6 +1,6 @@
 edition = "2024";
 
-message MetaCacheEntry {
+message PlaylistCacheEntry {
 	string id = 1;
 	string etag = 2;
 	string title = 3;
@@ -9,13 +9,12 @@ message MetaCacheEntry {
 	bytes id_hash = 6;
 }
 
-message MetaCacheNode {
-	MetaCacheEntry entry = 1;
-	string prev = 2;
-	string next = 3;
+message PlaylistCacheNode {
+	PlaylistCacheEntry entry = 1;
+	string next = 2;
 }
 
 // extra fields to store important info about the entire cache 
-message MetaCacheHead {
+message PlaylistCacheHead {
 	bool is_sorted = 100;
 }
