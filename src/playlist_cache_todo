@@ -6,15 +6,21 @@ Serialise PlaylistCacheHead once in destructor
 
 update() pseudocode
 -----------------
+// add disclaimer about how the const and non-const aren't synced
+// so changes in one won't show up in the other but this specific
+// use case of reading, then maybe writing and then discarding both
+// is fine because it explicitly avoids race conditions 
 prev = before_begin()
-curr = begin()
+prev_const = before_begin()
+curr = begin() // used only when writes required i.e. case 2, 3
+curr_const = cbegin() // used for reads which won't force writes
 while (curr != end()) {
 	if (etag same) {
-		 prev=std::move(curr); curr++; // move assignment
+		 prev=++curr; // move assignment
 	} else if (id found) {
 		curr->attr = new_val; // operator->
 		is_sorted = false; // new class attribute 
-		prev=std::move(curr); curr++;
+		prev=++curr;
 	} else {
 		prev->next = curr->id;
 		curr++;

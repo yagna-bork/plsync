@@ -7,9 +7,9 @@
 #include <utility>
 
 PlaylistCache::PlaylistCache(Platform platform, const std::string &name) 
-	: Cache(platform), subdir(parent_dir/name), head_path(parent_dir/name/"HEAD.pb") 
+	: Cache(platform), cache_dir(parent_dir/name), head_path(parent_dir/name/"HEAD.pb") 
 {
-	std::filesystem::create_directory(subdir);
+	std::filesystem::create_directory(cache_dir);
 	if (std::filesystem::exists(head_path)) {
 		std::ifstream f(head_path, std::ios::binary);
 		PlaylistCacheHead head;
@@ -20,12 +20,36 @@ PlaylistCache::PlaylistCache(Platform platform, const std::string &name)
 
 	// set entry.id to 'HEAD' for head so save_node() and read_node()
 	// can correctly identify its location by way of get_file_name()
-	// i.e. subdir/HEAD.pb
+	// i.e. cache_dir/HEAD.pb
 	PlaylistCacheNode head;
 	head.mutable_entry()->set_id("HEAD");
 	save_node(head);
 	// empty list is always sorted
 	is_sorted = true;
+}
+
+PlaylistCache::const_iterator PlaylistCache::cbefore_begin() {
+	return const_iterator(cache_dir, const_iterator::HEAD, head_path.filename());
+}
+
+PlaylistCache::const_iterator PlaylistCache::cbegin() {
+	return ++cbefore_begin();
+}
+
+PlaylistCache::const_iterator PlaylistCache::cend() {
+	return const_iterator(cache_dir, const_iterator::END);
+}
+
+PlaylistCache::iterator PlaylistCache::before_begin() {
+	return iterator(cache_dir, iterator::HEAD, head_path.filename());
+}
+
+PlaylistCache::iterator PlaylistCache::begin() {
+	return ++before_begin();
+}
+
+PlaylistCache::iterator PlaylistCache::end() {
+	return iterator(cache_dir, iterator::END);
 }
 
 PlaylistCache::~PlaylistCache() {
@@ -46,7 +70,7 @@ void PlaylistCache::read_node_from_path(std::filesystem::path p, PlaylistCacheNo
 
 /* Saves the contents of node into the correct file */
 void PlaylistCache::save_node(const PlaylistCacheNode &node) {
-	std::ofstream f(subdir / get_file_name(node), std::ios::binary);
+	std::ofstream f(cache_dir / get_file_name(node), std::ios::binary);
 	node.SerializeToOstream(&f);
 }
 
@@ -114,7 +138,7 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 		prev.set_next(curr.next());
 		save_node(prev);
 		is_sorted = false;
-		std::filesystem::remove(subdir / get_file_name(curr));
+		std::filesystem::remove(cache_dir / get_file_name(curr));
 		read_node(curr.next(), curr);
 	}
 
