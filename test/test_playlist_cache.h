@@ -105,7 +105,7 @@ void test_update_untracked_unchanged() {
 	UntrackedCache untracked(Platform::TEST);
 	untracked.update(expected_playlists);
 	untracked.update(expected_playlists);
-	
+
 	auto cache_dir = std::filesystem::path(get_setting("cache_dir"));
 	auto untracked_dir = cache_dir / "test/untracked";
 	auto playlists = parse_playlists_from_cache(untracked_dir);
@@ -128,7 +128,7 @@ void test_update_untracked_changed() {
 	expected_playlists[0].is_private = false;
 	expected_playlists[0].items = 2;
 	untracked.update(expected_playlists);
-	
+
 	auto cache_dir = std::filesystem::path(get_setting("cache_dir"));
 	auto untracked_dir = cache_dir / "test/untracked";
 	auto playlists = parse_playlists_from_cache(untracked_dir);

@@ -6,19 +6,15 @@ Serialise PlaylistCacheHead once in destructor
 
 update() pseudocode
 -----------------
-// add disclaimer about how the const and non-const aren't synced
-// so changes in one won't show up in the other but this specific
-// use case of reading, then maybe writing and then discarding both
-// is fine because it explicitly avoids race conditions 
 prev = before_begin()
-prev_const = before_begin()
 curr = begin() // used only when writes required i.e. case 2, 3
-curr_const = cbegin() // used for reads which won't force writes
 while (curr != end()) {
 	if (etag same) {
 		 prev=++curr; // move assignment
 	} else if (id found) {
-		curr->attr = new_val; // operator->
+		Node updated = *curr;
+		updated.attr = new_val; // operator->
+		updated.Serialize(curr.file.get());
 		is_sorted = false; // new class attribute 
 		prev=++curr;
 	} else {
@@ -56,3 +52,144 @@ for (playlist: playlists) {
 node->clear_last(); // comment to explain
 is_sorted = true();
 return playlists;
+
+	/*
+	PlaylistCacheNode prev, curr;
+	read_node_from_path(head_path, prev);
+	read_node(prev.next(), curr);
+	while (curr.has_entry()) {
+		// case 1: same etag so playlist unchanged
+		std::string etag(curr.entry().etag());
+		if (etag_to_idx.count(etag)) {
+			std::size_t idx = etag_to_idx[etag];
+			is_new[idx] = false;
+			prev.CopyFrom(curr);
+			read_node(curr.next(), curr);
+			continue;
+		}
+		
+		// case 2: diff etag but playlist id 
+		// still exists so must update cache
+		std::string id(curr.entry().id());
+		if (id_to_idx.count(id)) {
+			std::size_t idx = id_to_idx[id];
+			is_new[idx] = false;
+			bool title_changed = id != playlists[idx].id;
+			set_entry(
+				curr.mutable_entry(), playlists[idx], /*set_id_hash=*/title_changed
+			);
+			save_node(curr);
+			if (title_changed) {
+				is_sorted = false;
+			}
+
+			prev.CopyFrom(curr);
+			read_node(curr.next(), curr);
+			continue;
+		}
+		
+		// case 3: playlist id not found
+		// delete from cache
+		prev.set_next(curr.next());
+		save_node(prev);
+		is_sorted = false;
+		std::filesystem::remove(cache_dir / get_file_name(curr));
+		read_node(curr.next(), curr);
+	}
+
+	
+	case 4: new playlists.
+	deal with the remaining by appending them to end of cache.
+	loop invariant: prev points to last node in cache and curr 
+	is one past the end meaning it's cleared and free for writes
+	
+	for (std::size_t i = 0; i != n; i++) {
+		if (!is_new[i]) {
+			continue;
+		}
+		set_entry(curr.mutable_entry(), playlists[i]);
+		save_node(curr);
+		set_next(prev, curr);
+		save_node(prev);
+		is_sorted = false;
+
+		// maintain invariant
+		prev.CopyFrom(curr);
+		read_node(curr.next(), curr);
+	}
+
+	// empty cache is still sorted
+	if (playlists.empty()) {
+		is_sorted = true;
+	}
+	*/
+	/*
+	PlaylistCacheNode prev, curr;
+	read_node_from_path(head_path, prev);
+	read_node(prev.next(), curr);
+	while (curr.has_entry()) {
+		// case 1: same etag so playlist unchanged
+		std::string etag(curr.entry().etag());
+		if (etag_to_idx.count(etag)) {
+			std::size_t idx = etag_to_idx[etag];
+			is_new[idx] = false;
+			prev.CopyFrom(curr);
+			read_node(curr.next(), curr);
+			continue;
+		}
+		
+		// case 2: diff etag but playlist id 
+		// still exists so must update cache
+		std::string id(curr.entry().id());
+		if (id_to_idx.count(id)) {
+			std::size_t idx = id_to_idx[id];
+			is_new[idx] = false;
+			bool title_changed = id != playlists[idx].id;
+			set_entry(
+				curr.mutable_entry(), playlists[idx], /*set_id_hash=*/title_changed
+			);
+			save_node(curr);
+			if (title_changed) {
+				is_sorted = false;
+			}
+
+			prev.CopyFrom(curr);
+			read_node(curr.next(), curr);
+			continue;
+		}
+		
+		// case 3: playlist id not found
+		// delete from cache
+		prev.set_next(curr.next());
+		save_node(prev);
+		is_sorted = false;
+		std::filesystem::remove(cache_dir / get_file_name(curr));
+		read_node(curr.next(), curr);
+	}
+
+	
+	case 4: new playlists.
+	deal with the remaining by appending them to end of cache.
+	loop invariant: prev points to last node in cache and curr 
+	is one past the end meaning it's cleared and free for writes
+	
+	for (std::size_t i = 0; i != n; i++) {
+		if (!is_new[i]) {
+			continue;
+		}
+		set_entry(curr.mutable_entry(), playlists[i]);
+		save_node(curr);
+		set_next(prev, curr);
+		save_node(prev);
+		is_sorted = false;
+
+		// maintain invariant
+		prev.CopyFrom(curr);
+		read_node(curr.next(), curr);
+	}
+
+	// empty cache is still sorted
+	if (playlists.empty()) {
+		is_sorted = true;
+	}
+	*/

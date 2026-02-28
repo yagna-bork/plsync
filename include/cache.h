@@ -9,12 +9,13 @@
 #include <ios>
 #include <fstream>
 #include <string_view>
+#include <stdexcept>
 #include <type_traits>
 #include "absl/strings/str_cat.h"
 
 class Cache {
 protected:
-	Cache(Platform platform) 
+	Cache(Platform platform)
 		: platform(platform), 
 		  parent_dir(
 			  std::filesystem::path(get_setting("cache_dir")) / title_lower(platform)
@@ -37,9 +38,7 @@ class PlaylistCache: public Cache {
 
 public:
 	void update(const std::vector<Playlist> &playlists);
-
 	std::vector<Playlist> get_playlists();
-
 	std::vector<Playlist> get_playlists_sorted();
 
 	~PlaylistCache();
@@ -48,6 +47,9 @@ protected:
 	PlaylistCache(Platform platform, const std::string &name); 
 
 private:
+	/* forward_list interface begin */
+	enum Position { HEAD, BETWEEN, END };
+
 	const_iterator cbefore_begin();
 	const_iterator cbegin();
 	const_iterator cend();
@@ -55,8 +57,20 @@ private:
 	iterator begin();
 	iterator end();
 
+	template <bool is_const>
+	Iterator<is_const> insert_after(Iterator<is_const>& pos, const Playlist& playlist);
+
+	template <bool is_const>
+	Iterator<is_const> erase_after(Iterator<is_const>& pos);
+
+	template <bool is_const>
+	void update_at(Iterator<is_const>& pos, const Playlist& playlist);
+	/* forward_list interface end */
+
+	PlaylistCacheEntry get_entry(const Playlist &playlist);
+
 	void set_entry(PlaylistCacheEntry *entry, const Playlist &pl, bool set_id_hash = true);
-	
+
 	/* Get the name of the file where node is stored */
 	inline std::string get_file_name(const PlaylistCacheNode &node) { 
 		return absl::StrCat(node.entry().id(), ".pb");
@@ -75,14 +89,14 @@ private:
 
 	/* Saves the contents of node into the correct file */
 	void save_node(const PlaylistCacheNode &node);
-	
+
 private:
 	/*
   	 * This cache is a forward_list of cache files which are stored
 	 * in cache_dir.
 	 */
 	std::filesystem::path cache_dir;
-	
+
 	/*
 	 * The file pointing to the first
 	 * element of the linked list
@@ -94,79 +108,57 @@ private:
 
 template <bool is_const>
 struct PlaylistCache::Iterator {
-	using iterator_catagory = std::forward_iterator_tag;
-	using value_type = std::conditional_t<is_const, const PlaylistCacheNode, PlaylistCacheNode>;
-	using difference_type = std::ptrdiff_t;
-	using pointer = std::conditional_t<is_const, const PlaylistCacheNode*, PlaylistCacheNode*>;
-	using reference = std::conditional_t<is_const, const PlaylistCacheNode&, PlaylistCacheNode&>;
+	friend struct Iterator<!is_const>;
 
-	enum Position { HEAD, BETWEEN, END  };
-	
-	const std::filesystem::path cache_dir;
+	using iterator_catagory = std::forward_iterator_tag;
+	using value_type = std::conditional_t<is_const, const PlaylistCacheEntry, PlaylistCacheEntry>;
+	using difference_type = std::ptrdiff_t;
+	using pointer = std::conditional_t<is_const, const PlaylistCacheEntry*, PlaylistCacheEntry*>;
+	using reference = std::conditional_t<is_const, const PlaylistCacheEntry&, PlaylistCacheEntry&>;
+
+	std::filesystem::path cache_dir;
 	std::shared_ptr<std::fstream> file;
 	std::shared_ptr<PlaylistCacheNode> node;
 	Position pos;
 	bool was_changed;
 
-	Iterator(
-		const std::filesystem::path &cache_dir, Position pos, const std::string &name = ""
-	) : cache_dir(cache_dir), pos(pos), was_changed(false)
-	{
-		if (pos == Position::END) return;
-		file = std::make_shared<std::fstream>(cache_dir / name, std::ios::binary);
-		node->ParseFromIstream(file.get());
-	}
+	Iterator(const std::filesystem::path &cache_dir, Position pos, const std::string &name = "");
 
-	~Iterator() {
-		if (pos != Position::BETWEEN || !was_changed) return;
-		file->seekp(0);
-		node->SerializeToOstream(file.get());
-	}
+	/* RULE OF 5 */
+	template <bool is_other_const>
+	Iterator(const Iterator<is_other_const> &other);
 
-	reference operator*() { 
-		// assume that a change was made whenever a non-const iterator is dereferenced
-		was_changed = !std::is_const_v<reference>; 
-		return *node.get(); 
-	}
+	template <bool is_rhs_const>
+	Iterator<is_const>& operator=(const Iterator<is_rhs_const> &rhs);
 
-	pointer operator->() { 
-		// assume that a change was made whenever a non-const iterator is dereferenced
-		was_changed = !std::is_const_v<pointer>; 
-		return node.get(); 
-	}
+	template <bool is_other_const>
+	Iterator(Iterator<is_other_const> &&other);
 
-	bool operator==(const Iterator<is_const> &rhs) const { 
-		if (pos != Position::BETWEEN) return pos == rhs.pos;
-		return node->entry().id() == rhs.node->entry().id();
-	}
+	template <bool is_rhs_const>
+	Iterator<is_const>& operator=(Iterator<is_rhs_const> &&rhs);
 
-	bool operator!=(const Iterator<is_const> &rhs) const {
-		return !(*this == rhs);
-	}
+	~Iterator() { save(); }
 
-	Iterator<is_const>& operator++() {
-		if (pos == Position::END) return *this; // undefined
-		if (pos == Position::BETWEEN && was_changed) {
-			file->seekp(0);
-			node->SerializeToOstream(file.get());
-		}
-		if (node->next().empty()) {
-			file.reset();
-			node->Clear();
-			pos = Position::END;
-			return *this;
-		}
-		file = std::make_shared<std::fstream>(cache_dir/node->next(), std::ios::binary);
-		node->ParseFromIstream(file.get());
-		pos = Position::BETWEEN;
-		return *this;
-	}
 
-	Iterator<is_const> operator++(int) {
-		auto tmp = *this;
-		++this;
-		return tmp;
-	}
+	/* Iterator interface */
+	reference operator*();
+	pointer operator->();
+	bool operator==(const Iterator<is_const> &rhs) const;
+	bool operator!=(const Iterator<is_const> &rhs) const;
+	Iterator<is_const>& operator++();
+	Iterator<is_const> operator++(int);
+
+
+	/* Other */
+	void save();
+	std::string next() const;
+
+	/* 
+	 * Changing next doesn't violate the const iterator requirement
+	 * because next is a member of PlaylistCacheNode, not PlaylistCacheEntry,
+	 * which is not the class that const requirements applies to.
+	 */
+	void set_next(std::string fname);
 };
 
 class UntrackedCache : public PlaylistCache {

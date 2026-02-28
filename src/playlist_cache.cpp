@@ -1,35 +1,43 @@
 #include "../include/cache.h"
 #include "../include/util.h"
+#include <cassert>
 #include <deque>
 #include <ios>
 #include <filesystem>
 #include <unordered_map>
 #include <utility>
+#include <memory>
+#include "absl/strings/str_cat.h"
 
 PlaylistCache::PlaylistCache(Platform platform, const std::string &name) 
 	: Cache(platform), cache_dir(parent_dir/name), head_path(parent_dir/name/"HEAD.pb") 
 {
 	std::filesystem::create_directory(cache_dir);
-	if (std::filesystem::exists(head_path)) {
-		std::ifstream f(head_path, std::ios::binary);
-		PlaylistCacheHead head;
-		head.ParseFromIstream(&f);
-		is_sorted = head.is_sorted();
-		return;
+	PlaylistCacheHead head;
+	if (!std::filesystem::exists(head_path)) {
+		// empty list is always sorted
+		head.set_is_sorted(true);
+		std::ofstream file(head_path, std::ios::binary);
+		head.SerializeToOstream(&file);
+	} else {
+		std::ifstream file(head_path, std::ios::binary);
+		head.ParseFromIstream(&file);
 	}
-
-	// set entry.id to 'HEAD' for head so save_node() and read_node()
-	// can correctly identify its location by way of get_file_name()
-	// i.e. cache_dir/HEAD.pb
-	PlaylistCacheNode head;
-	head.mutable_entry()->set_id("HEAD");
-	save_node(head);
-	// empty list is always sorted
-	is_sorted = true;
+	is_sorted = head.is_sorted();
+	return;
 }
 
+PlaylistCache::~PlaylistCache() {
+	PlaylistCacheHead head;
+	head.set_is_sorted(is_sorted);
+	std::ofstream file(head_path, std::ios::binary);
+	head.SerializeToOstream(&file);
+}
+
+
+/* forward_list interface BEGIN */
 PlaylistCache::const_iterator PlaylistCache::cbefore_begin() {
-	return const_iterator(cache_dir, const_iterator::HEAD, head_path.filename());
+	return const_iterator(cache_dir, Position::HEAD, head_path.filename());
 }
 
 PlaylistCache::const_iterator PlaylistCache::cbegin() {
@@ -37,11 +45,11 @@ PlaylistCache::const_iterator PlaylistCache::cbegin() {
 }
 
 PlaylistCache::const_iterator PlaylistCache::cend() {
-	return const_iterator(cache_dir, const_iterator::END);
+	return const_iterator(cache_dir, Position::END);
 }
 
 PlaylistCache::iterator PlaylistCache::before_begin() {
-	return iterator(cache_dir, iterator::HEAD, head_path.filename());
+	return iterator(cache_dir, Position::HEAD, head_path.filename());
 }
 
 PlaylistCache::iterator PlaylistCache::begin() {
@@ -49,14 +57,70 @@ PlaylistCache::iterator PlaylistCache::begin() {
 }
 
 PlaylistCache::iterator PlaylistCache::end() {
-	return iterator(cache_dir, iterator::END);
+	return iterator(cache_dir, Position::END);
 }
 
-PlaylistCache::~PlaylistCache() {
-	PlaylistCacheHead head;
-	head.set_is_sorted(is_sorted);
-	std::ofstream f(head_path, std::ios::binary);
-	head.SerializeToOstream(&f);
+template <bool is_const>
+PlaylistCache::Iterator<is_const> PlaylistCache::insert_after(Iterator<is_const>& pos, const Playlist& playlist) {
+	assert(pos != end());
+	PlaylistCacheNode node;
+	node.set_next(pos.next());
+	*node.mutable_entry() = get_entry(playlist);
+
+	std::string fname = playlist.id + ".pb";
+	{
+		std::ofstream file(cache_dir / fname, std::ios::binary);
+		node.SerializeToOstream(&file);
+	}
+	pos.set_next(fname);
+	return iterator(cache_dir, Position::BETWEEN, fname);
+}
+
+template<bool is_const>
+PlaylistCache::Iterator<is_const> PlaylistCache::erase_after(Iterator<is_const>& pos) {
+	assert(pos != end());
+	std::string next = pos.next();
+	if (next.empty()) {
+		return end();
+	}
+	const_iterator tmp = pos;
+	++tmp;
+	std::string next_next = tmp.next();
+
+	std::filesystem::remove(cache_dir / next);
+	pos.set_next(next_next);
+	return next_next.empty() ? end() : iterator(cache_dir, Position::BETWEEN, next_next);
+}
+
+template <bool is_const>
+void PlaylistCache::update_at(Iterator<is_const>& pos, const Playlist& playlist) {
+	assert(pos != before_begin() && pos != end());
+	PlaylistCacheNode node;
+	node.set_next(pos.next());
+	*node.mutable_entry() = get_entry(playlist);
+	std::string name(absl::StrCat(pos->id(), ".pb"));
+	{
+		std::ofstream file(cache_dir / name, std::ios::binary);	
+		node.SerializeToOstream(&file);
+	}
+
+	// pos has been invalidated so refresh it
+	pos = iterator(cache_dir, Position::BETWEEN, name);
+}
+
+
+PlaylistCacheEntry PlaylistCache::get_entry(const Playlist& playlist) {
+	PlaylistCacheEntry entry;
+	entry.set_id(playlist.id);
+	entry.set_etag(playlist.etag);
+	entry.set_title(playlist.title);
+	entry.set_is_private(playlist.is_private);
+	entry.set_items(playlist.items);
+
+	std::string id_hash;
+	sha256(playlist.id, id_hash);
+	entry.set_id_hash(id_hash);
+	return entry;
 }
 
 void PlaylistCache::read_node_from_path(std::filesystem::path p, PlaylistCacheNode &node) {
@@ -89,6 +153,8 @@ void PlaylistCache::set_entry(PlaylistCacheEntry *entry, const Playlist &pl, boo
 	entry->set_id_hash(id_hash);
 }
 
+
+/* External interface */
 void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true); // instead of std::vector<bool>
@@ -99,73 +165,44 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 		id_to_idx[playlists[i].id] = i;
 	}
 
-	PlaylistCacheNode prev, curr;
-	read_node_from_path(head_path, prev);
-	read_node(prev.next(), curr);
-	while (curr.has_entry()) {
+	auto prev = cbefore_begin();
+	auto curr = cbegin();
+	while (curr != cend()) {
 		// case 1: same etag so playlist unchanged
-		std::string etag(curr.entry().etag());
+		std::string etag(curr->etag());
 		if (etag_to_idx.count(etag)) {
 			std::size_t idx = etag_to_idx[etag];
 			is_new[idx] = false;
-			prev.CopyFrom(curr);
-			read_node(curr.next(), curr);
+			prev = curr++;
 			continue;
 		}
-		
-		// case 2: diff etag but playlist id 
-		// still exists so must update cache
-		std::string id(curr.entry().id());
+
+		// case 2: etag changed so update cache
+		std::string id(curr->id());
 		if (id_to_idx.count(id)) {
 			std::size_t idx = id_to_idx[id];
 			is_new[idx] = false;
-			bool title_changed = id != playlists[idx].id;
-			set_entry(
-				curr.mutable_entry(), playlists[idx], /*set_id_hash=*/title_changed
-			);
-			save_node(curr);
-			if (title_changed) {
+			if (curr->title() != playlists[idx].title) {
 				is_sorted = false;
 			}
-
-			prev.CopyFrom(curr);
-			read_node(curr.next(), curr);
+			update_at(curr, playlists[idx]);
+			prev = curr++;
 			continue;
 		}
-		
-		// case 3: playlist id not found
-		// delete from cache
-		prev.set_next(curr.next());
-		save_node(prev);
+
+		// case 3: playlist id not found, delete from cache
+		curr = erase_after(prev);
 		is_sorted = false;
-		std::filesystem::remove(cache_dir / get_file_name(curr));
-		read_node(curr.next(), curr);
 	}
 
-	/* 
-	 * case 4: new playlists.
-	 * deal with the remaining by appending them to end of cache.
-	 * loop invariant: prev points to last node in cache and curr 
-	 * is one past the end meaning it's cleared and free for writes
-	 */
+	// case 4: all remaining playlists must be new
+	curr = std::move(prev);
 	for (std::size_t i = 0; i != n; i++) {
 		if (!is_new[i]) {
 			continue;
 		}
-		set_entry(curr.mutable_entry(), playlists[i]);
-		save_node(curr);
-		set_next(prev, curr);
-		save_node(prev);
+		curr = insert_after(curr, playlists[i]);
 		is_sorted = false;
-
-		// maintain invariant
-		prev.CopyFrom(curr);
-		read_node(curr.next(), curr);
-	}
-
-	// empty cache is still sorted
-	if (playlists.empty()) {
-		is_sorted = true;
 	}
 }
 
@@ -247,4 +284,169 @@ std::vector<Playlist> PlaylistCache::get_playlists_sorted() {
 	}
 	is_sorted = true;
 	return get_playlists();
+}
+
+
+/* Iterator */
+template <bool is_const>
+PlaylistCache::Iterator<is_const>::Iterator(
+	const std::filesystem::path &cache_dir, Position pos, const std::string &name
+) : cache_dir(cache_dir), pos(pos), was_changed(false), node(std::make_shared<PlaylistCacheNode>()),
+	file()
+{
+	if (pos == Position::END) return;
+	file = std::make_shared<std::fstream>(
+		cache_dir / name, std::ios::in | std::ios::out | std::ios::binary
+	);
+	node->ParseFromIstream(file.get());
+}
+
+
+/* RULE OF 5 */
+template <bool is_const> 
+template <bool is_other_const>
+PlaylistCache::Iterator<is_const>::Iterator(const Iterator<is_other_const> &other)
+	: cache_dir(other.cache_dir), pos(other.pos), was_changed(false), file(other.file), node(other.node)
+{
+	if (!is_const) {
+		if (is_other_const) { 
+			throw std::domain_error("Attempted to upgrade const iterator to non-const");
+		} else {
+			throw std::domain_error("Attempted to duplicate non-const iterator");
+		}
+	}
+	other.save();
+}
+
+template <bool is_const>
+template <bool is_rhs_const>
+PlaylistCache::Iterator<is_const>& PlaylistCache::Iterator<is_const>::operator=(const Iterator<is_rhs_const> &rhs) {
+	if (!is_const) {
+		if (is_rhs_const) { 
+			throw std::domain_error("Attempted to upgrade const iterator to non-const");
+		} else {
+			throw std::domain_error("Attempted to duplicate non-const iterator");
+		}
+	}
+	save();
+	rhs.save();
+	file = rhs.file;
+	node = rhs.node;
+	pos = rhs.pos;
+	return *this;
+}
+
+template <bool is_const>
+template <bool is_other_const>
+PlaylistCache::Iterator<is_const>::Iterator(Iterator<is_other_const> &&other)
+	: cache_dir(std::move(other.cache_dir)), file(std::move(other.file)), node(std::move(other.node)),
+	  pos(other.pos)
+{
+	if (!is_const && is_other_const) {
+		throw std::domain_error("Attempted to upgrade const iterator to non-const");
+	}
+	if (is_const == is_other_const) {
+		was_changed = other.was_changed;
+		other.was_changed = false; // prevent destructor from saving cleared/moved node
+	} else {
+		other.save();
+		was_changed = false;
+	}
+}
+
+template <bool is_const>
+template <bool is_rhs_const>
+PlaylistCache::Iterator<is_const>& PlaylistCache::Iterator<is_const>::operator=(Iterator<is_rhs_const> &&rhs) {
+	if (!is_const && is_rhs_const) {
+		throw std::domain_error("Attempted to upgrade const iterator to non-const");
+	}
+
+	if (is_const && !is_rhs_const) {
+		// const iterator can't save changes to PlaylistCacheEntry 
+		// so make non-const iterator save them first
+		rhs.save();
+	}
+
+	save();
+	file = std::move(rhs.file);
+	node = std::move(rhs.node);
+	pos = rhs.pos;
+	was_changed = rhs.was_changed;
+
+	if (is_const == is_rhs_const) {
+		rhs.was_changed = false; // prevent destructor from saving cleared/moved node
+	}
+	return *this;
+}
+
+
+/* Iterator interface */
+template <bool is_const>
+typename PlaylistCache::Iterator<is_const>::reference PlaylistCache::Iterator<is_const>::operator*() {
+	// assume change made when non-const iterator dereferenced
+	was_changed = !is_const; 
+	return node->entry(); 
+}
+
+template <bool is_const>
+typename PlaylistCache::Iterator<is_const>::pointer PlaylistCache::Iterator<is_const>::operator->() { 
+	// assume change made when non-const iterator dereferenced
+	was_changed = !is_const;
+	return &node->entry(); 
+}
+
+template <bool is_const>
+bool PlaylistCache::Iterator<is_const>::operator==(const Iterator<is_const> &rhs) const { 
+	if (pos != Position::BETWEEN) return pos == rhs.pos;
+	return node->entry().id() == rhs.node->entry().id();
+}
+
+template <bool is_const>
+inline bool PlaylistCache::Iterator<is_const>::operator!=(const Iterator<is_const> &rhs) const { 
+	return !(*this == rhs); 
+}
+
+template <bool is_const>
+PlaylistCache::Iterator<is_const>& PlaylistCache::Iterator<is_const>::operator++() {
+	if (pos == Position::END) return *this; // undefined
+	save();
+	if (node->next().empty()) {
+		file.reset();
+		node->Clear();
+		pos = Position::END;
+		return *this;
+	}
+	file = std::make_shared<std::fstream>(cache_dir/node->next(), std::ios::in | std::ios::out | std::ios::binary);
+	node->ParseFromIstream(file.get());
+	pos = Position::BETWEEN;
+	return *this;
+}
+
+template <bool is_const>
+PlaylistCache::Iterator<is_const> PlaylistCache::Iterator<is_const>::operator++(int) {
+	auto tmp = *this;
+	++(*this);
+	return tmp;
+}
+
+
+/* Other */
+template <bool is_const>
+void PlaylistCache::Iterator<is_const>::save() {
+	if (!was_changed || pos == Position::END) return;
+	file->clear();
+	file->seekp(0);
+	node->SerializeToOstream(file.get());
+	was_changed = false;
+}
+
+template <bool is_const>
+std::string PlaylistCache::Iterator<is_const>::next() const {
+	return std::string(node->next());
+}
+
+template <bool is_const>
+void PlaylistCache::Iterator<is_const>::set_next(std::string fname) {
+	node->set_next(fname);
+	was_changed = true;
 }
