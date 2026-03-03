@@ -1,0 +1,146 @@
+proto namespace;
+delete proto::Node::id_hash;
+delete proto::Head
+
+class PlaylistCache {
+	struct Node {
+		Playlist playlist
+		Node* next
+		bool was_changed
+
+		Node(next)
+		Node(playlist, next, was_changed)
+	}
+	
+	Node* head
+	set<string> delete_ids
+	path cache_dir
+}
+
+get_playlist(proto::Playlist)
+get_proto_playlist(Playlist)
+
+constructor() {
+	if HEAD not exists make it // dropping .pb extension
+
+	proto::Node proto_node = Parse(HEAD) 
+	Node* node = make from proto_node
+	while (proto_node.next) {
+		proto_node = Parse(proto_node.next)
+		node->next = make from proto_node
+		node = node->next
+	}
+}
+
+destructor() {
+	// persist changed or newly added playlists
+	curr = cbefore_begin(), next = begin()
+	for (; curr != end; ++curr, ++next) {
+		if (!curr.node->was_changed) {
+			cont
+		}
+		proto_node.playlist = get_proto_playlist(*curr)
+		proto_node.next = (next != end) ? next->id : ""
+		file(curr->id)
+		proto_node.Serialize(file)
+	}
+	
+	// persist deleted playlists
+	for (id: delete_ids) {
+		delete cache_dir / id
+	}
+	
+	// delete all nodes
+	node = head
+	while (node) {
+		tmp = node
+		node = node->next
+		delete tmp
+	}
+}
+
+template <bool is_const>
+struct Iterator {
+	Node* node
+	Iterator(): node(nullptr) {}
+	Iterator(Node* node): node(node) {}
+	operator*() { 
+		if (this == head) throw;
+		node->was_changed = !is_const
+		return node->playlist
+	}
+	operator->() {
+		if (this == head) throw;
+		node->was_changed = !is_const
+		return &node->playlist
+	}
+	operator++() {
+		node = node->next()
+		return this
+	}
+	operator++(int) {
+		Iterator<is_const> copy = this
+		node = node->next
+		return copy
+	}
+	operator==(rhs) { return node == rhs.node }
+	operator!=(rhs) { return !(this == rhs) }
+}
+
+// converion?
+template <>
+Iterator<true> {
+	Iterator(): node(nullptr)
+	Iterator(Node* node): node(node)
+	Iterator(const Iterator<false> &other): node(other.node)
+	Iterator(const Iterator<false> &&other): node(std::move(other.node))
+}
+Iterator<true>(const Iterator<false> &)
+Iterator<true>(Iterator<false> &&)
+
+before_begin() { return Iterator(head) }
+begin() { return ++before_begin() }
+end() { return Iterator() }
+
+iterator insert_after(const_iterator pos, Playlist p) {
+	delete_ids.erase(p.id); // in case previously deleted playlist re-added
+	auto next = pos;
+	++next;
+	pos.node->next = new Node(p, next.node, was_changed=true);
+	pos.node->was_changed = true;
+	return iterator(pos.node->next);
+}
+
+iterator erase_after(const_iterator pos) {
+	auto next = pos;
+	++next;
+	pos.node->next = next.node->next;
+	pos.node->was_changed = true;
+	next.node->next = nullptr;
+	delete_ids.insert(next->id);
+	return iterator(pos.node->next);
+}
+
+sort() {
+	vector<pair<string, Node*>> title_to_node;
+	it = cbegin();
+	while (it != end()) {
+		title_to_node.emplace_back(beg->title, beg.node);
+	}
+	sort(title_to_node);
+
+	it = cbefore_begin();
+	for (&title_node: title_to_node) {
+		node = title_node.second;
+		it.node->was_changed = it.node->next != node;
+		it.node->next = node;
+		++it;
+	}
+	it.node->was_changed = it.node->next != nullptr;
+	it.node->next = nullptr; // explain why
+}
+
+// move this logic into models.h
+fill_short_ids(Iterator<Playlist> beg, Iterator<Playlist> end);
+
+move is_sorted logic moves into tracked and untracked

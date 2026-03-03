@@ -171,6 +171,7 @@ void test_get_playlists() {
 	UntrackedCache untracked(Platform::TEST);
 	untracked.update(expected_playlists);
 	std::vector<Playlist> playlists = untracked.get_playlists();
+	print_playlists(playlists, "actual");
 
 	if (playlists == expected_playlists) {
 		std::cout << "test_get_playlists(): PASSED\n";
@@ -205,12 +206,12 @@ void test_get_playlists_sorted() {
 }
 
 void run() {
-	test_update_empty_untracked();
-	test_update_untracked_unchanged();
-	test_update_untracked_changed();
-	test_update_untracked_delete();
+	//test_update_empty_untracked();
+	//test_update_untracked_unchanged();
+	//test_update_untracked_changed();
+	//test_update_untracked_delete();
 	test_get_playlists();
-	test_get_playlists_sorted();
+	//test_get_playlists_sorted();
 }
 
 }

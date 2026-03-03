@@ -1,0 +1,54 @@
+PlaylistCacheHead
+-----------------
+Parse PlaylistCacheHead once in constructor
+Store all attributes of PlaylistCacheHead as attributes of PlaylistCache
+Serialise PlaylistCacheHead once in destructor
+
+update() pseudocode
+-----------------
+prev = before_begin()
+curr = begin() // used only when writes required i.e. case 2, 3
+while (curr != end()) {
+	if (etag same) {
+		 prev=++curr; // move assignment
+	} else if (id found) {
+		Node updated = *curr;
+		updated.attr = new_val; // operator->
+		updated.Serialize(curr.file.get());
+		is_sorted = false; // new class attribute 
+		prev=++curr;
+	} else {
+		prev->next = curr->id;
+		curr++;
+		erase_after(prev); // new forward_list method
+		is_sorted = false;
+	}
+}
+
+curr = prev;
+for (is_new) {
+	insert_after(curr);
+	curr++;
+}
+
+get_playlists() pseudocode
+--------------------------
+vector playlists;
+std::transform(begin(), end(), back_inserter(playlists), node_to_playlist); // new static method
+fill_short_ids(); // new method
+return playlists;
+
+get_playlists_sorted() pseudocode
+---------------------------------
+vector playlists = get_playlists();
+if (is_sorted) return playlists;
+
+std::sort(playlists, []() { cmp(title) });
+it node = before_beg();
+for (playlist: playlists) {
+	node->next = playlist.id;
+	node++;
+}
+node->clear_last(); // comment to explain
+is_sorted = true();
+return playlists;

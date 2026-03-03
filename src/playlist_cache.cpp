@@ -123,6 +123,16 @@ PlaylistCacheEntry PlaylistCache::get_entry(const Playlist& playlist) {
 	return entry;
 }
 
+Playlist PlaylistCache::get_playlist(const PlaylistCacheEntry& entry) {
+	return Playlist(
+		std::string(entry.id()),
+		std::string(entry.etag()),
+		std::string(entry.title()),
+		entry.is_private(),
+		entry.items()
+	);
+}
+
 void PlaylistCache::read_node_from_path(std::filesystem::path p, PlaylistCacheNode &node) {
 	if (!std::filesystem::exists(p)) {
 		node.Clear();
@@ -207,25 +217,16 @@ void PlaylistCache::update(const std::vector<Playlist> &playlists) {
 }
 
 std::vector<Playlist> PlaylistCache::get_playlists() {
+	// this is space inefficient but i wanted to test if the iterators really work
+	std::vector<PlaylistCacheEntry> cache_entries(cbegin(), cend());
 	std::vector<Playlist> playlists;
+	std::transform(cache_entries.begin(), cache_entries.end(), std::back_inserter(playlists), get_playlist);
 	std::vector<std::string> id_hashes;
-	PlaylistCacheNode node;
-	read_node_from_path(head_path, node);
-	read_node(node.next(), node);
+	std::transform(cache_entries.begin(), cache_entries.end(), std::back_inserter(id_hashes), 
+		[](const PlaylistCacheEntry& e) { return std::string(e.id_hash()); }
+	);
 
-	while (node.has_entry()) {
-		playlists.emplace_back(
-			std::string(node.entry().id()),
-			std::string(node.entry().etag()),
-			std::string(node.entry().title()),
-			node.entry().is_private(),
-			node.entry().items()
-		);
-		id_hashes.push_back(std::string(node.entry().id_hash()));
-		read_node(node.next(), node);
-	}
-
-	/* determine min length of short_id (sid) to make all unique */
+	// determine min length of short_id (sid) to make all unique
 	std::size_t n = playlists.size();
 	std::vector<std::size_t> collision_idxs(n);
 	std::iota(collision_idxs.begin(), collision_idxs.end(), 0);
@@ -250,7 +251,7 @@ std::vector<Playlist> PlaylistCache::get_playlists() {
 		sid_groups.clear();
 	}
 	
-	/* paste in short_ids of calculated length */
+	// paste in short_ids of calculated length
 	for (std::size_t i = 0; i != n; i++) {
 		playlists[i].short_id = std::string(id_hashes[i].data(), sid_len);
 	}
@@ -410,13 +411,13 @@ template <bool is_const>
 PlaylistCache::Iterator<is_const>& PlaylistCache::Iterator<is_const>::operator++() {
 	if (pos == Position::END) return *this; // undefined
 	save();
-	if (node->next().empty()) {
+	if (next().empty()) {
 		file.reset();
 		node->Clear();
 		pos = Position::END;
 		return *this;
 	}
-	file = std::make_shared<std::fstream>(cache_dir/node->next(), std::ios::in | std::ios::out | std::ios::binary);
+	file = std::make_shared<std::fstream>(cache_dir/next(), std::ios::in | std::ios::out | std::ios::binary);
 	node->ParseFromIstream(file.get());
 	pos = Position::BETWEEN;
 	return *this;

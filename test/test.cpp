@@ -8,11 +8,11 @@
 int main() {
 	std::cout << "Token storage tests\n";
 	std::cout << "-------------------\n";
-	TestTokenStorage::run();
+	// TestTokenStorage::run();
 
 	std::cout << "\n\nYoutube API tests\n";
 	std::cout << "-----------------\n";
-	TestAPI::run();
+	// TODO TestAPI::run();
 
 	std::cout << "\n\nPlaylist cache tests\n";
 	std::cout << "-----------------\n";

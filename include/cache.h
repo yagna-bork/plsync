@@ -67,7 +67,8 @@ private:
 	void update_at(Iterator<is_const>& pos, const Playlist& playlist);
 	/* forward_list interface end */
 
-	PlaylistCacheEntry get_entry(const Playlist &playlist);
+	static PlaylistCacheEntry get_entry(const Playlist &playlist);
+	static Playlist get_playlist(const PlaylistCacheEntry& entry);
 
 	void set_entry(PlaylistCacheEntry *entry, const Playlist &pl, bool set_id_hash = true);
 
@@ -110,7 +111,7 @@ template <bool is_const>
 struct PlaylistCache::Iterator {
 	friend struct Iterator<!is_const>;
 
-	using iterator_catagory = std::forward_iterator_tag;
+	using iterator_category = std::forward_iterator_tag;
 	using value_type = std::conditional_t<is_const, const PlaylistCacheEntry, PlaylistCacheEntry>;
 	using difference_type = std::ptrdiff_t;
 	using pointer = std::conditional_t<is_const, const PlaylistCacheEntry*, PlaylistCacheEntry*>;

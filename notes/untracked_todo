@@ -1,0 +1,42 @@
+PlaylistCache pl_cache;
+
+diffs;
+playlists;
+for (platform, id in tracking struct) {
+	auto playlist = PlaylistCache::get_playlist(platform, id); // IMPORTANT
+	if (!playlist) {
+		remove from tracking_struct(playlist.id);
+	} else {
+		diff.append(platform, diff_from_youtube(playlist.id));
+	}
+}
+
+get overall_diff from diffs;
+update playlist_items from overall_diff(tracking_struct.file);
+
+for (i = 0; i != platforms; i++)  {
+	upload_diff_to_platform(platform, diffs[i]);
+	cout << "making these changes to " << playlist.title << " ("  << platform <<  ") 
+		 << ": " << diffs[i] << '\n';
+}
+
+namespace PlaylistCache {
+	struct Node {
+		Playlist playlist;
+		bool is_tracked;
+		bool was_changed;
+		Node* next;
+	};
+
+	template <bool is_const>
+	struct Iterator;
+	using const_iterator = Iterator<false>;
+	using iterator = Iterator<true>;
+
+	Node* load();
+	void free(Node*);
+
+	Playlist get_playlist(Platform, id);
+	fill_short_ids(std::vector<Playlist>&);
+	sort(Node*);
+}
