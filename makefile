@@ -4,7 +4,7 @@ LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf`
 OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/platform.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
-			obj/playlist_cache.o
+			obj/playlist_cache.o obj/playlist_cache.pb.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o \
 			obj/playlist_cache.o obj/cache.pb.o
@@ -12,7 +12,7 @@ NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
 # TODO in prod enable NDEBUG to ignore asserts and ignore DEBUG_SYM
-DEBUG_OR_PROD = $(DEBUG_SYM)
+DEBUG_OR_PROD = #$(DEBUG_SYM)
 
 
 # TODO for prod need to make vcpkg install within project
@@ -44,7 +44,7 @@ obj/token_store.o: src/token_store.cpp include/token_store.h
 obj/platform.o: src/platform.cpp include/platform.h
 	clang++ -o obj/platform.o -c $(CXX) src/platform.cpp $(DEBUG_OR_PROD)
 
-obj/untracked.o: src/untracked.cpp include/untracked.h
+obj/untracked.o: src/untracked.cpp include/untracked.h include/playlist_cache.h
 	clang++ -o obj/untracked.o -c $(CXX) src/untracked.cpp $(DEBUG_OR_PROD)
 	
 obj/api.o: src/api.cpp include/api.h include/util.h
@@ -58,6 +58,9 @@ obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h 
 
 obj/playlist_cache.o: src/playlist_cache.cpp include/cache.h include/models.h include/config.h include/models.h include/platform.h
 	clang++ -o obj/playlist_cache.o -c $(CXX) src/playlist_cache.cpp $(DEBUG_OR_PROD)
+
+obj/playlist_cache.pb.o: include/playlist_cache.pb.h src/playlist_cache.pb.cc
+	clang++ -o obj/playlist_cache.pb.o -c $(CXX) src/playlist_cache.pb.cc $(DEBUG_OR_PROD)
 
 obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 	clang++ -o obj/cache.pb.o -c $(CXX) src/cache.pb.cc $(DEBUG_OR_PROD)

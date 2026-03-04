@@ -3,6 +3,8 @@
 #include "../include/util.h"
 #include "../include/api.h"
 #include "../include/token_store.h"
+#include "../include/models.h"
+#include "../include/playlist_cache.h"
 #include <iostream>
 
 static void print_usage() {
@@ -45,7 +47,7 @@ int run_untracked(int argc, char *argv[]) {
 	}
 	std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(platform, curl, tkn);
 
-	std::vector<BaseDataAPI::Playlist> playlists;
+	std::vector<Playlist> playlists;
 	// TODO is this etag even relevant?
 	std::string etag;
 	try {
@@ -55,10 +57,29 @@ int run_untracked(int argc, char *argv[]) {
 		return 1;
 	}
 	
-	for (const auto &pl: playlists) {
-		std::cout << pl.title << " " << (pl.is_private ? "private" : "public") << " " << pl.items << '\n';
+	CacheHead* head = load_cache(platform);
+	update_cache(head, playlists);
+	
+	// find longest title for even formatting
+	CacheNode *node = head->next;
+	std::size_t longest_title = 0;
+	while (node) {
+		longest_title = std::max(longest_title, node->playlist.title.size());
+		node = node->next;
 	}
 
-	
+	// TODO needs compression, probs iterator if it's quick enough
+	node = head->next;
+	while (node) {
+		const auto& pl = node->playlist;
+		std::size_t title_pad = longest_title + 1 - pl.title.size();
+		std::string privacy_type = pl.is_private ? "private" : "public";
+		std::size_t privacy_pad = pl.is_private ? 1 : 2;
+		std::cout << pl.title << std::string(title_pad, ' ') << " " 
+				  << privacy_type << std::string(privacy_pad, ' ') << " " 
+				  << pl.items << '\n';
+		node = node->next;
+	}
+	free_cache(head, platform);
 	return 0;
 }

@@ -1,5 +1,4 @@
-PlaylistCache pl_cache;
-
+/* sync.cpp */
 diffs;
 playlists;
 for (platform, id in tracking struct) {
@@ -20,12 +19,35 @@ for (i = 0; i != platforms; i++)  {
 		 << ": " << diffs[i] << '\n';
 }
 
+/* untracked.cpp */
+using cache = PlaylistCache;
+cache::Head* head = cache::load(platform);
+cache::update(head, curl);
+cache::fill_short_ids(head);
+
+cache::Node* node = head->next;
+while (node) {
+	if (node->is_tracked) {
+		continue;
+	}
+	print(node->playlist.x);
+	print(node->playlist.y);
+	print(node->playlist.z);
+}
+cache::save(head);
+
+/* playlist_cache.h */
 namespace PlaylistCache {
 	struct Node {
 		Playlist playlist;
 		bool is_tracked;
 		bool was_changed;
 		Node* next;
+	};
+	
+	struct Head {
+		Node* ptr;
+		Platform platform;
 	};
 
 	template <bool is_const>
@@ -34,7 +56,8 @@ namespace PlaylistCache {
 	using iterator = Iterator<true>;
 
 	Node* load();
-	void free(Node*);
+	void update(Node*);
+	void save(Node*);
 
 	Playlist get_playlist(Platform, id);
 	fill_short_ids(std::vector<Playlist>&);

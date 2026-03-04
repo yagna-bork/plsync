@@ -1,0 +1,22 @@
+edition = "2024";
+
+package proto;
+
+message CacheHead {
+	string next = 1;
+}
+
+message Playlist {
+	string id = 1;
+	string etag = 2;
+	string title = 3;
+	bool is_private = 4;
+	int32 items = 5;
+	string short_id = 6;
+}
+
+message CacheNode {
+	string next = 1;
+	Playlist playlist = 2;
+	bool is_tracked = 3;
+}
