@@ -2,6 +2,7 @@
 #include "../include/models.h"
 #include "../include/config.h"
 #include "../include/playlist_cache.pb.h"
+#include "../include/util.h"
 #include <cassert>
 #include <vector>
 #include <filesystem>
@@ -24,18 +25,6 @@ inline fs::path node_path(CacheNode* node, Platform plat) {
 	return dir(plat) / node->playlist.id;
 }
 
-inline void set_next(CacheHead* head, CacheNode* node) {
-	assert(head != nullptr);
-	head->next = node;
-	head->was_changed = true;
-}
-
-inline void set_next(CacheNode* node, CacheNode* next) {
-	assert(node != nullptr);
-	node->next = next;
-	node->was_changed = true;
-}
-
 inline void set_proto_next(proto::CacheHead &proto_head, CacheNode* node) {
 	std::string next = node ? node->playlist.id : "";
 	proto_head.set_next(next);
@@ -46,14 +35,9 @@ inline void set_proto_next(proto::CacheNode &proto_node, CacheNode* node) {
 	proto_node.set_next(next);
 }
 
-inline void advance_node(CacheNode** ptr) { 
-	assert(ptr && *ptr);
-	*ptr = (*ptr)->next; 
-}
-
 inline void free_and_advance_node(CacheNode** ptr) {
 	CacheNode* tmp = *ptr;
-	advance_node(ptr);
+	*ptr = (*ptr)->next;
 	delete tmp;
 }
 
@@ -78,26 +62,24 @@ CacheHead* load_cache(Platform plat) {
 	auto dummy_node = new CacheNode;
 	auto node = dummy_node;
 	while (!next_id.empty()) {
-		set_next(node, new CacheNode);
-		advance_node(&node);
 		proto::CacheNode proto_node;
 		std::ifstream f(dir(plat) / next_id, std::ios::binary);
 		proto_node.ParseFromIstream(&f);
+		next_id = std::string(proto_node.next());
 
-		node->was_changed = false;
-		node->is_tracked = proto_node.is_tracked();
+		node->next = new CacheNode(std::string(proto_node.id_hash()), proto_node.is_tracked());
+		node = node->next;
 
-		auto& node_pl = node->playlist;
 		const auto& proto_pl = proto_node.playlist();
+		auto& node_pl = node->playlist;
 		node_pl.id = std::string(proto_pl.id());
 		node_pl.etag = std::string(proto_pl.etag());
 		node_pl.title = std::string(proto_pl.title());
 		node_pl.is_private = proto_pl.is_private();
 		node_pl.items = proto_pl.items();
-
-		next_id = std::string(proto_node.next());
 	}
-	set_next(head, dummy_node->next);
+	head->next = node;
+	head->was_changed = true;
 	delete dummy_node;
 	return head;
 }
@@ -145,13 +127,7 @@ void update_playlist(Playlist& pl, const Playlist& other_pl) {
 	pl.items = other_pl.items;
 }
 
-void update_node_playlist(CacheNode* node, const Playlist& other_pl) {
-	assert(node != nullptr);
-	update_playlist(node->playlist, other_pl);
-	node->was_changed = true;
-}
-
-void update_cache(CacheHead* head, const std::vector<Playlist>& playlists) {
+void update_cache(PlaylistCache& cache, const std::vector<Playlist>& playlists) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true);
 	std::unordered_map<std::string, std::size_t> etag_to_idx;
@@ -161,49 +137,101 @@ void update_cache(CacheHead* head, const std::vector<Playlist>& playlists) {
 		id_to_idx[playlists[i].id] = i;
 	}
 
-	// TODO compress this dummy_node nonsense
-	CacheNode* dummy_node = new CacheNode;
-	dummy_node->next = head->next;
-	CacheNode* prev = dummy_node;
-	CacheNode* curr = dummy_node->next;
-	while (curr) {
+	auto prev = cache.cbefore_begin();
+	auto curr = cache.cbegin();
+	auto curr_write = cache.begin();
+	while (curr != cache.cend()) {
 		// case 1: etag unchanged, playlist unchanged
-		std::string etag(curr->playlist.etag);
+		std::string etag(curr->etag);
 		if (etag_to_idx.count(etag)) {
 			std::size_t i = etag_to_idx[etag];
 			is_new[i] = false;
-			advance_node(&curr);
-			advance_node(&prev);
+			prev++; curr++; curr_write++;
 			continue;
 		}
 
 		// case 2: etag changed but id found, playlist changed
-		std::string id(curr->playlist.id);
+		std::string id(curr->id);
 		if (id_to_idx.count(id)) {
 			std::size_t i = id_to_idx[id];
 			is_new[i] = false;
-			update_node_playlist(curr, playlists[i]);
-			advance_node(&curr);
-			advance_node(&prev);
+			update_playlist(*curr_write, playlists[i]);
+			prev++; curr++; curr_write++;
 			continue;
 		}
 		
 		// case 3: id not found, playlist deleted
-		set_next(prev, curr->next);
-		free_and_advance_node(&curr);
+		CacheNode* tmp = prev.next();
+		prev.set_next(curr.next());
+		fs::remove(node_path(tmp, cache.plat));
+		delete tmp;
+		curr++; curr_write++;
 	}
 
 	// case 4: playlist not found in cache, new playlist
-	CacheNode* new_node = prev;
+	curr = prev;
 	for (std::size_t i = 0; i != n; i++) {
-		if (!is_new[i]) continue;
-		set_next(new_node, new CacheNode);
-		advance_node(&new_node);
-		new_node->is_tracked = false;
-		update_node_playlist(new_node, playlists[i]);
+		if (!is_new[i]) {
+			continue;
+		}
+	
+		std::string id_hash;
+		sha256(playlists[i].id, id_hash);
+		CacheNode* new_node = new CacheNode(id_hash);
+		update_playlist(new_node->playlist, playlists[i]);
+		curr.set_next(new_node);
+		curr++;
 	}
-	if (head->next != dummy_node->next) {
-		set_next(head, dummy_node->next);
-	}
-	delete dummy_node;
 }
+
+void update_cache(CacheHead* head, Platform plat, const std::vector<Playlist>& playlists) {
+	PlaylistCache cache(head, plat);
+	update_cache(cache, playlists);
+}
+
+std::size_t fill_short_ids(CacheHead* head) {
+	std::vector<std::string> id_hashes;
+	CacheNode* node = head->next;
+	while (node) {
+		id_hashes.emplace_back(node->id_hash);
+		node = node->next;
+	}
+
+	// determine min length of short_id (sid) to make all unique
+	std::vector<std::size_t> collision_idxs(id_hashes.size());
+	std::iota(collision_idxs.begin(), collision_idxs.end(), 0);
+
+	std::unordered_map<std::string, std::vector<std::size_t>> sid_groups;
+	std::size_t sid_len = 0;
+	while (!collision_idxs.empty()) {
+		sid_len++;
+		sid_groups.clear();
+		for (std::size_t idx: collision_idxs) {
+			std::string sid(id_hashes[idx].data(), sid_len);
+			sid_groups[sid].push_back(idx);
+		}
+		
+		collision_idxs.clear();
+		for (const auto &pr: sid_groups) {
+			const auto &group = pr.second;
+			if (group.size() < 2) {
+				continue;
+			}
+			std::copy(group.begin(), group.end(), std::back_inserter(collision_idxs));
+		}
+	}
+
+	node = head->next;
+	while (node) {
+		node->playlist.short_id = std::string(node->id_hash.data(), sid_len);
+		node = node->next;
+	}
+	return sid_len;
+}
+
+PlaylistCache::const_iterator PlaylistCache::cbefore_begin() const { return const_iterator(head); }
+PlaylistCache::const_iterator PlaylistCache::cbegin() const { return ++const_iterator(head); }
+PlaylistCache::const_iterator PlaylistCache::cend() const { return const_iterator(); }
+PlaylistCache::iterator PlaylistCache::before_begin() { return iterator(head); }
+PlaylistCache::iterator PlaylistCache::begin() { return ++iterator(head); }
+PlaylistCache::iterator PlaylistCache::end() { return iterator(); }

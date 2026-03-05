@@ -1,3 +1,4 @@
+/*
 #include "../include/cache.h"
 #include "../include/platform.h"
 #include "../include/models.h"
@@ -59,7 +60,7 @@ std::vector<Playlist> parse_playlists_from_cache(std::filesystem::path cache_dir
 	return playlists;
 }
 
-/* lowercase hex char to a binary char */
+// lowercase hex char to a binary char
 unsigned char hex_to_bin(char c) {
 	if ('0' <= c && c <= '9') {
 		return c - '0';
@@ -67,7 +68,7 @@ unsigned char hex_to_bin(char c) {
 	return c - 'a' + 10;
 }
 
-/* lowercase hex string to a raw binary string */
+// lowercase hex string to a raw binary string
 std::string hex_to_bin(const std::string &hex_str) {
 	std::size_t n = hex_str.size();
 	std::string res;
@@ -215,3 +216,4 @@ void run() {
 }
 
 }
+*/

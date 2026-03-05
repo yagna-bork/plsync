@@ -2,6 +2,7 @@
 #define GUARD_PLAYLIST_CACHE_H 
 #include "models.h"
 #include "platform.h"
+#include <cstddef>
 #include <vector>
 
 struct CacheNode {
@@ -9,6 +10,14 @@ struct CacheNode {
 	bool is_tracked;
 	CacheNode* next;
 	bool was_changed;
+	std::string id_hash;
+
+	CacheNode() {}
+
+	CacheNode(const std::string& id_hash, bool is_tracked = false)
+		: was_changed(true), id_hash(id_hash), is_tracked(is_tracked)
+	{
+	}
 };
 
 struct CacheHead {
@@ -16,81 +25,13 @@ struct CacheHead {
 	bool was_changed;
 };
 
+struct PlaylistCache;
+
 CacheHead* load_cache(Platform plat);
-void update_cache(CacheHead* head, const std::vector<Playlist>& playlists);
+void update_cache(PlaylistCache& cache, const std::vector<Playlist>& playlists);
+void update_cache(CacheHead* head, Platform plat, const std::vector<Playlist>& playlists);
+std::size_t fill_short_ids(CacheHead* head);
 void free_cache(CacheHead* head, Platform plat);
-
-enum CacheIteratorPos { HEAD, BETWEEN, END };
-
-template <bool is_const>
-class CacheIterator {
-public:
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type   = std::ptrdiff_t;
-    using value_type        = std::conditional_t<is_const, const Playlist, Playlist>;
-    using pointer           = std::conditional_t<is_const, const Playlist*, Playlist*>;
-    using reference         = std::conditional_t<is_const, const Playlist&, Playlist&>;
-	
-	CacheIterator(): node(nullptr), pos(CacheIteratorPos::END) {}
-
-	CacheIterator(CacheHead* head)
-		: node(create_dummy_head(head->next)), pos(CacheIteratorPos::HEAD) 
-	{}
-
-	~CacheIterator() { 
-		if (pos == CacheIteratorPos::HEAD) free_dummy_head(node); 
-	}
-
-	CacheIterator(const CacheIterator<false>& other): pos(other.pos) {
-		node = (pos == CacheIteratorPos::HEAD) ? create_dummy_head(other.node->next) 
-											  : other.node;
-	}
-
-	reference operator*() { 
-		if (!is_const) node->was_changed = true; 
-		return node->playlist; 
-	}
-
-	pointer operator->() { 
-		if (!is_const) node->was_changed = true; 
-		return &node->playlist; 
-	}
-
-	CacheIterator& operator++() {
-		if (pos == CacheIteratorPos::HEAD) {
-			auto next = node->next;
-			free_dummy_head(node);
-			node = next;
-		} else {
-			node = node->next;
-		}
-		pos = (node == nullptr) ? CacheIteratorPos::END : CacheIteratorPos::BETWEEN;
-		return *this;
-	}
-
-	CacheIterator operator++(int) {
-		auto tmp = *this;
-		++*this;
-		return tmp;
-	}
-
-	bool operator==(const CacheIterator& rhs) { 
-		return node == rhs.node || (pos == CacheIteratorPos::HEAD && pos == rhs.pos); 
-	}
-
-	bool operator!=(const CacheIterator& rhs) { return !(*this == rhs); }
-private:
-	CacheNode* node;
-	CacheIteratorPos pos;
-
-	CacheNode* create_dummy_head(CacheNode* next) {
-		auto dummy_head = new CacheNode; 
-		dummy_head->next = next; 
-		return dummy_head;
-	}
-
-	void free_dummy_head(CacheNode* dummy_head) { delete dummy_head; }
-};
 
 struct PlaylistCache {
 	CacheHead* head;
@@ -100,19 +41,73 @@ struct PlaylistCache {
 	PlaylistCache(CacheHead* head, Platform plat): head(head), plat(plat), owns_head(false) {}
 	~PlaylistCache() { if (owns_head) free_cache(head, plat); }
 
-	// TODO call other update_cache
-	void update(const std::vector<Playlist>& playlists) { update_cache(head, playlists); }
+	void update(const std::vector<Playlist>& playlists) { update_cache(*this, playlists); }
+	std::size_t fill_short_ids() { return ::fill_short_ids(head); }
 
-	using const_iterator = CacheIterator</*is_const=*/true>;
-	using iterator = CacheIterator</*is_const=*/false>;
+	enum IteratorPos { HEAD, BETWEEN, END };
 
-	const_iterator cbefore_begin() { return const_iterator(head); }
-	const_iterator cbegin() { return ++const_iterator(head); }
-	const_iterator cend() { return const_iterator(); }
-	iterator before_begin() { return iterator(head); }
-	iterator begin() { return ++iterator(head); }
-	iterator end() { return iterator(); }
+	template <bool is_const>
+	class Iterator;
+	using const_iterator = Iterator</*is_const=*/true>;
+	using iterator = Iterator</*is_const=*/false>;
+
+	const_iterator cbefore_begin() const;
+	const_iterator cbegin() const;
+	const_iterator cend() const;
+	iterator before_begin();
+	iterator begin();
+	iterator end();
 private:
 	bool owns_head;
+};
+
+template <bool is_const>
+class PlaylistCache::Iterator {
+	friend void update_cache(PlaylistCache& cache, const std::vector<Playlist>& playlists);
+public:
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type   = std::ptrdiff_t;
+    using value_type        = std::conditional_t<is_const, const Playlist, Playlist>;
+    using pointer           = std::conditional_t<is_const, const Playlist*, Playlist*>;
+    using reference         = std::conditional_t<is_const, const Playlist&, Playlist&>;
+	
+	Iterator(): head(nullptr), node(nullptr), pos(IteratorPos::END) {}
+	Iterator(CacheHead* head) : head(head), node(nullptr), pos(IteratorPos::HEAD) {}
+	Iterator(const Iterator<false>& other): head(other.head), node(other.node), pos(other.pos) {}
+
+	reference operator*() { if (!is_const) node->was_changed = true; return node->playlist; }
+	pointer operator->() { if (!is_const) node->was_changed = true; return &node->playlist; }
+	bool operator==(const Iterator& rhs) { return (pos != IteratorPos::BETWEEN && pos == rhs.pos) || node == rhs.node; }
+	bool operator!=(const Iterator& rhs) { return !(*this == rhs); }
+
+	Iterator& operator++() {
+		node = next();
+		pos = (node == nullptr) ? IteratorPos::END : IteratorPos::BETWEEN;
+		return *this;
+	}
+
+	Iterator operator++(int) {
+		auto tmp = *this;
+		++*this;
+		return tmp;
+	}
+private:
+	CacheHead* head;
+	CacheNode* node;
+	IteratorPos pos;
+	
+	// TODO semantic decompress
+	bool is_head() { return pos == IteratorPos::HEAD; }
+	CacheNode* next() { return is_head() ? head->next : node->next; }
+
+	void set_next(CacheNode* next) { 
+		if (is_head()) { 
+			head->next = next; 
+			head->was_changed = true;
+		} else { 
+			node->next = next; 
+			node->was_changed = true;
+		} 
+	}
 };
 #endif

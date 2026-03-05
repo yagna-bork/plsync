@@ -6,6 +6,7 @@
 #include "../include/models.h"
 #include "../include/playlist_cache.h"
 #include <iostream>
+#include <sstream>
 
 static void print_usage() {
 	std::cout << "usage: plsync untracked <platform>\n\n"
@@ -59,21 +60,26 @@ int run_untracked(int argc, char *argv[]) {
 	
 	PlaylistCache cache(platform);
 	cache.update(playlists);
+	int id_len = cache.fill_short_ids();
 	
 	std::size_t longest_title = 0;
 	for (const auto& playlist: cache) {
 		longest_title = std::max(longest_title, playlist.title.size());
 	}
 
-	std::string heading = "title" + std::string(longest_title-3, ' ') + "privacy  items";
-	std::cout << heading << '\n';
-	std::cout << std::string(heading.size(), '-') << '\n';
+	std::stringstream heading;
+	std::size_t id_pad = std::max(1, id_len*2 - 1);
+	std::size_t title_pad = longest_title - 3;
+	heading << "id" << std::string(id_pad, ' ') << "title" << std::string(title_pad, ' ') << "privacy " << " items";
+	std::cout << heading.rdbuf() << '\n';
 
 	for (const auto& playlist: cache) {
+		std::size_t id_pad = std::max(1, 3 - id_len*2); 
 		std::size_t title_pad = longest_title + 2 - playlist.title.size();
 		std::string privacy_type = playlist.is_private ? "private" : "public";
 		std::size_t privacy_pad = playlist.is_private ? 2 : 3;
-		std::cout << playlist.title << std::string(title_pad, ' ')
+		std::cout << bin_to_hex(playlist.short_id) << std::string(id_pad, ' ')
+				  << playlist.title << std::string(title_pad, ' ')
 				  << privacy_type << std::string(privacy_pad, ' ')
 				  << playlist.items << '\n';
 	}

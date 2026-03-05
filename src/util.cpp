@@ -158,3 +158,21 @@ bool ensure_tmpdir(std::filesystem::path &tmpdir) {
 	}
 	return true;
 }
+
+// nibble = half a byte hehe
+char hex_bit(char nibble) {
+	if (nibble <= 9) {
+		return '0' + nibble;
+	} else {
+		return 'a' + nibble - 10;
+	}
+}
+
+std::string bin_to_hex(const std::string& data) {
+	std::string res;
+	for (unsigned char byte: data) {
+		res.push_back(hex_bit(byte >> 4)); // most significant nibble 
+		res.push_back(hex_bit(byte & 15)); // least significant nibble
+	}
+	return res;
+}

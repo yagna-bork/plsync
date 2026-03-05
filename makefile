@@ -6,8 +6,7 @@ OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
 			obj/playlist_cache.o obj/playlist_cache.pb.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
-			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o \
-			obj/playlist_cache.o obj/cache.pb.o
+			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 

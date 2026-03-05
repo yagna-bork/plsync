@@ -108,4 +108,6 @@ std::string rndstr(size_t size);
 bool ensure_tmpdir(std::filesystem::path &tmpdir);
 
 inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy_init(), curl_easy_cleanup); }
+
+std::string bin_to_hex(const std::string& data);
 #endif
