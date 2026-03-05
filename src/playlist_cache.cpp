@@ -151,7 +151,7 @@ void update_node_playlist(CacheNode* node, const Playlist& other_pl) {
 	node->was_changed = true;
 }
 
-void update_cache(CacheHead* head, std::vector<Playlist>& playlists) {
+void update_cache(CacheHead* head, const std::vector<Playlist>& playlists) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true);
 	std::unordered_map<std::string, std::size_t> etag_to_idx;

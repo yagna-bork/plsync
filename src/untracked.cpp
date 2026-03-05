@@ -57,29 +57,25 @@ int run_untracked(int argc, char *argv[]) {
 		return 1;
 	}
 	
-	CacheHead* head = load_cache(platform);
-	update_cache(head, playlists);
+	PlaylistCache cache(platform);
+	cache.update(playlists);
 	
-	// find longest title for even formatting
-	CacheNode *node = head->next;
 	std::size_t longest_title = 0;
-	while (node) {
-		longest_title = std::max(longest_title, node->playlist.title.size());
-		node = node->next;
+	for (const auto& playlist: cache) {
+		longest_title = std::max(longest_title, playlist.title.size());
 	}
 
-	// TODO needs compression, probs iterator if it's quick enough
-	node = head->next;
-	while (node) {
-		const auto& pl = node->playlist;
-		std::size_t title_pad = longest_title + 1 - pl.title.size();
-		std::string privacy_type = pl.is_private ? "private" : "public";
-		std::size_t privacy_pad = pl.is_private ? 1 : 2;
-		std::cout << pl.title << std::string(title_pad, ' ') << " " 
-				  << privacy_type << std::string(privacy_pad, ' ') << " " 
-				  << pl.items << '\n';
-		node = node->next;
+	std::string heading = "title" + std::string(longest_title-3, ' ') + "privacy  items";
+	std::cout << heading << '\n';
+	std::cout << std::string(heading.size(), '-') << '\n';
+
+	for (const auto& playlist: cache) {
+		std::size_t title_pad = longest_title + 2 - playlist.title.size();
+		std::string privacy_type = playlist.is_private ? "private" : "public";
+		std::size_t privacy_pad = playlist.is_private ? 2 : 3;
+		std::cout << playlist.title << std::string(title_pad, ' ')
+				  << privacy_type << std::string(privacy_pad, ' ')
+				  << playlist.items << '\n';
 	}
-	free_cache(head, platform);
 	return 0;
 }

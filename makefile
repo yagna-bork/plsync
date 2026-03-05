@@ -56,7 +56,7 @@ obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h 
 obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
-obj/playlist_cache.o: src/playlist_cache.cpp include/cache.h include/models.h include/config.h include/models.h include/platform.h
+obj/playlist_cache.o: src/playlist_cache.cpp include/playlist_cache.h include/models.h include/config.h
 	clang++ -o obj/playlist_cache.o -c $(CXX) src/playlist_cache.cpp $(DEBUG_OR_PROD)
 
 obj/playlist_cache.pb.o: include/playlist_cache.pb.h src/playlist_cache.pb.cc
