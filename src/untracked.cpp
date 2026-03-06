@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace Cache = PlaylistCache;
+
 static void print_usage() {
 	std::cout << "usage: plsync untracked <platform>\n\n"
 			  << untracked::description << "\n\n"
@@ -48,40 +50,44 @@ int run_untracked(int argc, char *argv[]) {
 	}
 	std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(platform, curl, tkn);
 
-	std::vector<Playlist> playlists;
-	// TODO is this etag even relevant?
-	std::string etag;
+	Cache::Handle cache(platform);
+	bool modified;
+	std::vector<Playlist> modified_playlists;
+	std::string modified_etag = cache.head->etag;
 	try {
-		api->get_playlists(playlists, etag);
+		modified = api->get_playlists(modified_playlists, modified_etag);
 	} catch (const BaseAPI::RequestError &e) {
 		std::cerr << "Something went wrong. Try again.\n";
 		return 1;
 	}
-	
-	PlaylistCache cache(platform);
-	cache.update(playlists);
-	int id_len = cache.fill_short_ids();
-	
-	std::size_t longest_title = 0;
-	for (const auto& playlist: cache) {
-		longest_title = std::max(longest_title, playlist.title.size());
+	if (modified) {
+		Cache::update(cache.head, cache.plat, modified_playlists, modified_etag);
 	}
 
-	std::stringstream heading;
-	std::size_t id_pad = std::max(1, id_len*2 - 1);
-	std::size_t title_pad = longest_title - 3;
-	heading << "id" << std::string(id_pad, ' ') << "title" << std::string(title_pad, ' ') << "privacy " << " items";
-	std::cout << heading.rdbuf() << '\n';
+	int longest_title = 0;
+	for (auto pl = Cache::cbegin(cache.head); pl != Cache::cend(); ++pl) {
+		longest_title = std::max(static_cast<std::size_t>(longest_title), pl->title.size());
+	}
 
-	for (const auto& playlist: cache) {
-		std::size_t id_pad = std::max(1, 3 - id_len*2); 
-		std::size_t title_pad = longest_title + 2 - playlist.title.size();
-		std::string privacy_type = playlist.is_private ? "private" : "public";
-		std::size_t privacy_pad = playlist.is_private ? 2 : 3;
-		std::cout << bin_to_hex(playlist.short_id) << std::string(id_pad, ' ')
-				  << playlist.title << std::string(title_pad, ' ')
+	int id_len = Cache::fill_short_ids(cache.head);
+	int id_pad = std::max(1, id_len*2 - 1);
+	int title_pad = std::max(1, longest_title - 3);
+	std::stringstream heading;
+	heading << "id" << std::string(id_pad, ' ') 
+			<< "title" << std::string(title_pad, ' ') 
+			<< "privacy " << " items";
+	std::cout << heading.rdbuf() << '\n';
+	std::cout << std::string(heading.str().size(), '-') << '\n'; // inefficient but don't care
+
+	for (auto pl = Cache::cbegin(cache.head); pl != Cache::cend(); ++pl) {
+		int id_pad = std::max(1, 3 - id_len*2); 
+		int title_pad = std::max(1ul, longest_title + 2 - pl->title.size());
+		std::string privacy_type = pl->is_private ? "private" : "public";
+		int privacy_pad = pl->is_private ? 2 : 3;
+		std::cout << bin_to_hex(pl->short_id) << std::string(id_pad, ' ')
+				  << pl->title << std::string(title_pad, ' ')
 				  << privacy_type << std::string(privacy_pad, ' ')
-				  << playlist.items << '\n';
+				  << pl->items << '\n';
 	}
 	return 0;
 }

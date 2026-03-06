@@ -4,6 +4,7 @@ package proto;
 
 message CacheHead {
 	string next = 1;
+	string etag = 2;
 }
 
 message Playlist {
@@ -19,5 +20,5 @@ message CacheNode {
 	string next = 1;
 	Playlist playlist = 2;
 	bool is_tracked = 3;
-	string id_hash = 4;
+	bytes id_hash = 4;
 }

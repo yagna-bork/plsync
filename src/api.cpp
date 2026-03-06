@@ -63,7 +63,7 @@ long BaseAPI::status_code() {
 bool BaseAPI::is_response_json() {
 	char *content_type;
 	if (curl_easy_getinfo(curl.get(), CURLINFO_CONTENT_TYPE, &content_type) != CURLE_OK) {
-		throw RequestError("couldn't retrieve http response type");
+		throw RequestError("couldn't retrieve http content type");
 	}
 	const char *app_json = "application/json";
 	return std::equal(app_json, app_json+std::strlen(app_json), content_type);
@@ -108,7 +108,7 @@ long BaseAPI::GET(
 	}
 
 	std::string resp = decompress_gzip(resp_path);
-	if (is_response_json()) {
+	if (is_response_json() && !resp.empty()) {
 		jresp = nlohmann::json::parse(resp);
 	}
 	return status_code();

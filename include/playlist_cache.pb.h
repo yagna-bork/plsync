@@ -481,6 +481,7 @@ class CacheHead final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kNextFieldNumber = 1,
+    kEtagFieldNumber = 2,
   };
   // string next = 1;
   bool has_next() const;
@@ -494,12 +495,24 @@ class CacheHead final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_next(::absl::string_view value);
 
   public:
+  // string etag = 2;
+  bool has_etag() const;
+  void clear_etag() ;
+  ::absl::string_view etag() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_etag(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_etag() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
+
+  public:
   // @@protoc_insertion_point(class_scope:proto.CacheHead)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<0, 1,
-                                   0, 28,
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   0, 32,
                                    2>
       _table_;
 
@@ -521,6 +534,7 @@ class CacheHead final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr next_;
+    ::google::protobuf::internal::ArenaStringPtr etag_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -689,7 +703,7 @@ class CacheNode final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_next(::absl::string_view value);
 
   public:
-  // string id_hash = 4;
+  // bytes id_hash = 4;
   bool has_id_hash() const;
   void clear_id_hash() ;
   ::absl::string_view id_hash() const;
@@ -732,7 +746,7 @@ class CacheNode final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   1, 35,
+                                   1, 28,
                                    2>
       _table_;
 
@@ -812,6 +826,39 @@ inline void CacheHead::_internal_set_next(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   SetHasBit(_impl_._has_bits_[0], 0x00000001U);
   _impl_.next_.Set(value, GetArena());
+}
+
+// string etag = 2;
+inline bool CacheHead::has_etag() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void CacheHead::clear_etag() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.etag_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view CacheHead::etag() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheHead.etag)
+  return _internal_etag();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheHead::set_etag(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheHead.etag)
+}
+inline ::absl::string_view CacheHead::_internal_etag() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.etag_.Get();
+}
+inline void CacheHead::_internal_set_etag(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.etag_.Set(value, GetArena());
 }
 
 // -------------------------------------------------------------------
@@ -1173,7 +1220,7 @@ inline void CacheNode::_internal_set_is_tracked(bool value) {
   _impl_.is_tracked_ = value;
 }
 
-// string id_hash = 4;
+// bytes id_hash = 4;
 inline bool CacheNode::has_id_hash() const {
   bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
   return value;
