@@ -67,7 +67,7 @@ int run_untracked(int argc, char *argv[]) {
 		Cache::update(cache.head, cache.plat, modified_playlists, modified_etag);
 		sid_len = Cache::calculate_short_id_len(cache.head);
 		Cache::fill_short_ids(cache.head, sid_len);
-		update_sid_to_id_map(cache.head);
+		update_sid_to_id_map(cache.head, cache.plat);
 	} else {
 		sid_len = cache.head->sid_len;
 		Cache::fill_short_ids(cache.head, sid_len);

@@ -2,6 +2,8 @@
 #include "../include/sid_to_id_map.pb.h"
 #include "../include/playlist_cache.h"
 #include "../include/config.h"
+#include "../include/platform.h"
+#include "../include/util.h"
 #include <cstddef>
 #include <fstream>
 #include <ios>
@@ -15,12 +17,14 @@ using ProtoMap = proto::SidToIdMap;
 namespace fs = std::filesystem;
 namespace Cache = PlaylistCache;
 
-fs::path file_path() {
-	return fs::path(get_setting("cache_dir")) / "short_id_to_id_map";
+fs::path file_path(Platform plat) {
+	return fs::path(get_setting("cache_dir")) / "sid_to_id_map" / title_lower(plat);
 }
 
-Map load_sid_to_id_map() {
-	std::ifstream file(file_path(), std::ios::binary);
+Map load_sid_to_id_map(Platform plat) {
+	auto path = file_path(plat);
+	ensure_file(path);
+	std::ifstream file(path, std::ios::binary);
 	ProtoMap proto_map;
 	proto_map.ParseFromIstream(&file);
 
@@ -35,16 +39,16 @@ Map load_sid_to_id_map() {
 	return map;
 }
 
-Map update_sid_to_id_map(Cache::Head* head) {
+Map update_sid_to_id_map(Cache::Head* head, Platform plat) {
 	Map map;
 	for (auto it = Cache::cbegin(head); it != Cache::cend(); ++it) {
 		map[it->short_id] = it->id;
 	}
-	save_sid_to_id_map(map);
+	save_sid_to_id_map(map, plat);
 	return map;
 }
 
-void save_sid_to_id_map(const Map& map) {
+void save_sid_to_id_map(const Map& map, Platform plat) {
 	ProtoMap proto_map;
 	for (std::size_t i = 0; i != NUM_BUCKETS; i++) {
 		proto_map.add_buckets();
@@ -58,6 +62,8 @@ void save_sid_to_id_map(const Map& map) {
 		proto_pair->set_id(pair.second);
 	}
 	
-	std::ofstream file(file_path(), std::ios::binary);
+	auto path = file_path(plat);
+	ensure_file(path);
+	std::ofstream file(path, std::ios::binary);
 	proto_map.SerializeToOstream(&file);
 }

@@ -106,6 +106,7 @@ struct fileDeleter {
 std::string rndstr(size_t size);
 
 bool ensure_tmpdir(std::filesystem::path &tmpdir);
+void ensure_file(const std::filesystem::path& file);
 
 inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy_init(), curl_easy_cleanup); }
 
