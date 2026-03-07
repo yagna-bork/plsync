@@ -69,12 +69,7 @@ iterator begin(Head* head) { return ++iterator(head); }
 iterator end() { return iterator(); }
 
 Head* load(Platform plat) { 
-	// ensure HEAD file and parent directory exist
-	fs::create_directories(dir(plat));
-	if (!fs::exists(head_path(plat))) {
-		std::ofstream f(head_path(plat), std::ios::binary);
-	}
-
+	ensure_file(head_path(plat));
 	proto::CacheHead proto_head;
 	{
 		std::ifstream f(head_path(plat), std::ios::binary);

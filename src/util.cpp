@@ -161,7 +161,9 @@ bool ensure_tmpdir(std::filesystem::path &tmpdir) {
 
 void ensure_file(const std::filesystem::path& file) {
 	std::filesystem::create_directories(file.parent_path());
-	std::ofstream tmp(file);
+	if (!std::filesystem::exists(file)) {
+		std::ofstream tmp(file);
+	}
 }
 
 // nibble = half a byte hehe
@@ -178,6 +180,27 @@ std::string bin_to_hex(const std::string& data) {
 	for (unsigned char byte: data) {
 		res.push_back(hex_bit(byte >> 4)); // most significant nibble 
 		res.push_back(hex_bit(byte & 15)); // least significant nibble
+	}
+	return res;
+}
+
+// lowercase hex char to a binary char
+unsigned char hex_to_bin(char c) {
+	if ('0' <= c && c <= '9') {
+		return c - '0';
+	}
+	return c - 'a' + 10;
+}
+
+// lowercase hex string to a raw binary string
+std::string hex_to_bin(const std::string &hex_str) {
+	std::size_t n = hex_str.size();
+	std::string res;
+	res.reserve(n / 2);
+	unsigned char byte;
+	for (std::size_t i = 0; i != n; i += 2) {
+		byte = (hex_to_bin(hex_str[i]) << 4) + hex_to_bin(hex_str[i+1]);
+		res.push_back(byte);
 	}
 	return res;
 }

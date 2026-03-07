@@ -5,7 +5,7 @@ OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/platform.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
 			obj/playlist_cache.o obj/playlist_cache.pb.o \
-			obj/sid_to_id_map.o obj/sid_to_id_map.pb.o
+			obj/sid_to_id_map.o obj/sid_to_id_map.pb.o obj/track.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
@@ -70,6 +70,9 @@ obj/sid_to_id_map.pb.o: include/sid_to_id_map.pb.h
 
 obj/sid_to_id_map.o: src/sid_to_id_map.cpp include/sid_to_id_map.h include/sid_to_id_map.pb.h
 	clang++ -o obj/sid_to_id_map.o -c $(CXX) src/sid_to_id_map.cpp $(DEBUG_OR_PROD)
+
+obj/track.o: src/track.cpp include/track.h
+	clang++ -o obj/track.o -c $(CXX) src/track.cpp $(DEBUG_OR_PROD)
 
 # tests
 # TODO for prod need to make vcpkg install within project
