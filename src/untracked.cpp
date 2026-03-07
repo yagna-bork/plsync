@@ -5,6 +5,7 @@
 #include "../include/token_store.h"
 #include "../include/models.h"
 #include "../include/playlist_cache.h"
+#include "../include/sid_to_id_map.h"
 #include <iostream>
 #include <sstream>
 
@@ -60,8 +61,16 @@ int run_untracked(int argc, char *argv[]) {
 		std::cerr << "Something went wrong. Try again.\n";
 		return 1;
 	}
+	
+	int sid_len;
 	if (modified) {
 		Cache::update(cache.head, cache.plat, modified_playlists, modified_etag);
+		sid_len = Cache::calculate_short_id_len(cache.head);
+		Cache::fill_short_ids(cache.head, sid_len);
+		update_sid_to_id_map(cache.head);
+	} else {
+		sid_len = cache.head->sid_len;
+		Cache::fill_short_ids(cache.head, sid_len);
 	}
 
 	int longest_title = 0;
@@ -69,8 +78,7 @@ int run_untracked(int argc, char *argv[]) {
 		longest_title = std::max(static_cast<std::size_t>(longest_title), pl->title.size());
 	}
 
-	int id_len = Cache::fill_short_ids(cache.head);
-	int id_pad = std::max(1, id_len*2 - 1);
+	int id_pad = std::max(1, sid_len*2 - 1);
 	int title_pad = std::max(1, longest_title - 3);
 	std::stringstream heading;
 	heading << "id" << std::string(id_pad, ' ') 
@@ -80,7 +88,7 @@ int run_untracked(int argc, char *argv[]) {
 	std::cout << std::string(heading.str().size(), '-') << '\n'; // inefficient but don't care
 
 	for (auto pl = Cache::cbegin(cache.head); pl != Cache::cend(); ++pl) {
-		int id_pad = std::max(1, 3 - id_len*2); 
+		int id_pad = std::max(1, 3 - sid_len*2); 
 		int title_pad = std::max(1ul, longest_title + 2 - pl->title.size());
 		std::string privacy_type = pl->is_private ? "private" : "public";
 		int privacy_pad = pl->is_private ? 2 : 3;

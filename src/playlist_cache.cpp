@@ -82,6 +82,7 @@ Head* load(Platform plat) {
 	}
 	Head* head = new Head;
 	head->etag = proto_head.etag();
+	head->sid_len = proto_head.sid_len();
 	std::string next_id(proto_head.next());
 	if (next_id.empty()) {
 		return head;
@@ -115,6 +116,7 @@ void cleanup(Head* head, Platform plat) {
 		proto::CacheHead proto_head;
 		set_next(proto_head, head->next);
 		proto_head.set_etag(head->etag);
+		proto_head.set_sid_len(head->sid_len);
 		std::ofstream f(head_path(plat), std::ios::binary);
 		proto_head.SerializeToOstream(&f);
 	}
@@ -206,7 +208,7 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 	}
 }
 
-std::size_t fill_short_ids(Head* head) {
+std::size_t calculate_short_id_len(Head* head) {
 	std::vector<std::string> id_hashes;
 	Node* node = head->next;
 	while (node) {
@@ -214,7 +216,6 @@ std::size_t fill_short_ids(Head* head) {
 		node = node->next;
 	}
 
-	// determine min length of short_id (sid) to make all unique
 	std::vector<std::size_t> collision_idxs(id_hashes.size());
 	std::iota(collision_idxs.begin(), collision_idxs.end(), 0);
 
@@ -237,14 +238,21 @@ std::size_t fill_short_ids(Head* head) {
 			std::copy(group.begin(), group.end(), std::back_inserter(collision_idxs));
 		}
 	}
+	return sid_len;
+}
 
-	node = head->next;
+void fill_short_ids(Head* head, std::size_t sid_len) {
+	if (sid_len != head->sid_len) {
+		head->sid_len = sid_len;
+		head->was_changed = true;
+	}
+
+	Node* node = head->next;
 	while (node) {
 		std::string short_id(node->id_hash.data(), sid_len);
 		node->playlist.short_id = short_id;
 		node = node->next;
 	}
-	return sid_len;
 }
 
 }

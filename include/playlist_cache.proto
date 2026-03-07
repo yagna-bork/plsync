@@ -5,6 +5,7 @@ package proto;
 message CacheHead {
 	string next = 1;
 	string etag = 2;
+	uint32 sid_len = 3;
 }
 
 message Playlist {

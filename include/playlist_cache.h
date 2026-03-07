@@ -27,11 +27,17 @@ struct Head {
 	Node* next;
 	bool was_changed;
 	std::string etag;
+	std::size_t sid_len;
 };
 
 Head* load(Platform plat);
 void cleanup(Head* head, Platform plat);
 void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, const std::string& etag);
+
+/* Determine min characters of id_hash that make them all unique */
+std::size_t calculate_short_id_len(Head* head);
+void fill_short_ids(Head* head, std::size_t short_id_len);
+
 
 struct Handle {
 	Head* head;
@@ -95,8 +101,5 @@ const_iterator cend();
 iterator before_begin(Head* head);
 iterator begin(Head* head);
 iterator end();
-
-std::size_t fill_short_ids(Head* head);
-
 };
 #endif

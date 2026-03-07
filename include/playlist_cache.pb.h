@@ -482,6 +482,7 @@ class CacheHead final : public ::google::protobuf::Message
   enum : int {
     kNextFieldNumber = 1,
     kEtagFieldNumber = 2,
+    kSidLenFieldNumber = 3,
   };
   // string next = 1;
   bool has_next() const;
@@ -507,11 +508,22 @@ class CacheHead final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
 
   public:
+  // uint32 sid_len = 3;
+  bool has_sid_len() const;
+  void clear_sid_len() ;
+  ::uint32_t sid_len() const;
+  void set_sid_len(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_sid_len() const;
+  void _internal_set_sid_len(::uint32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:proto.CacheHead)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
                                    0, 32,
                                    2>
       _table_;
@@ -535,6 +547,7 @@ class CacheHead final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr next_;
     ::google::protobuf::internal::ArenaStringPtr etag_;
+    ::uint32_t sid_len_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -859,6 +872,35 @@ inline void CacheHead::_internal_set_etag(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   SetHasBit(_impl_._has_bits_[0], 0x00000002U);
   _impl_.etag_.Set(value, GetArena());
+}
+
+// uint32 sid_len = 3;
+inline bool CacheHead::has_sid_len() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  return value;
+}
+inline void CacheHead::clear_sid_len() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.sid_len_ = 0u;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::uint32_t CacheHead::sid_len() const {
+  // @@protoc_insertion_point(field_get:proto.CacheHead.sid_len)
+  return _internal_sid_len();
+}
+inline void CacheHead::set_sid_len(::uint32_t value) {
+  _internal_set_sid_len(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:proto.CacheHead.sid_len)
+}
+inline ::uint32_t CacheHead::_internal_sid_len() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.sid_len_;
+}
+inline void CacheHead::_internal_set_sid_len(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.sid_len_ = value;
 }
 
 // -------------------------------------------------------------------
