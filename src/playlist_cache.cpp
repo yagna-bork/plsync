@@ -17,7 +17,7 @@ namespace PlaylistCache {
 
 inline fs::path dir(Platform plat) { 
 	fs::path cache_dir = get_setting("cache_dir");
-	return cache_dir / "playlist" / title_lower(plat); 
+	return cache_dir / "playlist" / platform_title_lower(plat); 
 }
 
 inline fs::path head_path(Platform plat) { return dir(plat) / "HEAD"; }

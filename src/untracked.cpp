@@ -23,22 +23,12 @@ static Platform parse_args(int argc, char *argv[]) {
 		print_usage();
 		exit(1);
 	}
-
-	const char *platform = argv[0];
-	const char *youtube = "youtube";
-	const char *spotify = "spotify";
-
-	if (strcmp(platform, "yt") == 0) {
-		return Platform::YOUTUBE;
-	} 
-	if (std::equal(platform, platform+strlen(platform), youtube)) {
-		return Platform::YOUTUBE;
+	auto platform = parse_platform(argv[0]);
+	if (platform == Platform::INVALID) {
+		print_usage();
+		exit(1);
 	}
-	if (std::equal(platform, platform+strlen(platform), spotify)) {
-		return Platform::SPOTIFY;
-	}
-	print_usage();
-	exit(1);
+	return platform;
 }
 
 int run_untracked(int argc, char *argv[]) {

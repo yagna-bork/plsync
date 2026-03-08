@@ -4,19 +4,22 @@
 #include <string>
 
 enum Platform { 
-	YOUTUBE = 0, 
-	SPOTIFY = 1
+	YOUTUBE, 
+	SPOTIFY,
 #ifndef NDEBUG
-	,TEST = 2
+	TEST,
 #endif
+	INVALID
 };
 
 /* Name of platform in capital case e.g. Youtube */
-std::string title(Platform p);
+std::string platform_title(Platform p);
 
 /* Name of platform in lower case e.g. youtube */
-std::string title_lower(Platform p);
+std::string platform_title_lower(Platform p);
 
 /* Abbreviation of platform e.g. yt */
-std::string abbrev(Platform p);
+std::string platform_abbrev(Platform p);
+
+Platform parse_platform(const std::string& s);
 #endif

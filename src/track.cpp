@@ -18,22 +18,16 @@ void parse_args(int argc, char *argv[], Platform& platform, std::string& playlis
 		exit(1);
 	}
 
-	const char *platform_arg = argv[0];
-	const char *youtube = "youtube";
-	const char *spotify = "spotify";
-
-	if (strcmp(platform_arg, "yt") == 0) {
-		platform = Platform::YOUTUBE;
-	} else if (std::equal(platform_arg, platform_arg+strlen(platform_arg), youtube)) {
-		platform = Platform::YOUTUBE;
-	} else if (std::equal(platform_arg, platform_arg+strlen(platform_arg), spotify)) {
-		platform = Platform::SPOTIFY;
-	} else {
+	platform = parse_platform(argv[0]);
+	if (platform == Platform::INVALID) {
 		print_usage();
 		exit(1);
 	}
-	
 	playlist_sid = argv[1];
+	if (playlist_sid.size() % 2 != 0) {
+		print_usage();
+		exit(1);
+	}
 }
 
 int run_track(int argc, char *argv[]) {

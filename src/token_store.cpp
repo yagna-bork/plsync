@@ -10,7 +10,7 @@
 #include <memory>
 
 bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t duration) {
-	std::string acc = title_lower(platform) + "-access-token";
+	std::string acc = platform_title_lower(platform) + "-access-token";
 	std::string expiry = std::to_string(time(nullptr) + duration);
 	std::string pwd = tkn + ":" + expiry;
 	std::string err;
@@ -18,7 +18,7 @@ bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t dura
 }
 
 bool save_refresh_tkn(Platform platform, const std::string &tkn) {
-	std::string acc = title_lower(platform) + "-refresh-token";
+	std::string acc = platform_title_lower(platform) + "-refresh-token";
 	std::string err;
 	return libcred::set_password(KEYCHAIN_SERVICE, acc, tkn, &err) == libcred::SUCCESS;
 }
@@ -38,7 +38,7 @@ static T stot(const std::string &s) {
 }
 
 static bool get_access_tkn(Platform platform, std::string &tkn, std::time_t &expiry) {
-	std::string acc = title_lower(platform) + "-access-token";
+	std::string acc = platform_title_lower(platform) + "-access-token";
 	std::string pass, err;
 	if (libcred::get_password(KEYCHAIN_SERVICE, acc, &pass, &err) != libcred::SUCCESS) {
 		return false;
@@ -61,7 +61,7 @@ static bool get_access_tkn(Platform platform, std::time_t &expiry) {
 }
 
 bool get_refresh_tkn(Platform platform, std::string &tkn) {
-	std::string acc = title_lower(platform) + "-refresh-token";
+	std::string acc = platform_title_lower(platform) + "-refresh-token";
 	std::string err;
 	return libcred::get_password(KEYCHAIN_SERVICE, acc, &tkn, &err) == libcred::SUCCESS;
 }

@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 namespace Cache = PlaylistCache;
 
 fs::path file_path(Platform plat) {
-	return fs::path(get_setting("cache_dir")) / "sid_to_id_map" / title_lower(plat);
+	return fs::path(get_setting("cache_dir")) / "sid_to_id_map" / platform_title_lower(plat);
 }
 
 Map load_sid_to_id_map(Platform plat) {

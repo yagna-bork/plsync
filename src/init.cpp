@@ -32,9 +32,9 @@ static bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) 
 
 	// listen at redirect url for auth_code
 	std::string auth_code;
-	std::cout << "Waiting for " << title(platform) << " authentication code... " << std::flush;
+	std::cout << "Waiting for " << platform_title(platform) << " authentication code... " << std::flush;
 	if (!api->collect_auth_code()) {
-		std::cout << "Unable to complete " << title(platform) << " authentication. Please try again" << '\n';
+		std::cout << "Unable to complete " << platform_title(platform) << " authentication. Please try again" << '\n';
 		return false;
 	}
 	std::cout << "Got it!\n";
@@ -57,7 +57,7 @@ static bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) 
 		std::cerr << "Couldn't store tokens in keychain. Please try again" << '\n';
 		return false;
 	}
-	std::cout << "Success! " << title(platform) << " authentication completed" << '\n';
+	std::cout << "Success! " << platform_title(platform) << " authentication completed" << '\n';
 	return true;
 }
 
