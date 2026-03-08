@@ -56,7 +56,7 @@ obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h 
 obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
-obj/playlist_cache.o: src/playlist_cache.cpp include/playlist_cache.h include/models.h include/config.h
+obj/playlist_cache.o: src/playlist_cache.cpp include/playlist_cache.h include/models.h include/config.h include/util.h
 	clang++ -o obj/playlist_cache.o -c $(CXX) src/playlist_cache.cpp $(DEBUG_OR_PROD)
 
 obj/playlist_cache.pb.o: include/playlist_cache.pb.h src/playlist_cache.pb.cc
@@ -68,7 +68,7 @@ obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 obj/sid_to_id_map.pb.o: include/sid_to_id_map.pb.h 
 	clang++ -o obj/sid_to_id_map.pb.o -c $(CXX) src/sid_to_id_map.pb.cc $(DEBUG_OR_PROD)
 
-obj/sid_to_id_map.o: src/sid_to_id_map.cpp include/sid_to_id_map.h include/sid_to_id_map.pb.h
+obj/sid_to_id_map.o: src/sid_to_id_map.cpp include/sid_to_id_map.h include/sid_to_id_map.pb.h include/util.h
 	clang++ -o obj/sid_to_id_map.o -c $(CXX) src/sid_to_id_map.cpp $(DEBUG_OR_PROD)
 
 obj/track.o: src/track.cpp include/track.h

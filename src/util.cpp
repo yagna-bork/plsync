@@ -159,13 +159,6 @@ bool ensure_tmpdir(std::filesystem::path &tmpdir) {
 	return true;
 }
 
-void ensure_file(const std::filesystem::path& file) {
-	std::filesystem::create_directories(file.parent_path());
-	if (!std::filesystem::exists(file)) {
-		std::ofstream tmp(file);
-	}
-}
-
 // nibble = half a byte hehe
 char hex_bit(char nibble) {
 	if (nibble <= 9) {

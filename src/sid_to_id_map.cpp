@@ -22,11 +22,11 @@ fs::path file_path(Platform plat) {
 }
 
 Map load_sid_to_id_map(Platform plat) {
-	auto path = file_path(plat);
-	ensure_file(path);
-	std::ifstream file(path, std::ios::binary);
 	ProtoMap proto_map;
-	proto_map.ParseFromIstream(&file);
+	{
+		auto file = ensure_file<std::ifstream>(file_path(plat), std::ios::binary);
+		proto_map.ParseFromIstream(&file);
+	}
 
 	Map map;
 	for (const auto& bucket: proto_map.buckets()) {
@@ -37,6 +37,22 @@ Map load_sid_to_id_map(Platform plat) {
 		}
 	}
 	return map;
+}
+
+std::string sid_to_id_lookup(const std::string& sid, Platform plat) {
+	ProtoMap proto_map;
+	{
+		auto file = ensure_file<std::ifstream>(file_path(plat), std::ios::binary);
+		proto_map.ParseFromIstream(&file);
+	}
+
+	auto sid_hash = std::hash<std::string>{}(sid);
+	auto bucket = sid_hash % NUM_BUCKETS;
+	for (const auto& pair: proto_map.buckets(bucket).pairs()) {
+		if (pair.short_id() != sid) continue;
+		return std::string(pair.id());
+	}
+	return "";
 }
 
 Map update_sid_to_id_map(Cache::Head* head, Platform plat) {
@@ -62,8 +78,6 @@ void save_sid_to_id_map(const Map& map, Platform plat) {
 		proto_pair->set_id(pair.second);
 	}
 	
-	auto path = file_path(plat);
-	ensure_file(path);
-	std::ofstream file(path, std::ios::binary);
+	auto file = ensure_file<std::ofstream>(file_path(plat), std::ios::binary);
 	proto_map.SerializeToOstream(&file);
 }

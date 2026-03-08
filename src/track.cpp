@@ -42,7 +42,10 @@ int run_track(int argc, char *argv[]) {
 	parse_args(argc, argv, platform, playlist_sid_hex);
 
 	std::string playlist_sid = hex_to_bin(playlist_sid_hex);
-	SidToIdMap map = load_sid_to_id_map(platform);
-	std::string playlist_id = map.count(playlist_sid) ? map[playlist_sid] : "";
+	std::string playlist_id = sid_to_id_lookup(playlist_sid, platform);
+	if (playlist_id.empty()) {
+		print_usage();
+		exit(1);
+	}
 	return 0;
 }

@@ -69,10 +69,10 @@ iterator begin(Head* head) { return ++iterator(head); }
 iterator end() { return iterator(); }
 
 Head* load(Platform plat) { 
-	ensure_file(head_path(plat));
+	
 	proto::CacheHead proto_head;
 	{
-		std::ifstream f(head_path(plat), std::ios::binary);
+		auto f = ensure_file<std::ifstream>(head_path(plat), std::ios::binary);
 		proto_head.ParseFromIstream(&f);
 	}
 	Head* head = new Head;
