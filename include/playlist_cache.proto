@@ -19,7 +19,8 @@ message Playlist {
 
 message CacheNode {
 	string next = 1;
-	Playlist playlist = 2;
-	bool is_tracked = 3;
-	bytes id_hash = 4;
+	string prev = 2;
+	Playlist playlist = 3;
+	string items_id = 4;
+	bytes id_hash = 5;
 }

@@ -6,6 +6,7 @@
 #include "../include/models.h"
 #include "../include/playlist_cache.h"
 #include "../include/sid_to_id_map.h"
+#include <cassert>
 #include <iostream>
 #include <sstream>
 
@@ -51,7 +52,7 @@ int run_untracked(int argc, char *argv[]) {
 		std::cerr << "Something went wrong. Try again.\n";
 		return 1;
 	}
-	
+
 	int sid_len;
 	if (modified) {
 		Cache::update(cache.head, cache.plat, modified_playlists, modified_etag);
@@ -64,28 +65,28 @@ int run_untracked(int argc, char *argv[]) {
 	}
 
 	std::size_t longest_title = 0;
-	for (auto pl = Cache::cbegin(cache.head); pl != Cache::cend(); ++pl) {
-		longest_title = std::max(longest_title, pl->title.size());
+	for (const Playlist& pl: cache) {
+		longest_title = std::max(longest_title, pl.title.size());
 	}
 
 	int id_pad = std::max(1, sid_len*2+1 - 2);
 	int title_pad = std::max(1, static_cast<int>(longest_title)+1 - 5);
 	std::stringstream heading;
-	heading << "id" << std::string(id_pad, ' ') 
-			<< "title" << std::string(title_pad, ' ') 
-			<< "privacy " << "items";
+	heading << "Id" << std::string(id_pad, ' ') 
+			<< "Title" << std::string(title_pad, ' ') 
+			<< "Privacy " << "Items";
 	std::cout << heading.rdbuf() << '\n';
 	std::cout << std::string(heading.str().size(), '-') << '\n'; // inefficient but don't care
 
-	for (auto pl = Cache::cbegin(cache.head); pl != Cache::cend(); ++pl) {
+	for (const Playlist& pl: cache) {
 		id_pad = std::max(1, 3 - sid_len*2); 
-		int title_pad = std::max(longest_title, std::size_t(5)) + 1 - pl->title.size();
-		std::string privacy_type = pl->is_private ? "private" : "public";
-		int privacy_pad = pl->is_private ? 1 : 2;
-		std::cout << bin_to_hex(pl->short_id) << std::string(id_pad, ' ')
-				  << pl->title << std::string(title_pad, ' ')
+		int title_pad = std::max(longest_title, std::size_t(5)) + 1 - pl.title.size();
+		std::string privacy_type = pl.is_private ? "private" : "public";
+		int privacy_pad = pl.is_private ? 1 : 2;
+		std::cout << bin_to_hex(pl.short_id) << std::string(id_pad, ' ')
+				  << pl.title << std::string(title_pad, ' ')
 				  << privacy_type << std::string(privacy_pad, ' ')
-				  << pl->items << '\n';
+				  << pl.items << '\n';
 	}
 	return 0;
 }

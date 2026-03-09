@@ -700,9 +700,10 @@ class CacheNode final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kNextFieldNumber = 1,
-    kIdHashFieldNumber = 4,
-    kPlaylistFieldNumber = 2,
-    kIsTrackedFieldNumber = 3,
+    kPrevFieldNumber = 2,
+    kItemsIdFieldNumber = 4,
+    kIdHashFieldNumber = 5,
+    kPlaylistFieldNumber = 3,
   };
   // string next = 1;
   bool has_next() const;
@@ -716,7 +717,31 @@ class CacheNode final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_next(::absl::string_view value);
 
   public:
-  // bytes id_hash = 4;
+  // string prev = 2;
+  bool has_prev() const;
+  void clear_prev() ;
+  ::absl::string_view prev() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_prev(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_prev() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_prev(::absl::string_view value);
+
+  public:
+  // string items_id = 4;
+  bool has_items_id() const;
+  void clear_items_id() ;
+  ::absl::string_view items_id() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_items_id(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_items_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_items_id(::absl::string_view value);
+
+  public:
+  // bytes id_hash = 5;
   bool has_id_hash() const;
   void clear_id_hash() ;
   ::absl::string_view id_hash() const;
@@ -728,7 +753,7 @@ class CacheNode final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_id_hash(::absl::string_view value);
 
   public:
-  // .proto.Playlist playlist = 2;
+  // .proto.Playlist playlist = 3;
   bool has_playlist() const;
   void clear_playlist() ;
   const ::proto::Playlist& playlist() const;
@@ -743,23 +768,12 @@ class CacheNode final : public ::google::protobuf::Message
   ::proto::Playlist* PROTOBUF_NONNULL _internal_mutable_playlist();
 
   public:
-  // bool is_tracked = 3;
-  bool has_is_tracked() const;
-  void clear_is_tracked() ;
-  bool is_tracked() const;
-  void set_is_tracked(bool value);
-
-  private:
-  bool _internal_is_tracked() const;
-  void _internal_set_is_tracked(bool value);
-
-  public:
   // @@protoc_insertion_point(class_scope:proto.CacheNode)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   1, 28,
+  static const ::google::protobuf::internal::TcParseTable<3, 5,
+                                   1, 40,
                                    2>
       _table_;
 
@@ -781,9 +795,10 @@ class CacheNode final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr next_;
+    ::google::protobuf::internal::ArenaStringPtr prev_;
+    ::google::protobuf::internal::ArenaStringPtr items_id_;
     ::google::protobuf::internal::ArenaStringPtr id_hash_;
     ::proto::Playlist* PROTOBUF_NULLABLE playlist_;
-    bool is_tracked_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -1134,9 +1149,42 @@ inline void CacheNode::_internal_set_next(::absl::string_view value) {
   _impl_.next_.Set(value, GetArena());
 }
 
-// .proto.Playlist playlist = 2;
+// string prev = 2;
+inline bool CacheNode::has_prev() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void CacheNode::clear_prev() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.prev_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view CacheNode::prev() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheNode.prev)
+  return _internal_prev();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheNode::set_prev(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.prev_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheNode.prev)
+}
+inline ::absl::string_view CacheNode::_internal_prev() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.prev_.Get();
+}
+inline void CacheNode::_internal_set_prev(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.prev_.Set(value, GetArena());
+}
+
+// .proto.Playlist playlist = 3;
 inline bool CacheNode::has_playlist() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
   PROTOBUF_ASSUME(!value || _impl_.playlist_ != nullptr);
   return value;
 }
@@ -1144,7 +1192,7 @@ inline void CacheNode::clear_playlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.playlist_ != nullptr) _impl_.playlist_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
+                  0x00000010U);
 }
 inline const ::proto::Playlist& CacheNode::_internal_playlist() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -1163,16 +1211,16 @@ inline void CacheNode::unsafe_arena_set_allocated_playlist(
   }
   _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.CacheNode.playlist)
 }
 inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::release_playlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::proto::Playlist* released = _impl_.playlist_;
   _impl_.playlist_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -1192,7 +1240,7 @@ inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::unsafe_arena_release_play
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:proto.CacheNode.playlist)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::proto::Playlist* temp = _impl_.playlist_;
   _impl_.playlist_ = nullptr;
   return temp;
@@ -1207,7 +1255,7 @@ inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::_internal_mutable_playlist
 }
 inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::mutable_playlist()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::proto::Playlist* _msg = _internal_mutable_playlist();
   // @@protoc_insertion_point(field_mutable:proto.CacheNode.playlist)
   return _msg;
@@ -1224,54 +1272,58 @@ inline void CacheNode::set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLAB
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   }
 
   _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
   // @@protoc_insertion_point(field_set_allocated:proto.CacheNode.playlist)
 }
 
-// bool is_tracked = 3;
-inline bool CacheNode::has_is_tracked() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
+// string items_id = 4;
+inline bool CacheNode::has_items_id() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
   return value;
 }
-inline void CacheNode::clear_is_tracked() {
+inline void CacheNode::clear_items_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.is_tracked_ = false;
+  _impl_.items_id_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000004U);
 }
-inline bool CacheNode::is_tracked() const {
-  // @@protoc_insertion_point(field_get:proto.CacheNode.is_tracked)
-  return _internal_is_tracked();
+inline ::absl::string_view CacheNode::items_id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheNode.items_id)
+  return _internal_items_id();
 }
-inline void CacheNode::set_is_tracked(bool value) {
-  _internal_set_is_tracked(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  // @@protoc_insertion_point(field_set:proto.CacheNode.is_tracked)
-}
-inline bool CacheNode::_internal_is_tracked() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.is_tracked_;
-}
-inline void CacheNode::_internal_set_is_tracked(bool value) {
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheNode::set_items_id(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.is_tracked_ = value;
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.items_id_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheNode.items_id)
+}
+inline ::absl::string_view CacheNode::_internal_items_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.items_id_.Get();
+}
+inline void CacheNode::_internal_set_items_id(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.items_id_.Set(value, GetArena());
 }
 
-// bytes id_hash = 4;
+// bytes id_hash = 5;
 inline bool CacheNode::has_id_hash() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
   return value;
 }
 inline void CacheNode::clear_id_hash() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.id_hash_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
+                  0x00000008U);
 }
 inline ::absl::string_view CacheNode::id_hash() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -1281,7 +1333,7 @@ inline ::absl::string_view CacheNode::id_hash() const
 template <typename Arg_>
 PROTOBUF_ALWAYS_INLINE void CacheNode::set_id_hash(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   _impl_.id_hash_.Set(static_cast<Arg_&&>(arg), GetArena());
   // @@protoc_insertion_point(field_set:proto.CacheNode.id_hash)
 }
@@ -1291,7 +1343,7 @@ inline ::absl::string_view CacheNode::_internal_id_hash() const {
 }
 inline void CacheNode::_internal_set_id_hash(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   _impl_.id_hash_.Set(value, GetArena());
 }
 

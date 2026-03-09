@@ -101,11 +101,16 @@ inline constexpr CacheNode::Impl_::Impl_(
         next_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        prev_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        items_id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         id_hash_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
-        playlist_{nullptr},
-        is_tracked_{false} {}
+        playlist_{nullptr} {}
 
 template <typename>
 PROTOBUF_CONSTEXPR CacheNode::CacheNode(::_pbi::ConstantInitialized)
@@ -160,15 +165,17 @@ const ::uint32_t
         3,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_._has_bits_),
-        7, // hasbit index offset
+        8, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.next_),
+        PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.prev_),
         PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.playlist_),
-        PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.is_tracked_),
+        PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.items_id_),
         PROTOBUF_FIELD_OFFSET(::proto::CacheNode, _impl_.id_hash_),
         0,
+        1,
+        4,
         2,
         3,
-        1,
 };
 
 static const ::_pbi::MigrationSchema
@@ -188,16 +195,16 @@ const char descriptor_table_protodef_playlist_5fcache_2eproto[] ABSL_ATTRIBUTE_S
     "ad\022\014\n\004next\030\001 \001(\t\022\014\n\004etag\030\002 \001(\t\022\017\n\007sid_le"
     "n\030\003 \001(\r\"h\n\010Playlist\022\n\n\002id\030\001 \001(\t\022\014\n\004etag\030"
     "\002 \001(\t\022\r\n\005title\030\003 \001(\t\022\022\n\nis_private\030\004 \001(\010"
-    "\022\r\n\005items\030\005 \001(\005\022\020\n\010short_id\030\006 \001(\t\"a\n\tCac"
-    "heNode\022\014\n\004next\030\001 \001(\t\022!\n\010playlist\030\002 \001(\0132\017"
-    ".proto.Playlist\022\022\n\nis_tracked\030\003 \001(\010\022\017\n\007i"
-    "d_hash\030\004 \001(\014b\010editionsp\351\007"
+    "\022\r\n\005items\030\005 \001(\005\022\020\n\010short_id\030\006 \001(\t\"m\n\tCac"
+    "heNode\022\014\n\004next\030\001 \001(\t\022\014\n\004prev\030\002 \001(\t\022!\n\010pl"
+    "aylist\030\003 \001(\0132\017.proto.Playlist\022\020\n\010items_i"
+    "d\030\004 \001(\t\022\017\n\007id_hash\030\005 \001(\014b\010editionsp\351\007"
 };
 static ::absl::once_flag descriptor_table_playlist_5fcache_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_playlist_5fcache_2eproto = {
     false,
     false,
-    305,
+    317,
     descriptor_table_protodef_playlist_5fcache_2eproto,
     "playlist_cache.proto",
     &descriptor_table_playlist_5fcache_2eproto_once,
@@ -987,6 +994,8 @@ PROTOBUF_NDEBUG_INLINE CacheNode::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         next_(arena, from.next_),
+        prev_(arena, from.prev_),
+        items_id_(arena, from.items_id_),
         id_hash_(arena, from.id_hash_) {}
 
 CacheNode::CacheNode(
@@ -1003,10 +1012,9 @@ CacheNode::CacheNode(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.playlist_ = (CheckHasBit(cached_has_bits, 0x00000004U))
+  _impl_.playlist_ = (CheckHasBit(cached_has_bits, 0x00000010U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.playlist_)
                 : nullptr;
-  _impl_.is_tracked_ = from._impl_.is_tracked_;
 
   // @@protoc_insertion_point(copy_constructor:proto.CacheNode)
 }
@@ -1015,16 +1023,13 @@ PROTOBUF_NDEBUG_INLINE CacheNode::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
         next_(arena),
+        prev_(arena),
+        items_id_(arena),
         id_hash_(arena) {}
 
 inline void CacheNode::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
-  ::memset(reinterpret_cast<char*>(&_impl_) +
-               offsetof(Impl_, playlist_),
-           0,
-           offsetof(Impl_, is_tracked_) -
-               offsetof(Impl_, playlist_) +
-               sizeof(Impl_::is_tracked_));
+  _impl_.playlist_ = {};
 }
 CacheNode::~CacheNode() {
   // @@protoc_insertion_point(destructor:proto.CacheNode)
@@ -1038,6 +1043,8 @@ inline void CacheNode::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.next_.Destroy();
+  this_._impl_.prev_.Destroy();
+  this_._impl_.items_id_.Destroy();
   this_._impl_.id_hash_.Destroy();
   delete this_._impl_.playlist_;
   this_._impl_.~Impl_();
@@ -1086,16 +1093,16 @@ CacheNode::GetClassData() const {
   return CacheNode_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 1, 28, 2>
+const ::_pbi::TcParseTable<3, 5, 1, 40, 2>
 CacheNode::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(CacheNode, _impl_._has_bits_),
     0, // no _extensions_
-    4, 24,  // max_field_number, fast_idx_mask
+    5, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967280,  // skipmap
+    4294967264,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    5,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     CacheNode_class_data_.base(),
@@ -1105,41 +1112,52 @@ CacheNode::_table_ = {
     ::_pbi::TcParser::GetTable<::proto::CacheNode>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // bytes id_hash = 4;
-    {::_pbi::TcParser::FastBS1,
-     {34, 1, 0,
-      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.id_hash_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     // string next = 1;
     {::_pbi::TcParser::FastUS1,
      {10, 0, 0,
       PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.next_)}},
-    // .proto.Playlist playlist = 2;
+    // string prev = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 1, 0,
+      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.prev_)}},
+    // .proto.Playlist playlist = 3;
     {::_pbi::TcParser::FastMtS1,
-     {18, 2, 0,
+     {26, 4, 0,
       PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.playlist_)}},
-    // bool is_tracked = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(CacheNode, _impl_.is_tracked_), 3>(),
-     {24, 3, 0,
-      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.is_tracked_)}},
+    // string items_id = 4;
+    {::_pbi::TcParser::FastUS1,
+     {34, 2, 0,
+      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.items_id_)}},
+    // bytes id_hash = 5;
+    {::_pbi::TcParser::FastBS1,
+     {42, 3, 0,
+      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.id_hash_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // string next = 1;
     {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.next_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // .proto.Playlist playlist = 2;
-    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.playlist_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
-    // bool is_tracked = 3;
-    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.is_tracked_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
-    // bytes id_hash = 4;
-    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.id_hash_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kBytes | ::_fl::kRepAString)},
+    // string prev = 2;
+    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.prev_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // .proto.Playlist playlist = 3;
+    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.playlist_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    // string items_id = 4;
+    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.items_id_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // bytes id_hash = 5;
+    {PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.id_hash_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kBytes | ::_fl::kRepAString)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::proto::Playlist>()},
   }},
   {{
-    "\17\4\0\0\0\0\0\0"
+    "\17\4\4\0\10\0\0\0"
     "proto.CacheNode"
     "next"
+    "prev"
+    "items_id"
   }},
 };
 PROTOBUF_NOINLINE void CacheNode::Clear() {
@@ -1150,19 +1168,24 @@ PROTOBUF_NOINLINE void CacheNode::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _impl_.next_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
-      _impl_.id_hash_.ClearNonDefaultToEmpty();
+      _impl_.prev_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      _impl_.items_id_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      _impl_.id_hash_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       ABSL_DCHECK(_impl_.playlist_ != nullptr);
       _impl_.playlist_->Clear();
     }
   }
-  _impl_.is_tracked_ = false;
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -1194,24 +1217,33 @@ PROTOBUF_NOINLINE void CacheNode::Clear() {
     target = stream->WriteStringMaybeAliased(1, _s, target);
   }
 
-  // .proto.Playlist playlist = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+  // string prev = 2;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    const ::absl::string_view _s = this_._internal_prev();
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+        _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "proto.CacheNode.prev");
+    target = stream->WriteStringMaybeAliased(2, _s, target);
+  }
+
+  // .proto.Playlist playlist = 3;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-        2, *this_._impl_.playlist_, this_._impl_.playlist_->GetCachedSize(), target,
+        3, *this_._impl_.playlist_, this_._impl_.playlist_->GetCachedSize(), target,
         stream);
   }
 
-  // bool is_tracked = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteBoolToArray(
-        3, this_._internal_is_tracked(), target);
+  // string items_id = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    const ::absl::string_view _s = this_._internal_items_id();
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+        _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "proto.CacheNode.items_id");
+    target = stream->WriteStringMaybeAliased(4, _s, target);
   }
 
-  // bytes id_hash = 4;
-  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+  // bytes id_hash = 5;
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
     const ::absl::string_view _s = this_._internal_id_hash();
-    target = stream->WriteBytesMaybeAliased(4, _s, target);
+    target = stream->WriteBytesMaybeAliased(5, _s, target);
   }
 
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -1239,20 +1271,29 @@ PROTOBUF_NOINLINE void CacheNode::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  total_size += static_cast<bool>(0x00000008U & cached_has_bits) * 2;
-  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
     // string next = 1;
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                       this_._internal_next());
     }
-    // bytes id_hash = 4;
+    // string prev = 2;
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                      this_._internal_prev());
+    }
+    // string items_id = 4;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                      this_._internal_items_id());
+    }
+    // bytes id_hash = 5;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
                                       this_._internal_id_hash());
     }
-    // .proto.Playlist playlist = 2;
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    // .proto.Playlist playlist = 3;
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.playlist_);
     }
@@ -1276,23 +1317,26 @@ void CacheNode::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _this->_internal_set_next(from._internal_next());
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
-      _this->_internal_set_id_hash(from._internal_id_hash());
+      _this->_internal_set_prev(from._internal_prev());
     }
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      _this->_internal_set_items_id(from._internal_items_id());
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      _this->_internal_set_id_hash(from._internal_id_hash());
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       ABSL_DCHECK(from._impl_.playlist_ != nullptr);
       if (_this->_impl_.playlist_ == nullptr) {
         _this->_impl_.playlist_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.playlist_);
       } else {
         _this->_impl_.playlist_->MergeFrom(*from._impl_.playlist_);
       }
-    }
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
-      _this->_impl_.is_tracked_ = from._impl_.is_tracked_;
     }
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
@@ -1315,13 +1359,10 @@ void CacheNode::InternalSwap(CacheNode* PROTOBUF_RESTRICT PROTOBUF_NONNULL other
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   _impl_.next_.InternalSwap(&_impl_.next_, &other->_impl_.next_, arena);
+  _impl_.prev_.InternalSwap(&_impl_.prev_, &other->_impl_.prev_, arena);
+  _impl_.items_id_.InternalSwap(&_impl_.items_id_, &other->_impl_.items_id_, arena);
   _impl_.id_hash_.InternalSwap(&_impl_.id_hash_, &other->_impl_.id_hash_, arena);
-  ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.is_tracked_)
-      + sizeof(CacheNode::_impl_.is_tracked_)
-      - PROTOBUF_FIELD_OFFSET(CacheNode, _impl_.playlist_)>(
-          reinterpret_cast<char*>(&_impl_.playlist_),
-          reinterpret_cast<char*>(&other->_impl_.playlist_));
+  swap(_impl_.playlist_, other->_impl_.playlist_);
 }
 
 ::google::protobuf::Metadata CacheNode::GetMetadata() const {

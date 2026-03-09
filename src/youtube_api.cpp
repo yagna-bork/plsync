@@ -46,7 +46,7 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 		{
 			"fields", 
 			"etag,nextPageToken,items("
-				"id,etag,snippet/title,status/privacyStatus,contentDetails/itemCount"
+				"id,snippet/title,status/privacyStatus,contentDetails/itemCount"
 			")"
 		},
 	};
@@ -61,7 +61,9 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 		for (nlohmann::json &playlist: resp["items"]) {
 			playlists.emplace_back(
 				playlist["id"], 
-				playlist["etag"], 
+				// the api has a seperate etag for the resource containing a single playlist
+				// and the playlist resource itself, only get former after call to get_playlist
+				/*etag=*/"", 
 				playlist["snippet"]["title"], 
 				playlist["status"]["privacyStatus"] == "private", 
 				playlist["contentDetails"]["itemCount"]
