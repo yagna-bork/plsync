@@ -15,6 +15,20 @@ namespace fs = std::filesystem;
 
 namespace PlaylistCache {
 
+void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
+	pl.id = std::string(proto_pl.id());
+	pl.etag = std::string(proto_pl.etag());
+	pl.title = std::string(proto_pl.title());
+	pl.is_private = proto_pl.is_private();
+	pl.items = proto_pl.items();
+}
+
+Node::Node(const proto::CacheNode& proto_node)
+	: id_hash(proto_node.id_hash()), items_id(proto_node.items_id()), was_changed(false)
+{
+	update_playlist(playlist, proto_node.playlist());
+}
+
 inline fs::path dir(Platform plat) { 
 	fs::path cache_dir = get_setting("cache_dir");
 	return cache_dir / "playlist" / platform_title_lower(plat); 
@@ -22,7 +36,7 @@ inline fs::path dir(Platform plat) {
 
 inline fs::path head_path(Platform plat) { return dir(plat) / "HEAD"; }
 
-inline fs::path node_path(Node* node, Platform plat) {
+inline fs::path node_path(const Node* node, Platform plat) {
 	assert(node && !node->playlist.id.empty());
 	return dir(plat) / node->playlist.id;
 }
@@ -61,22 +75,6 @@ inline void free_and_advance_node(Node** ptr) {
 	Node* tmp = *ptr;
 	*ptr = (*ptr)->next;
 	delete tmp;
-}
-
-void update_playlist(Playlist& pl, const Playlist& other_pl) {
-	pl.id = other_pl.id;
-	pl.etag = other_pl.etag;
-	pl.title = other_pl.title;
-	pl.is_private = other_pl.is_private;
-	pl.items = other_pl.items;
-}
-
-void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
-	pl.id = std::string(proto_pl.id());
-	pl.etag = std::string(proto_pl.etag());
-	pl.title = std::string(proto_pl.title());
-	pl.is_private = proto_pl.is_private();
-	pl.items = proto_pl.items();
 }
 
 proto::CacheNode create_proto_node(const Node* node) {
@@ -121,10 +119,7 @@ Head* load(Platform plat) {
 		std::ifstream f(dir(plat) / next_id, std::ios::binary);
 		proto_node.ParseFromIstream(&f);
 
-		auto new_node = new Node(
-			std::string(proto_node.id_hash()), std::string(proto_node.items_id()), false
-		);
-		update_playlist(new_node->playlist, proto_node.playlist());
+		auto new_node = new Node(proto_node);
 		node->next = new_node;
 		set_prev(new_node, node);
 		next_id = std::string(proto_node.next());
@@ -198,7 +193,7 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 		if (id_to_idx.count(id)) {
 			std::size_t i = id_to_idx[id];
 			is_new[i] = false;
-			update_playlist(*curr_write, playlists[i]);
+			*curr_write = playlists[i];
 			++prev; ++curr; ++curr_write;
 			continue;
 		}
@@ -221,11 +216,8 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 		if (!is_new[i]) {
 			continue;
 		}
-		std::string id_hash;
-		sha256(playlists[i].id, id_hash);
-		Node* new_node = new Node(id_hash, "", true);
-		update_playlist(new_node->playlist, playlists[i]);
 
+		Node* new_node = new Node(playlists[i]);
 		if (curr.ptr.is_head) {
 			set_prev(new_node, curr.ptr.head);
 		} else {
@@ -289,23 +281,18 @@ Node load_node(const std::string& id, Platform plat) {
 		std::ifstream f(dir(plat) / id, std::ios::binary);
 		proto_node.ParseFromIstream(&f);
 	}
-	Node node(
-		std::string(proto_node.id_hash()), std::string(proto_node.items_id()), false
-	);
+	Node node(proto_node);
 	update_playlist(node.playlist, proto_node.playlist());
 	return node;
 }
 
-void update_node(Node& node, Platform plat, const Playlist& playlist) {
-	update_playlist(node.playlist, playlist);
-	auto proto_node = create_proto_node(&node);
-
+void save_node(Node& node, Platform plat) {
 	proto::CacheNode tmp;
+	auto proto_node = create_proto_node(&node);
 	std::fstream f(dir(plat) / node.playlist.id, std::ios::binary|std::ios::out|std::ios::in);
 	tmp.ParseFromIstream(&f);
 	proto_node.set_next(tmp.next());
 	proto_node.set_prev(tmp.prev());
-	
 	f.clear();
 	f.seekp(0);
 	proto_node.SerializeToOstream(&f);
@@ -347,6 +334,34 @@ void delete_node(Node& node, Platform plat) {
 		tmp.SerializeToOstream(&file);
 	}
 	node = Node();
+}
+
+void create_node(const Node& node, Platform plat) {
+	proto::CacheHead head;
+	std::string next;
+	{
+		std::fstream file(head_path(plat), std::ios::binary|std::ios::in|std::ios::out);
+		head.ParseFromIstream(&file);
+		next = std::string(head.next());
+		head.set_next(node.playlist.id);
+		head.SerializeToOstream(&file);
+	}
+
+	auto proto_node = create_proto_node(&node);
+	proto_node.set_next(next);
+	proto_node.set_prev("HEAD");
+	{
+		std::ofstream file(node_path(&node, plat), std::ios::binary);
+		proto_node.SerializeToOstream(&file);
+	}
+	
+	if (next.empty()) {
+		return;
+	}
+	std::fstream file(dir(plat) / next, std::ios::binary|std::ios::in|std::ios::out);
+	proto_node.ParseFromIstream(&file);
+	proto_node.set_prev(node.playlist.id);
+	proto_node.SerializeToOstream(&file);
 }
 
 const_iterator Handle::cbefore_begin() { return PlaylistCache::cbefore_begin(head); }

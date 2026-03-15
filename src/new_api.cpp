@@ -100,11 +100,59 @@ long GET(
 		}
 	}
 
+	// TODO use Accept header instead 
 	std::string resp = decompress_gzip(resp_path);
 	if (is_response_json(curl) && !resp.empty()) {
 		jresp = nlohmann::json::parse(resp);
 	}
 	return status_code(curl);
+}
+
+long POST(
+	CURL* curl, 
+	const std::string &url, 
+	const std::string& data, 
+	nlohmann::json &jresp, 
+	const std::string& application_type,
+	const Params &params,
+	const std::string& access_tkn
+) {
+	curl_easy_reset(curl);
+
+	std::string resp;
+	curl_easy_setopt(curl, CURLOPT_URL, append_params(url, params).c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp);
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+
+	curl_slist_raii headers;
+	headers.append("Accept: application/json");
+	if (!application_type.empty()) {
+		headers.append("Content-Type: " + application_type);
+	}
+	if (!access_tkn.empty()) {
+		headers.append("Authorization: Bearer " + access_tkn);
+	}
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
+
+	curl_easy_perform(curl);
+	jresp = nlohmann::json::parse(resp);
+	return status_code(curl);
+}
+
+std::string fields_to_string(const Fields& fields) {
+	std::string fields_str;
+	for (int i = 0; i != fields.size(); i++) {
+		const auto &field = fields[i];
+		if (i > 0) {
+			fields_str.push_back('&');
+		}
+		fields_str.append(field.first);
+		fields_str.push_back('=');
+		fields_str.append(field.second);
+	}
+	return fields_str;
 }
 
 }

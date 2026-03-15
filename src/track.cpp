@@ -13,6 +13,7 @@
 
 using PlatSidPair = std::pair<Platform, std::string>;
 using PlatSidPairs = std::vector<PlatSidPair>;
+using namespace PlaylistCache;
 
 static void print_usage_exit() {
 	std::cout << "usage: plsync track <platform> <playlist-id>\n\n"
@@ -56,14 +57,16 @@ PlatSidPairs parse_args(int argc, char *argv[]) {
 }
 
 int run_track(int argc, char *argv[]) {
+	// TODO make map
 	PlatSidPairs plat_sid_pairs = parse_args(argc, argv);
 	if (plat_sid_pairs.size() < 2) {
 		print_usage_exit();
 	}
 	std::shared_ptr<CURL> curl = get_curl();
 
+	std::unordered_map<Platform, Node> plat_to_node;
 	std::string items_id;
-	std::string playlist_title;
+	std::string playlist_title = "test-pl";
 	for (const auto& pair: plat_sid_pairs) {
 		Platform plat = pair.first;
 		const auto& sid = pair.second;
@@ -81,7 +84,7 @@ int run_track(int argc, char *argv[]) {
 		if (id.empty()) {
 			print_usage_exit();
 		}
-		PlaylistCache::Node node = PlaylistCache::load_node(id, plat);
+		Node node = load_node(id, plat);
 	
 		// check playlist wasn't deleted
 		std::string access_tkn;
@@ -105,7 +108,8 @@ int run_track(int argc, char *argv[]) {
 				delete_node(node, plat);
 				print_usage_exit();
 			} else {
-				PlaylistCache::update_node(node, plat, playlist);
+				node.playlist = playlist;
+				save_node(node, plat);
 			}
 		}
 		
@@ -121,6 +125,7 @@ int run_track(int argc, char *argv[]) {
 		if (playlist_title.empty()) {
 			playlist_title = node.playlist.title;
 		}
+		plat_to_node[plat] = std::move(node);
 	}
 	
 	// create playlists for platforms where it wasn't provided
@@ -128,9 +133,24 @@ int run_track(int argc, char *argv[]) {
 		if (!pair.second.empty()) {
 			continue;
 		}
-		// playlist = create_playlist(playlist_title)
-		// create_node(playlist)
-		// plat_to_id.emplace_back(plat, id)
+
+		Platform plat = pair.first;
+		std::string access_tkn;
+		if (!get_or_fetch_access_tkn(plat, curl, access_tkn)) {
+			std::cerr << "Couldn't get " << platform_title(plat) << " access token. Please try again\n";
+			return 1;
+		}
+
+		Playlist playlist;
+		try {
+			playlist = NewYoutubeAPI::create_playlist(curl.get(), access_tkn, playlist_title);
+		} catch (const API::RequestError& e) {
+			std::cerr << "Something went wrong. Please try again.\n";
+			return 1;
+		}
+		Node node(playlist);
+		create_node(node, plat);
+		plat_to_node[plat] = std::move(node);
 	}
 	return 0;
 }

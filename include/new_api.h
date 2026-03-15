@@ -10,7 +10,8 @@ public:
 	RequestError(const char *msg) : std::runtime_error(msg) {}
 };
 
-typedef std::vector<std::pair<std::string, std::string>> Params;
+using Params = std::vector<std::pair<std::string, std::string>>;
+using Fields = Params;
 
 /* 
  * Performs a GET request at the specified url.
@@ -30,5 +31,25 @@ long GET(
 	const std::string &etag = ""
 );
 
-}
+/*
+ * Performs a POST request at the specified endpoint.
+ * This will use the default urlencoded POST type unless 
+ * specified in application_type.
+ * Throws RequestError if the request couldn't be made.
+ * Returns the http response status code and stores 
+ * the result in resp.
+ */
+long POST(
+	CURL* curl,
+	const std::string &url, 
+	const std::string& data, 
+	nlohmann::json &resp, 
+	const std::string& application_type = "",
+	const Params &params = {},
+	const std::string &access_tkn = ""
+);
+
+std::string fields_to_string(const Fields& fields);
+
+} // namespace API
 #endif

@@ -1,13 +1,15 @@
 #include "../include/new_youtube_api.h"
 #include "../include/new_api.h"
 
+using namespace API;
+
 namespace NewYoutubeAPI {
 
 bool get_playlist(
 	CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
 ) {
 	std::string url = base_url + "/playlists";
-	API::Params params = {
+	Params params = {
 		{"id", id},
 		{"part", "id,snippet,status,contentDetails"},
 		{
@@ -18,7 +20,7 @@ bool get_playlist(
 		},
 	};
 	nlohmann::json resp;
-	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
+	long status_code = GET(curl, url, resp, params, access_tkn, etag);
 
 	if (status_code == 304L) {
 		return false;
@@ -36,8 +38,30 @@ bool get_playlist(
 		res.items = resp["items"][0]["contentDetails"]["itemCount"];
 		return true;
 	} else {
-		throw API::RequestError("Invalid response from youtube");
+		throw RequestError("Invalid response from youtube");
 	}
+}
+
+Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string& title) {
+	std::string url = base_url + "/playlists";
+	Params params = {{"part", "id,snippet,status,contentDetails"}};
+	nlohmann::json data;
+	data["snippet"]["title"] = title;
+	data["snippet"]["description"] = "Created by plsync";
+	data["status"]["privacyStatus"] = "private";
+
+	nlohmann::json resp;
+	long status_code = POST(curl, url, data.dump(), resp, "application/json", params, access_tkn);
+	if (status_code != 200) {
+		throw RequestError("Invalid response from google");
+	}
+	return Playlist(
+		std::move(resp["id"]),
+		"",
+		std::move(resp["snippet"]["title"]),
+		resp["status"]["privacyStatus"] == "private",
+		resp["contentDetails"]["itemCount"]
+	);
 }
 
 }

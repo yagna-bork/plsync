@@ -2,6 +2,8 @@
 #define GUARD_PLAYLIST_CACHE_H 
 #include "models.h"
 #include "platform.h"
+#include "playlist_cache.pb.h"
+#include "util.h"
 #include <cassert>
 #include <cstddef>
 #include <vector>
@@ -28,11 +30,8 @@ struct Node {
 	std::string id_hash;
 
 	Node() {}
-
-	Node(const std::string& id_hash, const std::string& items_id, bool was_changed)
-		: id_hash(id_hash), items_id(items_id), was_changed(was_changed)
-	{
-	}
+	Node(const Playlist& pl) : was_changed(true), playlist(pl) { sha256(playlist.id, id_hash); }
+	Node(const proto::CacheNode& proto_node);
 };
 
 struct Head {
@@ -47,9 +46,10 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 void cleanup(Head* head, Platform plat);
 
 /* Providing an invalid id is undefined behaviour */
-Node load_node(const std::string& id, Platform plat); 
-void update_node(Node& node, Platform plat, const Playlist& playlist); 
-void delete_node(Node& id, Platform plat); 
+Node load_node(const std::string& id, Platform plat);
+void save_node(Node& node, Platform plat);
+void delete_node(Node& id, Platform plat);
+void create_node(const Node& node, Platform plat);
 
 /* Determine min characters of id_hash that make them all unique */
 std::size_t calculate_short_id_len(Head* head);

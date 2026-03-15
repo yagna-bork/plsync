@@ -15,5 +15,7 @@ const std::string base_url = "https://www.googleapis.com/youtube/v3";
  */
 bool get_playlist(CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
 
+Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string& title);
+
 }
 #endif
