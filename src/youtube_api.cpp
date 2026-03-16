@@ -49,6 +49,7 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 				"id,snippet/title,status/privacyStatus,contentDetails/itemCount"
 			")"
 		},
+		{"maxResults", "50"}
 	};
 	nlohmann::json resp;
 	std::string etag_copy = etag;

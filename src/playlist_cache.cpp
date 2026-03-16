@@ -4,12 +4,14 @@
 #include "../include/playlist_cache.pb.h"
 #include "../include/util.h"
 #include <cassert>
+#include <algorithm>
 #include <vector>
 #include <filesystem>
 #include <ios>
 #include <fstream>
 #include <deque>
 #include <unordered_map>
+#include <iterator>
 
 namespace fs = std::filesystem;
 
@@ -101,7 +103,7 @@ iterator end() { return iterator(); }
 Head* load(Platform plat) { 
 	proto::CacheHead proto_head;
 	{
-		auto f = ensure_file<std::ifstream>(head_path(plat), std::ios::binary);
+		auto f = ensure_bin_file<std::ifstream>(head_path(plat));
 		proto_head.ParseFromIstream(&f);
 	}
 	Head* head = new Head;
@@ -242,6 +244,9 @@ std::size_t calculate_short_id_len(Head* head) {
 	std::unordered_map<std::string, std::vector<std::size_t>> sid_groups;
 	std::size_t sid_len = 0;
 	while (!collision_idxs.empty()) {
+		std::ostream_iterator<std::size_t> out(std::cout, ",");
+		std::copy(collision_idxs.begin(), collision_idxs.end(), out);
+		std::cout << '\n';
 		sid_len++;
 		sid_groups.clear();
 		for (std::size_t idx: collision_idxs) {
@@ -286,7 +291,7 @@ Node load_node(const std::string& id, Platform plat) {
 	return node;
 }
 
-void save_node(Node& node, Platform plat) {
+void save_node(const Node& node, Platform plat) {
 	proto::CacheNode tmp;
 	auto proto_node = create_proto_node(&node);
 	std::fstream f(dir(plat) / node.playlist.id, std::ios::binary|std::ios::out|std::ios::in);
@@ -340,7 +345,7 @@ void create_node(const Node& node, Platform plat) {
 	proto::CacheHead head;
 	std::string next;
 	{
-		std::fstream file(head_path(plat), std::ios::binary|std::ios::in|std::ios::out);
+		auto file = ensure_bin_file<std::fstream>(head_path(plat), std::ios::in | std::ios::out);
 		head.ParseFromIstream(&file);
 		next = std::string(head.next());
 		head.set_next(node.playlist.id);

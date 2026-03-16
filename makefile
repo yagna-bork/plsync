@@ -6,14 +6,15 @@ OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
 			obj/playlist_cache.o obj/playlist_cache.pb.o \
 			obj/sid_to_id_map.o obj/sid_to_id_map.pb.o obj/track.o obj/new_api.o \
-			obj/new_youtube_api.o obj/new_spotify_api.o
+			obj/new_youtube_api.o obj/new_spotify_api.o obj/playlist_items.pb.o \
+			obj/playlist_items.o	
 TEST_OBJS = obj/token_store.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
 # TODO in prod enable NDEBUG to ignore asserts and ignore DEBUG_SYM
-DEBUG_OR_PROD = #$(DEBUG_SYM)
+DEBUG_OR_PROD = $(DEBUG_SYM)
 
 
 # TODO for prod need to make vcpkg install within project
@@ -85,6 +86,12 @@ obj/new_youtube_api.o: src/new_youtube_api.cpp include/new_youtube_api.h
 
 obj/new_spotify_api.o: src/new_spotify_api.cpp include/new_spotify_api.h
 	clang++ -o obj/new_spotify_api.o -c $(CXX) src/new_spotify_api.cpp $(DEBUG_OR_PROD)
+
+obj/playlist_items.pb.o: src/playlist_items.pb.cc include/playlist_items.pb.h
+	clang++ -o obj/playlist_items.pb.o -c $(CXX) src/playlist_items.pb.cc $(DEBUG_OR_PROD)
+
+obj/playlist_items.o: src/playlist_items.cpp include/playlist_items.h
+	clang++ -o obj/playlist_items.o -c $(CXX) src/playlist_items.cpp $(DEBUG_OR_PROD)
 
 # tests
 # TODO for prod need to make vcpkg install within project

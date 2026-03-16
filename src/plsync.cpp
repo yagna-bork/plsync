@@ -24,7 +24,7 @@ static void print_usage() {
 			  << "Avaliable commands:\n" 
 			  << "  init       " << init::description << "\n\n"
 			  << "  untracked  " << untracked::description << "\n\n"
-			  << "  track      " << track::description << '\n';
+			  << "  track      " << track_description << '\n';
 }
 
 static const char *parse_args_init_only(int argc, char *argv[]) {

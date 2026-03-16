@@ -2,33 +2,49 @@
 #include "../include/config.h"
 #include "../include/models.h"
 #include <cstdint>
+#include <algorithm>
 #include <string>
+#include <string>
+#include <unordered_set>
+#include <curl/curl.h>
+
+// TODO copy into new_spotify_api
+static std::string read_etag_header(CURL* curl) {
+	struct curl_header* header;
+	CURLHcode status = curl_easy_header(curl, "etag", 0, CURLH_HEADER, -1, &header);
+	if (status == CURLHE_MISSING) {
+		return "";
+	}
+	if (status != CURLHE_OK) {
+		throw BaseAPI::RequestError("couldn't read header");
+	}
+	return std::string(header->value);
+}
 
 long SpotifyAPI::paginated_GET(
 	const std::string &endpoint, nlohmann::json &initial_page, Params &params, std::string &etag
 ) {
-	std::size_t limit = 20, offset = 0;
+	std::size_t limit = 50, offset = 0;
 	params.emplace_back("limit", std::to_string(limit));
 	params.emplace_back("offset", std::to_string(offset));
 	
 	long status_code = GET(endpoint, initial_page, params, access_tkn, etag);
-	if (status_code != 200) {
+	if (status_code < 200 || status_code >= 300) {
 		return status_code;
 	}
-	// TODO use header, see requests/spotify_create_playlists_resp.json
-	etag = initial_page.value("snapshot_id", "");
+	etag = read_etag_header(curl.get());
 	std::size_t total = initial_page["total"];
 
 	for (offset = limit; offset < total; offset += limit) {
 		params.back().second = std::to_string(offset);
 		nlohmann::json next_page;
 		status_code = GET(endpoint, next_page, params, access_tkn);
-		if (status_code != 200) {
+		if (status_code < 200 || status_code >= 300) {
 			return status_code;
 		}
 		std::move(next_page["items"].begin(), next_page["items"].end(), std::back_inserter(initial_page["items"]));
 	}
-	return 200L;
+	return status_code;
 }
 
 const std::string &SpotifyAPI::get_user_id() {
@@ -49,13 +65,18 @@ bool SpotifyAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 	if(paginated_GET("/me/playlists", resp, params, etag) != 200L) {
 		throw RequestError("Invalid response from spotify");
 	}
-	
+	std::unordered_set<std::string> ids;
 	for (auto &plist: resp["items"]) {
 		// Ignore playlists followed by user, reserve that for a 
 		// different method to be consistent across platforms
 		if (plist["owner"]["id"] != user_id) {
 			continue;
 		}
+		// deal with duplicate playlists across different pages bug
+		if (ids.count(plist["id"])) {
+			continue;
+		}
+		ids.insert(plist["id"]);
 		playlists.emplace_back(
 			std::move(plist["id"]), 
 			std::move(plist["snapshot_id"]), 
@@ -98,7 +119,7 @@ BaseAuthAPI::AccessTokenResponse SpotifyAuthAPI::refresh_access_tkn(const std::s
 	std::vector<std::pair<std::string, std::string>> fields = {
 		{"client_id", get_setting("client_id", platform)}, 
 		{"grant_type", "refresh_token"},
-		{"refresh_token", refresh_tkn},
+		{"refresh_token", refresh_tkn}
 	};
 	
 	nlohmann::json resp;

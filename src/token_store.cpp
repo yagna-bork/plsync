@@ -100,5 +100,30 @@ bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl, std:
 
 	save_access_tkn(platform, resp.access_tkn, resp.access_duration);
 	tkn = std::move(resp.access_tkn);
+	if (platform == Platform::SPOTIFY && !save_refresh_tkn(platform, resp.refresh_tkn)) {
+		return false;
+	}
 	return true;
+}
+
+std::string get_or_refresh_access_tkn(Platform platform, std::shared_ptr<CURL> curl) {
+	std::string tkn;
+	if (is_access_tkn_valid(platform)) {
+		if (!get_access_tkn(platform, tkn)) {
+			throw TokenStorageAccessError();
+		}
+		return tkn;
+	}
+
+	std::string refresh_tkn;
+	if (!get_refresh_tkn(platform, refresh_tkn)) {
+		throw TokenStorageAccessError();
+	}
+	std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
+	BaseAuthAPI::AccessTokenResponse resp = api->refresh_access_tkn(refresh_tkn);
+	save_access_tkn(platform, resp.access_tkn, resp.access_duration);
+	if (platform == Platform::SPOTIFY && !save_refresh_tkn(platform, resp.refresh_tkn)) {
+		throw TokenStorageAccessError();
+	}
+	return std::move(resp.access_tkn);
 }

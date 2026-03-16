@@ -3,9 +3,15 @@
 #include "platform.h"
 #include <ctime>
 #include <string>
+#include <stdexcept>
 #include <curl/curl.h>
 
 const std::string KEYCHAIN_SERVICE = "plsync-token-service";
+
+class TokenStorageAccessError : public std::runtime_error {
+public:
+	TokenStorageAccessError() : std::runtime_error("") {}
+};
 
 bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t duration);
 bool save_refresh_tkn(Platform platform, const std::string &tkn);
@@ -18,8 +24,10 @@ bool save_refresh_tkn(Platform platform, const std::string &tkn);
  * see 'init.h'.
  */
 bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl, std::string &tkn);
+// TODO make this the only way to handle token_store errors
+/* throws TokenStorageAccessError on storage access or API::RequestError on token refresh failure */
+std::string get_or_refresh_access_tkn(Platform platform, std::shared_ptr<CURL> curl);
 bool get_refresh_tkn(Platform platform, std::string &tkn);
-
 
 bool is_refresh_tkn_valid(Platform platform);
 #endif

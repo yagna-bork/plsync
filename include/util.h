@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <ios>
 #include <curl/curl.h>
 #include <zlib.h>
 
@@ -109,12 +110,12 @@ std::string rndstr(size_t size);
 bool ensure_tmpdir(std::filesystem::path &tmpdir);
 
 template <class FstreamT, class... Types>
-FstreamT ensure_file(const std::filesystem::path& file, Types... args) {
+FstreamT ensure_bin_file(const std::filesystem::path& file, std::ios::openmode mode = std::ios::binary) {
 	std::filesystem::create_directories(file.parent_path());
 	if (!std::filesystem::exists(file)) {
 		std::ofstream tmp(file);
 	}
-	return FstreamT(file, args...);
+	return FstreamT(file, mode | std::ios::binary);
 }
 
 inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy_init(), curl_easy_cleanup); }

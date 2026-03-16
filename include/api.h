@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
+#include <iostream> // TODO remove
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -76,7 +77,7 @@ private:
 	/* throws RequestError on failure */
 	std::string decompress_gzip(std::filesystem::path file_path);
 
-private:
+protected:
 	const std::string url;
 	std::shared_ptr<CURL> curl;
 };
@@ -126,12 +127,14 @@ public:
 	struct AccessTokenResponse {
 		std::string access_tkn;
 		std::time_t access_duration;
+		std::string refresh_tkn;
 
 		AccessTokenResponse() = default;
 		
 		AccessTokenResponse(nlohmann::json &&resp)
-			: access_tkn(std::move(resp["access_token"])), 
-			  access_duration(std::move(resp["expires_in"]))
+			: access_tkn(std::move(resp.at("access_token"))), 
+			  access_duration(std::move(resp.at("expires_in"))),
+			  refresh_tkn(std::move(resp.value("refresh_token", "")))
 		{
 		}
 	};
