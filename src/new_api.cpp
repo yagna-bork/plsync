@@ -1,13 +1,20 @@
 #include "../include/new_api.h"
+#include "../include/new_spotify_api.h"
+#include "../include/new_youtube_api.h"
+#include "../include/platform.h"
+#include "../include/models.h"
 #include "../include/util.h"
 #include <algorithm>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <ios>
+#include <stdexcept>
 #include <filesystem>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+
+using namespace nlohmann;
 
 namespace API {
 
@@ -41,15 +48,6 @@ std::string decompress_gzip(std::filesystem::path file) {
 	return decompressed;
 }
 
-bool is_response_json(CURL* curl) {
-	char *content_type;
-	if (curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type) != CURLE_OK) {
-		throw RequestError("couldn't retrieve http content type");
-	}
-	const char *app_json = "application/json";
-	return std::equal(app_json, app_json+std::strlen(app_json), content_type);
-}
-
 long status_code(CURL* curl) {
 	long status_code;
 	if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code) != CURLE_OK) {
@@ -61,7 +59,7 @@ long status_code(CURL* curl) {
 long GET(
 	CURL* curl,
 	const std::string &url, 
-	nlohmann::json &jresp, 
+	json &jresp, 
 	const Params &params,
 	const std::string &access_tkn,
 	const std::string &etag
@@ -70,6 +68,7 @@ long GET(
 	curl_easy_setopt(curl, CURLOPT_URL, append_params(url, params).c_str());
 	
 	curl_slist_raii headers;
+	headers.append("Accept: application/json");
 	headers.append("If-None-Match: " + etag);
 	headers.append("Accept-Encoding: gzip");
 	headers.append("User-Agent: plsync (gzip)");
@@ -100,11 +99,8 @@ long GET(
 		}
 	}
 
-	// TODO use Accept header instead 
 	std::string resp = decompress_gzip(resp_path);
-	if (is_response_json(curl) && !resp.empty()) {
-		jresp = nlohmann::json::parse(resp);
-	}
+	jresp = json::parse(resp.empty() ? "{}" : resp);
 	return status_code(curl);
 }
 
@@ -112,7 +108,7 @@ long POST(
 	CURL* curl, 
 	const std::string &url, 
 	const std::string& data, 
-	nlohmann::json &jresp, 
+	json &jresp, 
 	const std::string& application_type,
 	const Params &params,
 	const std::string& access_tkn
@@ -137,7 +133,7 @@ long POST(
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
 
 	curl_easy_perform(curl);
-	jresp = nlohmann::json::parse(resp);
+	jresp = json::parse(resp.empty() ? "{}" : resp);
 	return status_code(curl);
 }
 
@@ -153,6 +149,34 @@ std::string fields_to_string(const Fields& fields) {
 		fields_str.append(field.second);
 	}
 	return fields_str;
+}
+
+bool get_playlist(
+	Platform plat, CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
+) {
+	switch (plat) {
+		case Platform::YOUTUBE:
+			return NewYoutubeAPI::get_playlist(curl, access_tkn, id, etag, res);
+			break;
+		case Platform::SPOTIFY:
+			return NewSpotifyAPI::get_playlist(curl, access_tkn, id, etag, res);
+			break;
+		default:
+			throw std::domain_error("function not yet implemented for " + platform_title_lower(plat));
+	}
+}
+
+Playlist create_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& title) {
+	switch (plat) {
+		case Platform::YOUTUBE:
+			return NewYoutubeAPI::create_playlist(curl, access_tkn, title);
+			break;
+		case Platform::SPOTIFY:
+			return NewSpotifyAPI::create_playlist(curl, access_tkn, title);
+			break;
+		default:
+			throw std::domain_error("function not yet implemented for " + platform_title_lower(plat));
+	}
 }
 
 }

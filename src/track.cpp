@@ -3,7 +3,6 @@
 #include "../include/sid_to_id_map.h"
 #include "../include/util.h"
 #include "../include/playlist_cache.h"
-#include "../include/new_youtube_api.h"
 #include "../include/new_api.h"
 #include "../include/token_store.h"
 #include <iostream>
@@ -66,16 +65,11 @@ int run_track(int argc, char *argv[]) {
 
 	std::unordered_map<Platform, Node> plat_to_node;
 	std::string items_id;
-	std::string playlist_title = "test-pl";
+	std::string playlist_title;
 	for (const auto& pair: plat_sid_pairs) {
 		Platform plat = pair.first;
 		const auto& sid = pair.second;
 		if (sid.empty()) {
-			continue;
-		}
-
-		// TODO remove
-		if (plat != Platform::YOUTUBE) {
 			continue;
 		}
 
@@ -94,26 +88,25 @@ int run_track(int argc, char *argv[]) {
 		}
 
 		bool modified;
-		Playlist playlist;
+		Playlist modified_playlist;
 		try {
-			modified = NewYoutubeAPI::get_playlist(curl.get(), access_tkn, id, node.playlist.etag, playlist);
+			modified = API::get_playlist(plat, curl.get(), access_tkn, id, node.playlist.etag, modified_playlist);
 		} catch (const API::RequestError& e) {
 			std::cerr << "Something went wrong please try again\n";
 			exit(1);
 		}
 
 		if (modified) {
-			if (playlist.id.empty()) {
+			if (modified_playlist.id.empty()) {
 				// playlist was deleted
 				delete_node(node, plat);
 				print_usage_exit();
 			} else {
-				node.playlist = playlist;
+				node.playlist = modified_playlist;
 				save_node(node, plat);
 			}
 		}
 		
-		// TODO test
 		// check at most one playlist is already tracked
 		if (!node.items_id.empty()) {
 			if (!items_id.empty()) {
@@ -143,7 +136,7 @@ int run_track(int argc, char *argv[]) {
 
 		Playlist playlist;
 		try {
-			playlist = NewYoutubeAPI::create_playlist(curl.get(), access_tkn, playlist_title);
+			playlist = API::create_playlist(plat, curl.get(), access_tkn, playlist_title);
 		} catch (const API::RequestError& e) {
 			std::cerr << "Something went wrong. Please try again.\n";
 			return 1;

@@ -1,5 +1,7 @@
 #ifndef GUARD_NEW_API_H
 #define GUARD_NEW_API_H
+#include "platform.h"
+#include "models.h"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -50,6 +52,15 @@ long POST(
 );
 
 std::string fields_to_string(const Fields& fields);
+
+/* 
+ * Returns whether playlist was modified.
+ * res will be an empty playlist i.e. id attribute is empty 
+ * if the playlist doesn't exist/was deleted.
+ */
+bool get_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
+
+Playlist create_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& title);
 
 } // namespace API
 #endif

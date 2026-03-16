@@ -15,6 +15,7 @@ long SpotifyAPI::paginated_GET(
 	if (status_code != 200) {
 		return status_code;
 	}
+	// TODO use header, see requests/spotify_create_playlists_resp.json
 	etag = initial_page.value("snapshot_id", "");
 	std::size_t total = initial_page["total"];
 
