@@ -51,6 +51,8 @@ void save_node(const Node& node, Platform plat);
 void delete_node(Node& id, Platform plat);
 void create_node(const Node& node, Platform plat);
 
+bool load_head(Platform plat, Head& res);
+
 /* Determine min characters of id_hash that make them all unique */
 std::size_t calculate_short_id_len(Head* head);
 void fill_short_ids(Head* head, std::size_t short_id_len);

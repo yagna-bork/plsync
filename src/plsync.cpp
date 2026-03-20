@@ -3,6 +3,7 @@
 #include "../include/untracked.h"
 #include "../include/platform.h"
 #include "../include/track.h"
+#include "../include/tracked.h"
 #include <cstring>
 #include <iostream>
 #include <iterator>
@@ -10,7 +11,7 @@
 #include <string>
 #include <vector>
 
-const std::vector<const char *> COMMANDS = {"init", "untracked", "track"};
+const std::vector<const char *> COMMANDS = {"init", "untracked", "track", "tracked"};
 
 static void print_init_only_usage() {
 	std::cout << "usage: plsync [-h] <command>\n\n" 
@@ -24,7 +25,8 @@ static void print_usage() {
 			  << "Avaliable commands:\n" 
 			  << "  init       " << init::description << "\n\n"
 			  << "  untracked  " << untracked::description << "\n\n"
-			  << "  track      " << track_description << '\n';
+			  << "  track      " << track_description << "\n\n"
+			  << "  tracked    " << tracked_description << '\n';
 }
 
 static const char *parse_args_init_only(int argc, char *argv[]) {
@@ -68,6 +70,8 @@ int main(int argc, char *argv[]) {
 		return run_untracked(argc-2, argv+2);
 	} else if (strcmp(command, "track") == 0) {
 		return run_track(argc-2, argv+2);
+	} else if (strcmp(command, "tracked") == 0) {
+		return run_tracked(argc-2, argv+2);
 	}
 	return 0;
 }

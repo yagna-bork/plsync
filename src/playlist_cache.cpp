@@ -3,6 +3,7 @@
 #include "../include/config.h"
 #include "../include/playlist_cache.pb.h"
 #include "../include/util.h"
+#include "../include/playlist_items_cache.h"
 #include <cassert>
 #include <algorithm>
 #include <vector>
@@ -159,6 +160,9 @@ void cleanup(Head* head, Platform plat) {
 		proto_node.set_prev(prev_id);
 		std::ofstream f(node_path(node, plat), std::ios::binary);
 		proto_node.SerializeToOstream(&f);
+		if (!node->items_id.empty()) {
+			PlaylistItemsCache::update_title(node->playlist.title, node->items_id, plat);
+		}
 		
 		prev_id = node->playlist.id;
 		free_and_advance_node(&node);
@@ -299,6 +303,9 @@ void save_node(const Node& node, Platform plat) {
 	f.clear();
 	f.seekp(0);
 	proto_node.SerializeToOstream(&f);
+	if (!node.items_id.empty()) {
+		PlaylistItemsCache::update_title(node.playlist.title, node.items_id, plat);
+	}
 }
 
 void delete_node(Node& node, Platform plat) {
@@ -365,6 +372,16 @@ void create_node(const Node& node, Platform plat) {
 	proto_node.ParseFromIstream(&file);
 	proto_node.set_prev(node.playlist.id);
 	proto_node.SerializeToOstream(&file);
+}
+
+bool load_head(Platform plat, Head& res) {
+	if (!fs::exists(head_path(plat))) return false;
+	proto::CacheHead head;
+	std::ifstream file(head_path(plat), std::ios::binary);
+	head.ParseFromIstream(&file);
+	res.etag = std::string(head.etag());
+	res.sid_len = head.sid_len();
+	return true;
 }
 
 const_iterator Handle::cbefore_begin() { return PlaylistCache::cbefore_begin(head); }

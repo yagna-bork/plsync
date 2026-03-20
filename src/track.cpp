@@ -5,7 +5,7 @@
 #include "../include/playlist_cache.h"
 #include "../include/new_api.h"
 #include "../include/token_store.h"
-#include "../include/playlist_items.h"
+#include "../include/playlist_items_cache.h"
 #include <iostream>
 #include <utility>
 #include <unordered_set>
@@ -116,12 +116,12 @@ static void track(int argc, char *argv[]) {
 	}
 	
 	// and finally track the provided playlists
-	PlaylistItems pl_items;
+	PlaylistItemsCache::PlaylistItems pl_items;
 	if (items_id.empty()) {
 		pl_items.id = bin_to_hex(rndstr(16));
 	} else {
 		// TODO test
-		pl_items = load_playlist_items(items_id);
+		pl_items = PlaylistItemsCache::load(items_id);
 	}
 
 	for (auto& pair: plat_to_node) {
@@ -130,11 +130,11 @@ static void track(int argc, char *argv[]) {
 		if (!node.items_id.empty()) {
 			continue;
 		}
-		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"");
+		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"", node.playlist.title);
 		node.items_id = pl_items.id;
 		save_node(node, plat);
 	}
-	save_playlist_items(pl_items);
+	PlaylistItemsCache::save(pl_items);
 }
 
 int run_track(int argc, char *argv[]) {
