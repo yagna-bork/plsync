@@ -28,6 +28,7 @@ struct PlaylistItems {
 PlaylistItems load(const std::string& id);
 std::vector<PlaylistItems> load_all();
 void save(const PlaylistItems& pl_items);
+void remove(const std::string& id);
 void update_title(const std::string& title, const std::string& items_id, Platform plat);
 
 }

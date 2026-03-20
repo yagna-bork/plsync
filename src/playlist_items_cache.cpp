@@ -1,5 +1,6 @@
 #include "../include/playlist_items_cache.h"
 #include "../include/playlist_items_cache.pb.h"
+#include "../include/playlist_cache.h"
 #include "../include/util.h"
 #include "../include/config.h"
 #include <cassert>
@@ -37,17 +38,18 @@ Platform get_platform(proto::Platform plat) {
 	}
 }
 
-PlaylistItems load(const std::string& id) {
-	return load(dir() / id);
-}
-
-PlaylistItems load(const fs::path& path) {
-	PlaylistItems items;
+proto::PlaylistItems get_proto_items(const fs::path &path) {
 	proto::PlaylistItems proto_items;
 	{
 		auto file = ensure_bin_file<std::ifstream>(path);
 		proto_items.ParseFromIstream(&file);
 	}
+	return proto_items;
+}
+
+PlaylistItems load_from_path(const fs::path& path) {
+	PlaylistItems items;
+	auto proto_items = get_proto_items(path);
 	for (const auto& proto_pl: proto_items.tracked_playlists()) {
 		items.tracked_playlists.emplace_back(
 			get_platform(proto_pl.plat()), 
@@ -59,13 +61,18 @@ PlaylistItems load(const fs::path& path) {
 	for (const auto& song: proto_items.song_hashes()) {
 		items.song_hashes.emplace_back(song);
 	}
+	items.id = path.filename();
 	return items;
+}
+
+PlaylistItems load(const std::string& id) {
+	return load_from_path(dir() / id);
 }
 
 std::vector<PlaylistItems> load_all() {
 	std::vector<PlaylistItems> res;
 	for (const auto& path: fs::directory_iterator(dir())) {
-		res.push_back(load(path.path()));
+		res.push_back(load_from_path(path.path()));
 	}
 	return res;
 }
@@ -86,16 +93,28 @@ void save(const PlaylistItems& items) {
 	proto_items.SerializeToOstream(&file);
 }
 
+void remove(const std::string& id) {
+	auto items = get_proto_items(dir() / id);
+	for (const auto& pl: items.tracked_playlists()) {
+		Platform plat = get_platform(pl.plat());
+		auto node = PlaylistCache::load_node(std::string(pl.id()), plat);
+		node.items_id.clear();
+		PlaylistCache::save_node(node, plat);
+	}
+	fs::remove(dir() / id);
+}
+
 void update_title(const std::string& title, const std::string& items_id, Platform plat) {
 	proto::PlaylistItems proto_items;
 	auto file = ensure_bin_file<std::fstream>(dir() / items_id, std::ios::in | std::ios::out);
 	proto_items.ParseFromIstream(&file);
 	for (auto& pl: *proto_items.mutable_tracked_playlists()) {
-		if (pl.plat() == get_proto_platform(plat)) {
-			pl.set_title(title);
-			proto_items.SerializeToOstream(&file);
-			return;
+		if (pl.plat() != get_proto_platform(plat)) {
+			continue;
 		}
+		pl.set_title(title);
+		proto_items.SerializeToOstream(&file);
+		return;
 	}
 	assert(false); // plat is not being tracked by this PlaylistItems
 }

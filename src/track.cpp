@@ -132,7 +132,7 @@ static void track(int argc, char *argv[]) {
 		}
 		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"", node.playlist.title);
 		node.items_id = pl_items.id;
-		save_node(node, plat);
+		save_node(node, plat, /*update_items=*/false);
 	}
 	PlaylistItemsCache::save(pl_items);
 }

@@ -71,22 +71,26 @@ int run_untracked(int argc, char *argv[]) {
 
 	int id_pad = std::max(1, sid_len*2+1 - 2);
 	int title_pad = std::max(1, static_cast<int>(longest_title)+1 - 5);
-	std::stringstream heading;
-	heading << "Id" << std::string(id_pad, ' ') 
+	std::stringstream heading_ss;
+	heading_ss << "Id" << std::string(id_pad, ' ') 
 			<< "Title" << std::string(title_pad, ' ') 
 			<< "Privacy " << "Items";
-	std::cout << heading.rdbuf() << '\n';
-	std::cout << std::string(heading.str().size(), '-') << '\n'; // inefficient but don't care
+	std::string heading = heading_ss.str();
+	std::cout << heading << '\n';
+	std::cout << std::string(heading.size(), '-') << '\n';
 
-	for (const Playlist& pl: cache) {
+	for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
+		if (!it.ptr.node->items_id.empty()) {
+			continue;
+		}
 		id_pad = std::max(1, 3 - sid_len*2); 
-		int title_pad = std::max(longest_title, std::size_t(5)) + 1 - pl.title.size();
-		std::string privacy_type = pl.is_private ? "private" : "public";
-		int privacy_pad = pl.is_private ? 1 : 2;
-		std::cout << bin_to_hex(pl.short_id) << std::string(id_pad, ' ')
-				  << pl.title << std::string(title_pad, ' ')
+		int title_pad = std::max(longest_title, std::size_t(5)) + 1 - it->title.size();
+		std::string privacy_type = it->is_private ? "private" : "public";
+		int privacy_pad = it->is_private ? 1 : 2;
+		std::cout << bin_to_hex(it->short_id) << std::string(id_pad, ' ')
+				  << it->title << std::string(title_pad, ' ')
 				  << privacy_type << std::string(privacy_pad, ' ')
-				  << pl.items << '\n';
+				  << it->items << '\n';
 	}
 	return 0;
 }

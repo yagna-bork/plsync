@@ -293,7 +293,7 @@ Node load_node(const std::string& id, Platform plat) {
 	return node;
 }
 
-void save_node(const Node& node, Platform plat) {
+void save_node(const Node& node, Platform plat, bool update_items) {
 	proto::CacheNode tmp;
 	auto proto_node = create_proto_node(&node);
 	std::fstream f(dir(plat) / node.playlist.id, std::ios::binary|std::ios::out|std::ios::in);
@@ -303,7 +303,7 @@ void save_node(const Node& node, Platform plat) {
 	f.clear();
 	f.seekp(0);
 	proto_node.SerializeToOstream(&f);
-	if (!node.items_id.empty()) {
+	if (!node.items_id.empty() && update_items) {
 		PlaylistItemsCache::update_title(node.playlist.title, node.items_id, plat);
 	}
 }
