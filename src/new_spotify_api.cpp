@@ -28,6 +28,7 @@ bool get_playlist(CURL* curl, std::string& access_tkn, const std::string& id, co
 		res.title = resp["name"];
 		res.is_private = !resp["public"];
 		res.items = resp["items"]["total"];
+		res.version = resp["snapshot_id"];
 
 		// get etag from response header
 		struct curl_header* header;
@@ -58,7 +59,7 @@ Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string&
 	if (status_code != 201) {
 		throw RequestError("invalid response from spotify");
 	}
-	return Playlist(resp["id"], "", resp["name"], !resp["public"], 0);
+	return Playlist(resp["id"], "", resp["snapshot_id"], resp["name"], !resp["public"], 0);
 }
 
 }

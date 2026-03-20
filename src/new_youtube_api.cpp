@@ -15,7 +15,7 @@ bool get_playlist(
 		{
 			"fields", 
 			"etag,items("
-				"id,snippet/title,status/privacyStatus,contentDetails/itemCount"
+				"id,etag,snippet/title,status/privacyStatus,contentDetails/itemCount"
 			")"
 		},
 	};
@@ -33,6 +33,7 @@ bool get_playlist(
 		// the api has a seperate etag for the resource containing 
 		// a single playlist and the playlist resource itself
 		res.etag = resp["etag"];
+		res.version = resp["items"][0]["etag"];
 		res.title = resp["items"][0]["snippet"]["title"];
 		res.is_private = (resp["items"][0]["status"]["privacyStatus"] == "private");
 		res.items = resp["items"][0]["contentDetails"]["itemCount"];
@@ -58,6 +59,7 @@ Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string&
 	return Playlist(
 		std::move(resp["id"]),
 		"",
+		std::move(resp["etag"]),
 		std::move(resp["snippet"]["title"]),
 		resp["status"]["privacyStatus"] == "private",
 		resp["contentDetails"]["itemCount"]

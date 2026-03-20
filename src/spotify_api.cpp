@@ -79,6 +79,7 @@ bool SpotifyAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 		ids.insert(plist["id"]);
 		playlists.emplace_back(
 			std::move(plist["id"]), 
+			/*etag=*/"",
 			std::move(plist["snapshot_id"]), 
 			std::move(plist["name"]),
 			!plist["public"],

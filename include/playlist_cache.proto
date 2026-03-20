@@ -11,10 +11,11 @@ message CacheHead {
 message Playlist {
 	string id = 1;
 	string etag = 2;
-	string title = 3;
-	bool is_private = 4;
-	int32 items = 5;
-	string short_id = 6;
+	string version = 3;
+	string title = 4;
+	bool is_private = 5;
+	int32 items = 6;
+	string short_id = 7;
 }
 
 message CacheNode {

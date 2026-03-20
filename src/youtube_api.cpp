@@ -6,8 +6,10 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 
-long YoutubeAPI::paginated_GET(const std::string &endpoint, nlohmann::json &initial_page, Params &params) {
-	nlohmann::json next_page;
+using namespace nlohmann;
+
+long YoutubeAPI::paginated_GET(const std::string &endpoint, json &initial_page, Params &params) {
+	json next_page;
 	long status_code = GET(endpoint, next_page, params, access_tkn);
 	if (status_code != 200L) {
 		return status_code;
@@ -24,7 +26,7 @@ long YoutubeAPI::paginated_GET(const std::string &endpoint, nlohmann::json &init
 }
 
 long YoutubeAPI::paginated_GET(
-	const std::string &endpoint, nlohmann::json &initial_page, Params &params, std::string &etag
+	const std::string &endpoint, json &initial_page, Params &params, std::string &etag
 ) {
 	long status_code = GET(endpoint, initial_page, params, access_tkn, etag);
 	if(status_code != 200L) {
@@ -46,12 +48,12 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 		{
 			"fields", 
 			"etag,nextPageToken,items("
-				"id,snippet/title,status/privacyStatus,contentDetails/itemCount"
+				"id,etag,snippet/title,status/privacyStatus,contentDetails/itemCount"
 			")"
 		},
 		{"maxResults", "50"}
 	};
-	nlohmann::json resp;
+	json resp;
 	std::string etag_copy = etag;
 	long status_code = paginated_GET("playlists", resp, params, etag_copy);
 
@@ -59,13 +61,14 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 		return false;
 	} else if (status_code == 200L) {
 		etag = etag_copy;
-		for (nlohmann::json &playlist: resp["items"]) {
+		for (json& playlist: resp["items"]) {
 			playlists.emplace_back(
-				playlist["id"], 
+				std::move(playlist["id"]), 
 				// the api has a seperate etag for the resource containing a single playlist
 				// and the playlist resource itself, only get former after call to get_playlist
 				/*etag=*/"", 
-				playlist["snippet"]["title"], 
+				/*version=*/std::move(playlist["etag"]),
+				std::move(playlist["snippet"]["title"]), 
 				playlist["status"]["privacyStatus"] == "private", 
 				playlist["contentDetails"]["itemCount"]
 			);
@@ -96,7 +99,7 @@ BaseAuthAPI::TokenResponse YoutubeAuthAPI::exchange_auth_code() {
 		}
 	};
 	
-	nlohmann::json resp;
+	json resp;
 	if(POST(/*endpoint=*/"token", fields, resp) != 200) {
 		throw RequestError("invalid token response from google");
 	}
@@ -112,7 +115,7 @@ BaseAuthAPI::AccessTokenResponse YoutubeAuthAPI::refresh_access_tkn(const std::s
 		{"client_secret", get_setting("client_secret", platform)}
 	};
 	
-	nlohmann::json resp;
+	json resp;
 	if(POST(/*endpoint=*/"token", fields, resp) != 200) {
 		throw RequestError("invalid token response from google");
 	}

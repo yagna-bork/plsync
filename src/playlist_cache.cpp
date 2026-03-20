@@ -11,7 +11,6 @@
 #include <fstream>
 #include <deque>
 #include <unordered_map>
-#include <iterator>
 
 namespace fs = std::filesystem;
 
@@ -20,6 +19,7 @@ namespace PlaylistCache {
 void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
 	pl.id = std::string(proto_pl.id());
 	pl.etag = std::string(proto_pl.etag());
+	pl.version = std::string(proto_pl.version());
 	pl.title = std::string(proto_pl.title());
 	pl.is_private = proto_pl.is_private();
 	pl.items = proto_pl.items();
@@ -87,6 +87,7 @@ proto::CacheNode create_proto_node(const Node* node) {
 	auto proto_pl = proto_node.mutable_playlist();
 	proto_pl->set_id(node->playlist.id);
 	proto_pl->set_etag(node->playlist.etag);
+	proto_pl->set_version(node->playlist.version);
 	proto_pl->set_title(node->playlist.title);
 	proto_pl->set_is_private(node->playlist.is_private);
 	proto_pl->set_items(node->playlist.items);
@@ -167,10 +168,10 @@ void cleanup(Head* head, Platform plat) {
 void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, const std::string& etag) {
 	std::size_t n = playlists.size();
 	std::deque<bool> is_new(n, true);
-	std::unordered_map<std::string, std::size_t> etag_to_idx;
+	std::unordered_map<std::string, std::size_t> version_to_idx;
 	std::unordered_map<std::string, std::size_t> id_to_idx;
 	for (std::size_t i = 0; i != n; i++) {
-		etag_to_idx[playlists[i].etag] = i;
+		version_to_idx[playlists[i].version] = i;
 		id_to_idx[playlists[i].id] = i;
 	}
 
@@ -181,16 +182,16 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 	auto curr = cbegin(head);
 	auto curr_write = begin(head);
 	while (curr != cend()) {
-		// case 1: etag unchanged, playlist unchanged
-		std::string etag(curr->etag);
-		if (etag_to_idx.count(etag)) {
-			std::size_t i = etag_to_idx[etag];
+		// case 1: version unchanged, playlist unchanged
+		std::string version(curr->version);
+		if (version_to_idx.count(version)) {
+			std::size_t i = version_to_idx[version];
 			is_new[i] = false;
 			++prev; ++curr; ++curr_write;
 			continue;
 		}
 
-		// case 2: etag changed but id found, playlist changed
+		// case 2: version changed but id found, playlist changed
 		std::string id(curr->id);
 		if (id_to_idx.count(id)) {
 			std::size_t i = id_to_idx[id];
@@ -244,9 +245,6 @@ std::size_t calculate_short_id_len(Head* head) {
 	std::unordered_map<std::string, std::vector<std::size_t>> sid_groups;
 	std::size_t sid_len = 0;
 	while (!collision_idxs.empty()) {
-		std::ostream_iterator<std::size_t> out(std::cout, ",");
-		std::copy(collision_idxs.begin(), collision_idxs.end(), out);
-		std::cout << '\n';
 		sid_len++;
 		sid_groups.clear();
 		for (std::size_t idx: collision_idxs) {

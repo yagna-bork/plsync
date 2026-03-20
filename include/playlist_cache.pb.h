@@ -222,10 +222,11 @@ class Playlist final : public ::google::protobuf::Message
   enum : int {
     kIdFieldNumber = 1,
     kEtagFieldNumber = 2,
-    kTitleFieldNumber = 3,
-    kShortIdFieldNumber = 6,
-    kIsPrivateFieldNumber = 4,
-    kItemsFieldNumber = 5,
+    kVersionFieldNumber = 3,
+    kTitleFieldNumber = 4,
+    kShortIdFieldNumber = 7,
+    kIsPrivateFieldNumber = 5,
+    kItemsFieldNumber = 6,
   };
   // string id = 1;
   bool has_id() const;
@@ -251,7 +252,19 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
 
   public:
-  // string title = 3;
+  // string version = 3;
+  bool has_version() const;
+  void clear_version() ;
+  ::absl::string_view version() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_version(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_version() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_version(::absl::string_view value);
+
+  public:
+  // string title = 4;
   bool has_title() const;
   void clear_title() ;
   ::absl::string_view title() const;
@@ -263,7 +276,7 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_title(::absl::string_view value);
 
   public:
-  // string short_id = 6;
+  // string short_id = 7;
   bool has_short_id() const;
   void clear_short_id() ;
   ::absl::string_view short_id() const;
@@ -275,7 +288,7 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_short_id(::absl::string_view value);
 
   public:
-  // bool is_private = 4;
+  // bool is_private = 5;
   bool has_is_private() const;
   void clear_is_private() ;
   bool is_private() const;
@@ -286,7 +299,7 @@ class Playlist final : public ::google::protobuf::Message
   void _internal_set_is_private(bool value);
 
   public:
-  // int32 items = 5;
+  // int32 items = 6;
   bool has_items() const;
   void clear_items() ;
   ::int32_t items() const;
@@ -301,8 +314,8 @@ class Playlist final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   0, 42,
+  static const ::google::protobuf::internal::TcParseTable<3, 7,
+                                   0, 49,
                                    2>
       _table_;
 
@@ -325,6 +338,7 @@ class Playlist final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr id_;
     ::google::protobuf::internal::ArenaStringPtr etag_;
+    ::google::protobuf::internal::ArenaStringPtr version_;
     ::google::protobuf::internal::ArenaStringPtr title_;
     ::google::protobuf::internal::ArenaStringPtr short_id_;
     bool is_private_;
@@ -988,16 +1002,49 @@ inline void Playlist::_internal_set_etag(::absl::string_view value) {
   _impl_.etag_.Set(value, GetArena());
 }
 
-// string title = 3;
-inline bool Playlist::has_title() const {
+// string version = 3;
+inline bool Playlist::has_version() const {
   bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  return value;
+}
+inline void Playlist::clear_version() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.version_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::absl::string_view Playlist::version() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.version)
+  return _internal_version();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_version(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.version_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.version)
+}
+inline ::absl::string_view Playlist::_internal_version() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.version_.Get();
+}
+inline void Playlist::_internal_set_version(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.version_.Set(value, GetArena());
+}
+
+// string title = 4;
+inline bool Playlist::has_title() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
   return value;
 }
 inline void Playlist::clear_title() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.title_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
+                  0x00000008U);
 }
 inline ::absl::string_view Playlist::title() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -1007,7 +1054,7 @@ inline ::absl::string_view Playlist::title() const
 template <typename Arg_>
 PROTOBUF_ALWAYS_INLINE void Playlist::set_title(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   _impl_.title_.Set(static_cast<Arg_&&>(arg), GetArena());
   // @@protoc_insertion_point(field_set:proto.Playlist.title)
 }
@@ -1017,20 +1064,20 @@ inline ::absl::string_view Playlist::_internal_title() const {
 }
 inline void Playlist::_internal_set_title(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   _impl_.title_.Set(value, GetArena());
 }
 
-// bool is_private = 4;
+// bool is_private = 5;
 inline bool Playlist::has_is_private() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
   return value;
 }
 inline void Playlist::clear_is_private() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.is_private_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000020U);
 }
 inline bool Playlist::is_private() const {
   // @@protoc_insertion_point(field_get:proto.Playlist.is_private)
@@ -1038,7 +1085,7 @@ inline bool Playlist::is_private() const {
 }
 inline void Playlist::set_is_private(bool value) {
   _internal_set_is_private(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:proto.Playlist.is_private)
 }
 inline bool Playlist::_internal_is_private() const {
@@ -1050,16 +1097,16 @@ inline void Playlist::_internal_set_is_private(bool value) {
   _impl_.is_private_ = value;
 }
 
-// int32 items = 5;
+// int32 items = 6;
 inline bool Playlist::has_items() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
   return value;
 }
 inline void Playlist::clear_items() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.items_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000040U);
 }
 inline ::int32_t Playlist::items() const {
   // @@protoc_insertion_point(field_get:proto.Playlist.items)
@@ -1067,7 +1114,7 @@ inline ::int32_t Playlist::items() const {
 }
 inline void Playlist::set_items(::int32_t value) {
   _internal_set_items(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   // @@protoc_insertion_point(field_set:proto.Playlist.items)
 }
 inline ::int32_t Playlist::_internal_items() const {
@@ -1079,16 +1126,16 @@ inline void Playlist::_internal_set_items(::int32_t value) {
   _impl_.items_ = value;
 }
 
-// string short_id = 6;
+// string short_id = 7;
 inline bool Playlist::has_short_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
   return value;
 }
 inline void Playlist::clear_short_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.short_id_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000010U);
 }
 inline ::absl::string_view Playlist::short_id() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -1098,7 +1145,7 @@ inline ::absl::string_view Playlist::short_id() const
 template <typename Arg_>
 PROTOBUF_ALWAYS_INLINE void Playlist::set_short_id(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   _impl_.short_id_.Set(static_cast<Arg_&&>(arg), GetArena());
   // @@protoc_insertion_point(field_set:proto.Playlist.short_id)
 }
@@ -1108,7 +1155,7 @@ inline ::absl::string_view Playlist::_internal_short_id() const {
 }
 inline void Playlist::_internal_set_short_id(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   _impl_.short_id_.Set(value, GetArena());
 }
 
