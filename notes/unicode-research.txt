@@ -1,0 +1,74 @@
+affect
+format (zero width non/joiner), modifier symbol (according to python wcwidth, wikipedia), non spacing mark (visual selectors)
+
+format
+	zero width non joiner, grapheme break
+	zero width joiner, ignore rest of grapheme
+
+not affect
+control, lowercase letter, modifier letter, other letter, titlecase letter, uppercase letter, spacing mark (wcwidth returns 1),
+other number, connector punctuation, dash punctuation, close punctuation, final punctuation, initial punctuation, other punctuation, open punctuation,
+enclosing mark (according to kuhn's wcwidth), currency symbol, math symbols, other symbols, line seperator, paragraph separator, space separator
+
+Flags (GB12-13):
+utf8proc counts regional indicator as 1 so do nothing as combined 2 is fine
+SUM CODEPOINT WIDTHS
+
+Control:
+Line seperator, paragraph_seperator do nothing
+	widths are zero for utf8proc
+	SUM CODEPOINT WIDTHS
+Cc
+	Don't modify some base character, truely standalone and represent some information about the text presentation as a whole, rather than single base
+	char
+	I check and their widths are all 0 for utf8proc
+	SUM CODEPOINT WIDTHS
+Cf (-ZWJ, ZWNJ)
+	Tags, utf8proc gives 0 width, COUNT FLAG->CANCEL_TAG SEQUENCE AS CONST WIDTH 2
+	BiDi controls can ignore too, don't affect a base character, simply change the reading direction or text e.g. arabic, IGNORE
+
+SpacingMark:
+utf8proc gives 1 for spacing marks so that checks out
+SUM CODEPOINT WIDTHS
+
+Extend:
+Emoji modifiers are only skin tone modifiers
+	utf8proc gives width 2. this makes entire grapheme width 2 by making style go from text to emoji. i checked with finger + black skin modifier
+	☝ a ☝🏽 ab
+	CONST GRAPHEME WIDTH = 2
+text vs emoji presentation
+	works as expected, text = 1, emoji = 2 and in rare cases that text = 2, i verified that terminals actually do use 2
+grapheme_extend = Me + Mn + Other_Grapheme_Extend
+	Nonspacing marks and enclosing marks can defo adjust column width-----------------
+		but they're not supposed to, the ones that do should be in spacing characters so fuck em, utf8proc width = 0 is fine.
+		variation selectors, vs15, vs16 depricated but vs16 makes entire cluster width 2, CONST GRAPHEME WIDTH = 2		
+		vs15 makes preceding emoji width 1, some emoji have default style emoji but have a valid text style too, PREV WIDTH = 2
+		fuck v1-7, IGNORE
+	other_grapheme_extend are just spacing marks so that checks out
+		except tags which you can't break before hence the subregional flags will be one grapheme
+NZWJ
+	Has zero width as expected in utf8proc and it has no impact on base character width because it simply acts as a grapheme break between ligatures
+
+ZWJ:
+I don't know how to handle this. I can probably just leave it to the sum of widths for grapheme and hope no one ever uses it, IGNORE
+
+ZWJ Extended_Pictograph:
+If cluster contains at any point a ZWJ follow by a Extended_Pictographic then the entire cluster has width 2
+	Like with skin modifiers
+	CONST GRAPHEME WIDTH = 2
+
+Prepend:
+fuck knows, ignore em, some indic script and arabic number grouping shit that i don't need to care about
+sum of widths it is
+
+Hangul syllables:
+fuck em
+sum of widths in cluster
+
+ALGORITHM
+Iterate over grapheme breaks and sum width of chars to get width of grapheme
+//Except for 1F3F4 (waving black flag emoji) follow by a lowercase tag grapheme then grapheme width is 2
+Except if skin tone modifier in which case grapheme width is 2
+Except if vs16 in then grapheme width is 2
+Except if vs15 then previous emoji width should only count for 1
+Except if ZWJ following emoji then grapheme width is 2

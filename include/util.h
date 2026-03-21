@@ -1,6 +1,7 @@
 #ifndef GUARD_UTIL_H
 #define GUARD_UTIL_H
-#include <cstdio>
+#include <stddef.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -122,4 +123,6 @@ inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy
 
 std::string bin_to_hex(const std::string& data);
 std::string hex_to_bin(const std::string& hex_str);
+
+size_t utf8_len(const std::string& s);
 #endif

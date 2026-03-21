@@ -45,7 +45,7 @@ int run_tracked(int argc, char* argv[]) {
 	size_t longest_title = 0;
 	for (const auto& pl_items: pl_items_list) {
 		for (const auto& pl: pl_items.tracked_playlists) {
-			longest_title = std::max(longest_title, pl.title.size());
+			longest_title = std::max(longest_title, utf8_len(pl.title));
 		}
 	}
 
@@ -64,7 +64,7 @@ int run_tracked(int argc, char* argv[]) {
 			std::string id_hash;
 			sha256(pl.id, id_hash);
 			std::string sid(id_hash.begin(), id_hash.begin() + plat_to_sid_len[pl.plat]);
-			title_pad = std::max(size_t(5), longest_title) + 1 - pl.title.size();
+			title_pad = std::max(size_t(5), longest_title) + 1 - utf8_len(pl.title);
 			size_t plat_pad = 9 - platform_title(pl.plat).size();
 			std::cout << platform_title(pl.plat) << std::string(plat_pad, ' ') 
 					  << pl.title << std::string(title_pad, ' ') << bin_to_hex(sid) << '\n';

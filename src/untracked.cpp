@@ -6,7 +6,8 @@
 #include "../include/models.h"
 #include "../include/playlist_cache.h"
 #include "../include/sid_to_id_map.h"
-#include <cassert>
+#include <stddef.h>
+#include <assert.h>
 #include <iostream>
 #include <sstream>
 
@@ -64,17 +65,17 @@ int run_untracked(int argc, char *argv[]) {
 		Cache::fill_short_ids(cache.head, sid_len);
 	}
 
-	std::size_t longest_title = 0;
+	size_t longest_title = 0;
 	for (const Playlist& pl: cache) {
-		longest_title = std::max(longest_title, pl.title.size());
+		longest_title = std::max(longest_title, utf8_len(pl.title));
 	}
 
 	int id_pad = std::max(1, sid_len*2+1 - 2);
-	int title_pad = std::max(1, static_cast<int>(longest_title)+1 - 5);
+	int title_pad = std::max(size_t(1), longest_title - 4);
 	std::stringstream heading_ss;
 	heading_ss << "Id" << std::string(id_pad, ' ') 
-			<< "Title" << std::string(title_pad, ' ') 
-			<< "Privacy " << "Items";
+		       << "Title" << std::string(title_pad, ' ') 
+		       << "Privacy " << "Items";
 	std::string heading = heading_ss.str();
 	std::cout << heading << '\n';
 	std::cout << std::string(heading.size(), '-') << '\n';
@@ -84,7 +85,7 @@ int run_untracked(int argc, char *argv[]) {
 			continue;
 		}
 		id_pad = std::max(1, 3 - sid_len*2); 
-		int title_pad = std::max(longest_title, std::size_t(5)) + 1 - it->title.size();
+		int title_pad = std::max(longest_title, size_t(5)) + 1 - utf8_len(it->title);
 		std::string privacy_type = it->is_private ? "private" : "public";
 		int privacy_pad = it->is_private ? 1 : 2;
 		std::cout << bin_to_hex(it->short_id) << std::string(id_pad, ' ')

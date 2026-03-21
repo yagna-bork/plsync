@@ -1,6 +1,6 @@
-CXX = -std=c++17
+CXX = -std=c++20
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
-LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf`
+LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf libutf8proc`
 OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/token_store.o obj/platform.o \
 			obj/untracked.o obj/api.o obj/youtube_api.o obj/spotify_api.o \
@@ -20,7 +20,8 @@ DEBUG_OR_PROD = $(DEBUG_SYM)
 # TODO for prod need to make vcpkg install within project
 
 # link everything together
-plsync bin/plsync: obj/plsync.o $(OBJS)
+plsync bin/plsync: obj/plsync.o $(OBJS) bin/make_emoji_codepoint_ranges_h
+	./bin/make_emoji_codepoint_ranges_h
 	clang++ -o bin/plsync $(LIBS) obj/plsync.o $(OBJS) $(DEBUG_OR_PROD)
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/plsync
 	chmod u+x bin/plsync
@@ -46,7 +47,7 @@ obj/token_store.o: src/token_store.cpp include/token_store.h include/platform.h
 obj/platform.o: src/platform.cpp include/platform.h
 	clang++ -o obj/platform.o -c $(CXX) src/platform.cpp $(DEBUG_OR_PROD)
 
-obj/untracked.o: src/untracked.cpp include/untracked.h include/playlist_cache.h include/sid_to_id_map.h
+obj/untracked.o: src/untracked.cpp include/untracked.h include/playlist_cache.h include/sid_to_id_map.h include/util.h
 	clang++ -o obj/untracked.o -c $(CXX) src/untracked.cpp $(DEBUG_OR_PROD)
 	
 obj/api.o: src/api.cpp include/api.h include/util.h
@@ -98,6 +99,9 @@ obj/tracked.o: src/tracked.cpp include/tracked.h
 
 obj/untrack.o: src/untrack.cpp include/untrack.h
 	clang++ -o obj/untrack.o -c $(CXX) src/untrack.cpp $(DEBUG_OR_PROD)
+
+bin/make_emoji_codepoint_ranges_h: scripts/make_emoji_codepoint_ranges_h.cpp
+	clang++ -o bin/make_emoji_codepoint_ranges_h scripts/make_emoji_codepoint_ranges_h.cpp $(CXX)
 
 # tests
 # TODO for prod need to make vcpkg install within project

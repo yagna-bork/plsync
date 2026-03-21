@@ -1,10 +1,14 @@
 #include "../include/util.h"
+#include "../include/emoji_codepoint_ranges.h"
 #include <cassert>
+#include <limits.h>
 #include <string>
 #include <random>
 #include <fstream>
 #include <filesystem>
+#include <numeric>
 #include <openssl/evp.h>
+#include <utf8proc.h>
 
 // https://docs.openssl.org/master/man7/ossl-guide-libcrypto-introduction/#using-algorithms-in-applications
 bool sha256(const std::string &s, std::string &res) {
@@ -196,4 +200,67 @@ std::string hex_to_bin(const std::string &hex_str) {
 		res.push_back(byte);
 	}
 	return res;
+}
+
+bool _is_emoji(utf8proc_int32_t cp, int lo, int hi) {
+	if (lo == hi) {
+		return false;
+	}
+	int mid = std::midpoint(lo, hi);
+	if (emoji_cp_ranges[mid].first <= cp && cp <= emoji_cp_ranges[mid].second) {
+		return true;
+	} else if (cp <= emoji_cp_ranges[mid].first) {
+		hi = mid;
+		return _is_emoji(cp, lo, mid);
+	} else {
+		lo = mid+1;
+		return _is_emoji(cp, mid+1, hi);
+	}
+}
+
+inline bool is_emoji(utf8proc_int32_t cp) {
+	return _is_emoji(cp, 0, emoji_cp_ranges.size());
+}
+
+// see notes/unicode-research.txt for algorithm decision log
+size_t utf8_len(const std::string& str) {
+	static const utf8proc_int32_t sot = 0x02;
+	static const utf8proc_int32_t zwj = 0x200d;
+	static const utf8proc_int32_t skin_mod_beg = 0x1F3FB, skin_mod_end = 0x1F3FF;
+	static const utf8proc_int32_t vs15 = 0xFE0E, vs16 = 0xFE0F;
+
+	auto bytes = reinterpret_cast<const utf8proc_uint8_t*>(str.data());
+	auto bytes_end = bytes + str.size();
+	size_t len = 0;
+
+	utf8proc_int32_t prev_cp = sot, curr_cp;
+	utf8proc_int32_t state = 0;
+	utf8proc_ssize_t nread;
+	size_t grapheme_width = 0;
+	bool skip = false;
+	while ((nread = utf8proc_iterate(bytes, bytes_end-bytes, &curr_cp)) > 0) {
+		if (utf8proc_grapheme_break_stateful(prev_cp, curr_cp, &state)) {
+			len += grapheme_width;
+			grapheme_width = 0;
+			skip = false;
+		}
+		if (skip) {
+			continue;
+		}
+
+		grapheme_width += utf8proc_charwidth(curr_cp);
+		bool is_width_two = (skin_mod_beg <= curr_cp && curr_cp <= skin_mod_end) || 
+							(curr_cp == vs16) || 
+							(prev_cp == zwj && is_emoji(curr_cp));
+		if (is_width_two) {
+			grapheme_width = 2;
+			skip = true;
+		} else if (curr_cp == vs15) {
+			grapheme_width -= utf8proc_charwidth(prev_cp) - 1;
+		}
+		bytes += nread;
+		prev_cp = curr_cp;
+	}
+	len += grapheme_width;
+	return len;
 }
