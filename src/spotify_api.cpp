@@ -83,7 +83,7 @@ bool SpotifyAPI::get_playlists(std::vector<Playlist> &playlists, std::string &et
 			std::move(plist["snapshot_id"]), 
 			std::move(plist["name"]),
 			!plist["public"],
-			plist["items"].size()
+			plist["items"]["total"]
 		);
 	}
 	return true;
