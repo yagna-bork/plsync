@@ -41,6 +41,10 @@ int run_tracked(int argc, char* argv[]) {
 		}
 	}
 
+	// TODO denormalising title was a bad idea
+	// we want to force refresh playlist with api each time
+	// to keep cache up to date and see if a playlist has 
+	// been deleted
 	std::vector<PlaylistItems> pl_items_list = load_all();
 	size_t longest_title = 0;
 	for (const auto& pl_items: pl_items_list) {

@@ -7,7 +7,7 @@ OBJS = obj/init.o obj/config.o obj/util.o \
 			obj/playlist_cache.o obj/playlist_cache.pb.o \
 			obj/sid_to_id_map.o obj/sid_to_id_map.pb.o obj/track.o obj/new_api.o \
 			obj/new_youtube_api.o obj/new_spotify_api.o obj/playlist_items_cache.pb.o \
-			obj/playlist_items_cache.o obj/tracked.o obj/untrack.o
+			obj/playlist_items_cache.o obj/tracked.o obj/untrack.o obj/sync.o
 TEST_OBJS = obj/token_store.o obj/platform.o \
 			obj/api.o obj/youtube_api.o obj/spotify_api.o obj/config.o obj/util.o
 NDEBUG = -D NDEBUG
@@ -102,6 +102,9 @@ obj/untrack.o: src/untrack.cpp include/untrack.h
 
 bin/make_emoji_codepoint_ranges_h: scripts/make_emoji_codepoint_ranges_h.cpp
 	clang++ -o bin/make_emoji_codepoint_ranges_h scripts/make_emoji_codepoint_ranges_h.cpp $(CXX)
+
+obj/sync.o: src/sync.cpp include/sync.h
+	clang++ -o obj/sync.o -c $(CXX) src/sync.cpp $(DEBUG_OR_PROD)
 
 # tests
 # TODO for prod need to make vcpkg install within project
