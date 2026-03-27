@@ -58,9 +58,9 @@ std::string fields_to_string(const Fields& fields);
  * res will be an empty playlist i.e. id attribute is empty 
  * if the playlist doesn't exist/was deleted.
  */
-bool get_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
+bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
 
-Playlist create_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& title);
+Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title);
 
 } // namespace API
 #endif

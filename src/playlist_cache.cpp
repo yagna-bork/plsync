@@ -305,6 +305,7 @@ void save_node(const Node& node, Platform plat) {
 	proto_node.SerializeToOstream(&f);
 }
 
+// TODO remove from sid_to_id_map too
 void remove_node(Node& node, Platform plat) {
 	proto::CacheNode tmp;
 	{

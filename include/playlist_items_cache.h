@@ -6,6 +6,8 @@
 #include <forward_list>
 #include <string>
 #include <utility>
+#include <memory>
+#include <curl/curl.h>
 
 struct PlaylistItems {
 	std::string id;
@@ -15,8 +17,8 @@ struct PlaylistItems {
 };
 
 std::forward_list<PlaylistItems> load_playlist_items_cache();
-/* Can throw TokenStorageError and API::RequestError on failure */
-void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache);
+/* Can throw TokenStorageAccessError and API::RequestError on failure */
+void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::shared_ptr<CURL> curl);
 void save_playlist_items_cache(const std::forward_list<PlaylistItems>& cache);
 
 PlaylistItems load_playlist_items(const std::string& id);

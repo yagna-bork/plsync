@@ -4,13 +4,15 @@
 #include "../include/util.h"
 #include "../include/config.h"
 #include "../include/token_store.h"
+#include "../include/new_api.h"
 #include <cassert>
 #include <ios>
 #include <filesystem>
 #include <fstream>
 #include <forward_list>
-#include <unordered_map>
 #include <memory>
+#include <vector>
+#include <unordered_set>
 #include <curl/curl.h>
 
 namespace fs = std::filesystem;
@@ -78,31 +80,34 @@ std::forward_list<PlaylistItems> load_playlist_items_cache() {
 	return cache;
 }
 
-/*
 void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::shared_ptr<CURL> curl) {
-	std::unordered_map<Platform, std::string> plat_to_access_tkn;
-	auto prev = cache.before_begin(), curr = cache.begin();
+	std::vector<std::string> plat_to_access_tkn(Platform::INVALID);
+	for (int i = Platform::YOUTUBE; i != Platform::INVALID; i++) {
+		Platform plat = static_cast<Platform>(i);
+		plat_to_access_tkn[plat] = get_or_refresh_access_tkn(plat, curl);
+	}
+
+	auto prev = cache.before_begin();
+	auto curr = cache.begin();
 	while (curr != cache.end()) {
 		int i = 0;
 		while (i != curr->tracked.size()) {
 			auto& [plat, pl] = curr->tracked[i];
 			auto node = PlaylistCache::load_node(pl.id, plat);
-			pl->title = node.playlist.title;
+			pl.title = node.playlist.title;
 
-			if (!plat_to_access_tkn.count(plat)) {
-				plat_to_access_tkn[plat] = get_or_refresh_access_tkn(plat, curl);
-			}
 			const auto& access_tkn = plat_to_access_tkn[plat];
 			Playlist modified_playlist;
-			bool modified = API::get_playlist(plat, curl.get(), access_tkn, id, node.playlist.etag, modified_playlist);
-			if (modified) {
+			if (API::get_playlist(plat, curl.get(), access_tkn, pl.id, node.playlist.etag, modified_playlist)) {
 				if (modified_playlist.id.empty()) {
 					// playlist was deleted
 					remove_node(node, plat);
-					curr->tracked.erase(curr->tracked.begin() + i)
+					curr->tracked.erase(curr->tracked.begin() + i);
+					curr->was_changed = true;
 					continue;
 				} else {
-					node.playlist = modified_playlist;
+					pl.title = modified_playlist.title;
+					node.playlist = std::move(modified_playlist);
 					save_node(node, plat);
 				}
 			}
@@ -111,10 +116,31 @@ void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::s
 
 		if (curr->tracked.size() < 2) {
 			curr = cache.erase_after(prev);
+		} else {
+			curr++;
+			prev++;
 		}
 	}
 }
-*/
+
+void save_playlist_items_cache(const std::forward_list<PlaylistItems>& cache) {
+	std::unordered_set<std::string> deleted_ids;
+	for (const auto& e: fs::directory_iterator(dir())) {
+		deleted_ids.insert(e.path().filename());
+	}
+
+	for (const auto& pl_items: cache) {
+		deleted_ids.erase(pl_items.id);
+		if (!pl_items.was_changed) {
+			continue;
+		}
+		save_playlist_items(pl_items);	
+	}
+	
+	for (const auto& id: deleted_ids) {
+		remove_playlist_items(id);
+	}
+}
 
 void save_playlist_items(const PlaylistItems& pl_items) {
 	proto::PlaylistItems proto_items;
@@ -136,6 +162,9 @@ void remove_playlist_items(const std::string& id) {
 	for (const auto& p: items.tracked()) {
 		Platform plat = get_platform(p.plat());
 		auto node = PlaylistCache::load_node(std::string(p.playlist().id()), plat);
+		if (node.playlist.id.empty()) {
+			continue;
+		}
 		node.items_id.clear();
 		PlaylistCache::save_node(node, plat);
 	}

@@ -6,7 +6,7 @@ using namespace API;
 namespace NewYoutubeAPI {
 
 bool get_playlist(
-	CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
+	CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
 ) {
 	std::string url = base_url + "/playlists";
 	Params params = {
@@ -43,7 +43,7 @@ bool get_playlist(
 	}
 }
 
-Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string& title) {
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
 	std::string url = base_url + "/playlists";
 	Params params = {{"part", "id,snippet,status,contentDetails"}};
 	nlohmann::json data;

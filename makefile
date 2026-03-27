@@ -13,7 +13,7 @@ NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 
 # TODO in prod enable NDEBUG to ignore asserts and ignore DEBUG_SYM
-DEBUG_OR_PROD = $(DEBUG_SYM)
+DEBUG_OR_PROD = $(DEBUG_SYM) $(NDEBUG)
 
 
 # TODO for prod need to make vcpkg install within project

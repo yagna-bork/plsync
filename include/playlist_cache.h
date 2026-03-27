@@ -48,7 +48,7 @@ void save(Head* head, Platform plat);
 /* Providing an invalid id is undefined behaviour */
 Node load_node(const std::string& id, Platform plat);
 void save_node(const Node& node, Platform plat);
-void remove_node(Node& id, Platform plat);
+void remove_node(Node& node, Platform plat);
 void create_node(const Node& node, Platform plat);
 
 bool load_head(Platform plat, Head& res);

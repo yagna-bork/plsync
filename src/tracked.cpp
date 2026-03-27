@@ -4,6 +4,8 @@
 #include "../include/platform.h"
 #include "../include/playlist_cache.h"
 #include "../include/util.h"
+#include "../include/new_api.h"
+#include "../include/token_store.h"
 #include <stddef.h>
 #include <filesystem>
 #include <iostream>
@@ -25,6 +27,12 @@ static bool parse_args(int argc, char* argv[]) {
 	return true;
 }
 
+int save_cache_quit(std::forward_list<PlaylistItems>& cache) {
+	save_playlist_items_cache(cache);
+	std::cerr << "Something went wrong. Please try again.\n";
+	return 1;
+}
+
 int run_tracked(int argc, char* argv[]) {
 	if (!parse_args(argc, argv)) {
 		return 0;
@@ -40,10 +48,19 @@ int run_tracked(int argc, char* argv[]) {
 		}
 	}
 
+	auto curl = get_curl();
 	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
-	size_t id_pad = longest_sid*2 - 2;
+	try {
+		update_playlist_items_cache(cache, curl);
+	} catch (const TokenStorageAccessError& e) {
+		return save_cache_quit(cache);
+	} catch (const API::RequestError& e) {
+		return save_cache_quit(cache);
+	}
+
+	size_t id_pad = longest_sid*2 - 1;
 	std::ostringstream heading_ss;
-	heading_ss << "Platform Id" << std::string(id_pad, ' ');
+	heading_ss << "Platform Id" << std::string(id_pad, ' ') << "Title";
 	std::string heading = heading_ss.str();
 	std::cout << heading << '\n' << std::string(heading.size(), '-') << '\n';
 
@@ -59,9 +76,13 @@ int run_tracked(int argc, char* argv[]) {
 			sha256(pl.id, id_hash);
 			std::string sid(id_hash.begin(), id_hash.begin() + plat_to_sid_len[plat]);
 			size_t plat_pad = 9 - platform_title(plat).size();
-			std::cout << platform_title(plat) << std::string(plat_pad, ' ') << bin_to_hex(sid) << '\n';
+			id_pad = (longest_sid - sid.size())*2 + 1;
+			std::cout << platform_title(plat) << std::string(plat_pad, ' ') 
+					  << bin_to_hex(sid) << std::string(id_pad, ' ')
+					  << pl.title << '\n';
 		}
 		std::cout << pl_items.song_hashes.size() << " song(s)\n";
 	}
+	save_playlist_items_cache(cache);
 	return 0;
 }

@@ -11,7 +11,7 @@ using namespace nlohmann;
 
 namespace NewSpotifyAPI {
 
-bool get_playlist(CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res) {
+bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res) {
 	std::ostringstream url(base_url, std::ios::ate);
 	url << "/playlists/" << id;
 	json resp;
@@ -46,7 +46,7 @@ bool get_playlist(CURL* curl, std::string& access_tkn, const std::string& id, co
 	}
 }
 
-Playlist create_playlist(CURL* curl, std::string& access_tkn, const std::string& title) {
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
 	std::string url = base_url;
 	url += "/me/playlists";
 	json data;

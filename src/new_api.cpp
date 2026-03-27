@@ -154,7 +154,7 @@ std::string fields_to_string(const Fields& fields) {
 }
 
 bool get_playlist(
-	Platform plat, CURL* curl, std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
+	Platform plat, CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
 ) {
 	switch (plat) {
 		case Platform::YOUTUBE:
@@ -168,7 +168,7 @@ bool get_playlist(
 	}
 }
 
-Playlist create_playlist(Platform plat, CURL* curl, std::string& access_tkn, const std::string& title) {
+Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title) {
 	switch (plat) {
 		case Platform::YOUTUBE:
 			return NewYoutubeAPI::create_playlist(curl, access_tkn, title);

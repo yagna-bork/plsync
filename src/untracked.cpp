@@ -80,6 +80,8 @@ int run_untracked(int argc, char *argv[]) {
 	std::cout << heading << '\n';
 	std::cout << std::string(heading.size(), '-') << '\n';
 
+	// TODO sort
+	// TODO use setw but also use manual padding with title
 	for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
 		if (!it.ptr.node->items_id.empty()) {
 			continue;

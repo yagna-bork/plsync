@@ -88,7 +88,6 @@ static void track(int argc, char *argv[]) {
 		}
 		
 		// check at most one playlist is already tracked
-		// TODO test
 		if (!node.items_id.empty()) {
 			if (!items_id.empty()) {
 				throw std::invalid_argument("");
@@ -102,6 +101,15 @@ static void track(int argc, char *argv[]) {
 		plat_to_node[plat] = std::move(node);
 	}
 	
+	// TODO check no duplication of platforms
+	PlaylistItems pl_items;
+	if (items_id.empty()) {
+		pl_items.id = bin_to_hex(rndstr(16));
+	} else {
+		// TODO test
+		pl_items = load_playlist_items(items_id);
+	}
+
 	// create playlists for platforms where it wasn't provided
 	for (const auto& pair: plat_to_sid) {
 		if (!pair.second.empty()) {
@@ -116,14 +124,6 @@ static void track(int argc, char *argv[]) {
 	}
 	
 	// and finally track the provided playlists
-	PlaylistItems pl_items;
-	if (items_id.empty()) {
-		pl_items.id = bin_to_hex(rndstr(16));
-	} else {
-		// TODO test
-		pl_items = load_playlist_items(items_id);
-	}
-
 	for (auto& pair: plat_to_node) {
 		auto& plat = pair.first;
 		auto& node = pair.second;
