@@ -1,7 +1,7 @@
 #include "../include/playlist_cache.h"
 #include "../include/models.h"
 #include "../include/config.h"
-#include "../include/playlist_cache.pb.h"
+#include "../include/cache.pb.h"
 #include "../include/util.h"
 #include "../include/playlist_items_cache.h"
 #include <cassert>

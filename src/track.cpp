@@ -116,12 +116,12 @@ static void track(int argc, char *argv[]) {
 	}
 	
 	// and finally track the provided playlists
-	PlaylistItemsCache::PlaylistItems pl_items;
+	PlaylistItems pl_items;
 	if (items_id.empty()) {
 		pl_items.id = bin_to_hex(rndstr(16));
 	} else {
 		// TODO test
-		pl_items = PlaylistItemsCache::load(items_id);
+		pl_items = load_playlist_items(items_id);
 	}
 
 	for (auto& pair: plat_to_node) {
@@ -130,11 +130,11 @@ static void track(int argc, char *argv[]) {
 		if (!node.items_id.empty()) {
 			continue;
 		}
-		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"");
+		pl_items.tracked.emplace_back(plat, Playlist(node.playlist.id, /*items_etag=*/""));
 		node.items_id = pl_items.id;
 		save_node(node, plat);
 	}
-	PlaylistItemsCache::save(pl_items);
+	save_playlist_items(pl_items);
 }
 
 int run_track(int argc, char *argv[]) {

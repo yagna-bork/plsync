@@ -15,6 +15,8 @@ struct Playlist {
 	{
 	}
 
+	Playlist(const std::string& id, const std::string& items_etag): id(id), items_etag(items_etag) {}
+
 	std::string id;
 
 	/* Stores the etag for an api response containing only this playlist. Used in GET requests for caching. */
@@ -30,5 +32,7 @@ struct Playlist {
 	bool is_private;
 	std::size_t items;
 	std::string short_id;
+	std::string items_id;
+	std::string items_etag;
 };
 #endif

@@ -1,5 +1,5 @@
 #include "../include/sid_to_id_map.h"
-#include "../include/sid_to_id_map.pb.h"
+#include "../include/cache.pb.h"
 #include "../include/playlist_cache.h"
 #include "../include/config.h"
 #include "../include/platform.h"

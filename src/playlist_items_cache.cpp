@@ -1,16 +1,19 @@
 #include "../include/playlist_items_cache.h"
-#include "../include/playlist_items_cache.pb.h"
+#include "../include/cache.pb.h"
 #include "../include/playlist_cache.h"
 #include "../include/util.h"
 #include "../include/config.h"
+#include "../include/token_store.h"
 #include <cassert>
 #include <ios>
 #include <filesystem>
 #include <fstream>
+#include <forward_list>
+#include <unordered_map>
+#include <memory>
+#include <curl/curl.h>
 
 namespace fs = std::filesystem;
-
-namespace PlaylistItemsCache {
 
 inline fs::path dir() {
 	return fs::path(get_setting("cache_dir")) / "playlist_items";
@@ -50,11 +53,10 @@ proto::PlaylistItems get_proto_items(const fs::path &path) {
 PlaylistItems load_from_path(const fs::path& path) {
 	PlaylistItems items;
 	auto proto_items = get_proto_items(path);
-	for (const auto& proto_pl: proto_items.tracked_playlists()) {
-		items.tracked_playlists.emplace_back(
-			get_platform(proto_pl.plat()), 
-			std::string(proto_pl.id()), 
-			std::string(proto_pl.items_etag())
+	for (const auto& p: proto_items.tracked()) {
+		items.tracked.emplace_back(
+			get_platform(p.plat()), 
+			Playlist(std::string(p.playlist().id()), std::string(p.playlist().items_etag()))
 		);
 	}
 	for (const auto& song: proto_items.song_hashes()) {
@@ -64,42 +66,78 @@ PlaylistItems load_from_path(const fs::path& path) {
 	return items;
 }
 
-PlaylistItems load(const std::string& id) {
+PlaylistItems load_playlist_items(const std::string& id) {
 	return load_from_path(dir() / id);
 }
 
-std::vector<PlaylistItems> load_all() {
-	std::vector<PlaylistItems> res;
+std::forward_list<PlaylistItems> load_playlist_items_cache() {
+	std::forward_list<PlaylistItems> cache;
 	for (const auto& path: fs::directory_iterator(dir())) {
-		res.push_back(load_from_path(path.path()));
+		cache.push_front(load_from_path(path.path()));
 	}
-	return res;
+	return cache;
 }
 
-void save(const PlaylistItems& items) {
-	proto::PlaylistItems proto_items;
-	for (auto& pl: items.tracked_playlists) {
-		proto::PlaylistInfo* proto_pl = proto_items.add_tracked_playlists();
-		proto_pl->set_plat(get_proto_platform(pl.plat));
-		proto_pl->set_id(pl.id);
-		proto_pl->set_items_etag(pl.items_etag);
+/*
+void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::shared_ptr<CURL> curl) {
+	std::unordered_map<Platform, std::string> plat_to_access_tkn;
+	auto prev = cache.before_begin(), curr = cache.begin();
+	while (curr != cache.end()) {
+		int i = 0;
+		while (i != curr->tracked.size()) {
+			auto& [plat, pl] = curr->tracked[i];
+			auto node = PlaylistCache::load_node(pl.id, plat);
+			pl->title = node.playlist.title;
+
+			if (!plat_to_access_tkn.count(plat)) {
+				plat_to_access_tkn[plat] = get_or_refresh_access_tkn(plat, curl);
+			}
+			const auto& access_tkn = plat_to_access_tkn[plat];
+			Playlist modified_playlist;
+			bool modified = API::get_playlist(plat, curl.get(), access_tkn, id, node.playlist.etag, modified_playlist);
+			if (modified) {
+				if (modified_playlist.id.empty()) {
+					// playlist was deleted
+					remove_node(node, plat);
+					curr->tracked.erase(curr->tracked.begin() + i)
+					continue;
+				} else {
+					node.playlist = modified_playlist;
+					save_node(node, plat);
+				}
+			}
+			i++;
+		}
+
+		if (curr->tracked.size() < 2) {
+			curr = cache.erase_after(prev);
+		}
 	}
-	for (const auto& song: items.song_hashes) {
+}
+*/
+
+void save_playlist_items(const PlaylistItems& pl_items) {
+	proto::PlaylistItems proto_items;
+	for (const auto& [plat, pl]: pl_items.tracked) {
+		auto proto_pair = proto_items.add_tracked();
+		proto_pair->set_plat(get_proto_platform(plat));
+		proto_pair->mutable_playlist()->set_id(pl.id);
+		proto_pair->mutable_playlist()->set_items_etag(pl.items_etag);
+	}
+	for (const auto& song: pl_items.song_hashes) {
 		proto_items.add_song_hashes(song);
 	}
-	auto file = ensure_bin_file<std::ofstream>(dir() / items.id);
+	auto file = ensure_bin_file<std::ofstream>(dir() / pl_items.id);
 	proto_items.SerializeToOstream(&file);
 }
 
-void remove(const std::string& id) {
+void remove_playlist_items(const std::string& id) {
 	auto items = get_proto_items(dir() / id);
-	for (const auto& pl: items.tracked_playlists()) {
-		Platform plat = get_platform(pl.plat());
-		auto node = PlaylistCache::load_node(std::string(pl.id()), plat);
+	for (const auto& p: items.tracked()) {
+		Platform plat = get_platform(p.plat());
+		auto node = PlaylistCache::load_node(std::string(p.playlist().id()), plat);
 		node.items_id.clear();
 		PlaylistCache::save_node(node, plat);
 	}
 	fs::remove(dir() / id);
 }
-
-} // PlaylistItemsCache

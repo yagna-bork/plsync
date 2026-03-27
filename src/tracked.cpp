@@ -7,11 +7,10 @@
 #include <stddef.h>
 #include <filesystem>
 #include <iostream>
-#include <vector>
+#include <forward_list>
 #include <algorithm>
 #include <sstream>
 
-using namespace PlaylistItemsCache;
 namespace fs = std::filesystem;
 
 static void print_usage() {
@@ -41,29 +40,28 @@ int run_tracked(int argc, char* argv[]) {
 		}
 	}
 
-	// TODO denormalising title was a bad idea
-	// we want to force refresh playlist with api each time
-	// to keep cache up to date and see if a playlist has 
-	// been deleted
-	std::vector<PlaylistItems> pl_items_list = load_all();
+	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
 	size_t id_pad = longest_sid*2 - 2;
 	std::ostringstream heading_ss;
 	heading_ss << "Platform Id" << std::string(id_pad, ' ');
 	std::string heading = heading_ss.str();
 	std::cout << heading << '\n' << std::string(heading.size(), '-') << '\n';
 
-	for (int i = 0; i != pl_items_list.size(); i++) {
-		if (i > 0) {
+	bool skip_newline = true;
+	for (const auto& pl_items: cache) {
+		if (skip_newline) {
+			skip_newline = false;
+		} else {
 			std::cout << '\n';
 		}
-		for (const auto& pl: pl_items_list[i].tracked_playlists) {
+		for (const auto& [plat, pl]: pl_items.tracked) {
 			std::string id_hash;
 			sha256(pl.id, id_hash);
-			std::string sid(id_hash.begin(), id_hash.begin() + plat_to_sid_len[pl.plat]);
-			size_t plat_pad = 9 - platform_title(pl.plat).size();
-			std::cout << platform_title(pl.plat) << std::string(plat_pad, ' ') << bin_to_hex(sid) << '\n';
+			std::string sid(id_hash.begin(), id_hash.begin() + plat_to_sid_len[plat]);
+			size_t plat_pad = 9 - platform_title(plat).size();
+			std::cout << platform_title(plat) << std::string(plat_pad, ' ') << bin_to_hex(sid) << '\n';
 		}
-		std::cout << pl_items_list[i].song_hashes.size() << " song(s)\n";
+		std::cout << pl_items.song_hashes.size() << " song(s)\n";
 	}
 	return 0;
 }

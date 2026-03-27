@@ -2,7 +2,7 @@
 #define GUARD_PLAYLIST_CACHE_H 
 #include "models.h"
 #include "platform.h"
-#include "playlist_cache.pb.h"
+#include "cache.pb.h"
 #include "util.h"
 #include <cassert>
 #include <cstddef>

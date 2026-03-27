@@ -41,17 +41,17 @@ int untrack(int argc, char* argv[]) {
 	Platform plat;
 	PlaylistCache::Node node;
 	parse_args(argc, argv, plat, node);
-    auto pl_items = PlaylistItemsCache::load(node.items_id);
-	if (pl_items.tracked_playlists.size() == 2) {
-		PlaylistItemsCache::remove(pl_items.id);
+    auto pl_items = load_playlist_items(node.items_id);
+	if (pl_items.tracked.size() == 2) {
+		remove_playlist_items(pl_items.id);
 	} else {
-		for (auto it = pl_items.tracked_playlists.begin(); it != pl_items.tracked_playlists.end(); it++) {
-			if (it->id == node.playlist.id) {
-				pl_items.tracked_playlists.erase(it);
+		for (auto it = pl_items.tracked.begin(); it != pl_items.tracked.end(); it++) {
+			if (it->second.id == node.playlist.id) {
+				pl_items.tracked.erase(it);
 				break;
 			}
 		}
-		PlaylistItemsCache::save(pl_items);
+		save_playlist_items(pl_items);
 	}
 	node.items_id.clear();
 	PlaylistCache::save_node(node, plat);
