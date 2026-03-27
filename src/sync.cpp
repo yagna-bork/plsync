@@ -17,7 +17,7 @@ int run_sync(int argc, char* argv[]) {
 	if (!parse_args(argc, argv)) {
 		return 0;
 	}
-	std::cout << "Syncing... ";
-	std::cout << "Done!\n";
+	std::cout << "Syncing...";
+	std::cout << " Done!\n";
 	return 0;
 }

@@ -261,7 +261,6 @@ class PlaylistInfo final : public ::google::protobuf::Message
   enum : int {
     kIdFieldNumber = 2,
     kItemsEtagFieldNumber = 3,
-    kTitleFieldNumber = 4,
     kPlatFieldNumber = 1,
   };
   // string id = 2;
@@ -288,18 +287,6 @@ class PlaylistInfo final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_items_etag(::absl::string_view value);
 
   public:
-  // string title = 4;
-  bool has_title() const;
-  void clear_title() ;
-  ::absl::string_view title() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_title(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_title() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_title(::absl::string_view value);
-
-  public:
   // .proto.Platform plat = 1;
   bool has_plat() const;
   void clear_plat() ;
@@ -315,8 +302,8 @@ class PlaylistInfo final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   0, 44,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   0, 39,
                                    2>
       _table_;
 
@@ -339,7 +326,6 @@ class PlaylistInfo final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr id_;
     ::google::protobuf::internal::ArenaStringPtr items_etag_;
-    ::google::protobuf::internal::ArenaStringPtr title_;
     int plat_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -586,14 +572,14 @@ extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_class_dat
 
 // .proto.Platform plat = 1;
 inline bool PlaylistInfo::has_plat() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
   return value;
 }
 inline void PlaylistInfo::clear_plat() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.plat_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000004U);
 }
 inline ::proto::Platform PlaylistInfo::plat() const {
   // @@protoc_insertion_point(field_get:proto.PlaylistInfo.plat)
@@ -601,7 +587,7 @@ inline ::proto::Platform PlaylistInfo::plat() const {
 }
 inline void PlaylistInfo::set_plat(::proto::Platform value) {
   _internal_set_plat(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   // @@protoc_insertion_point(field_set:proto.PlaylistInfo.plat)
 }
 inline ::proto::Platform PlaylistInfo::_internal_plat() const {
@@ -677,39 +663,6 @@ inline void PlaylistInfo::_internal_set_items_etag(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   SetHasBit(_impl_._has_bits_[0], 0x00000002U);
   _impl_.items_etag_.Set(value, GetArena());
-}
-
-// string title = 4;
-inline bool PlaylistInfo::has_title() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
-  return value;
-}
-inline void PlaylistInfo::clear_title() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.title_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
-}
-inline ::absl::string_view PlaylistInfo::title() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PlaylistInfo.title)
-  return _internal_title();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void PlaylistInfo::set_title(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.title_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.PlaylistInfo.title)
-}
-inline ::absl::string_view PlaylistInfo::_internal_title() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.title_.Get();
-}
-inline void PlaylistInfo::_internal_set_title(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.title_.Set(value, GetArena());
 }
 
 // -------------------------------------------------------------------

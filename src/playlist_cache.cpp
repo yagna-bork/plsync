@@ -15,6 +15,9 @@
 
 namespace fs = std::filesystem;
 
+// TODO reduce number of tiles by bringing
+// playlist_items_cache and sid_to_id_map files
+// into this single file
 namespace PlaylistCache {
 
 void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
@@ -135,7 +138,7 @@ Head* load(Platform plat) {
 	return head;
 }
 
-void cleanup(Head* head, Platform plat) {
+void save(Head* head, Platform plat) {
 	// save and delete head
 	if (head->was_changed) {
 		proto::CacheHead proto_head;
@@ -160,9 +163,6 @@ void cleanup(Head* head, Platform plat) {
 		proto_node.set_prev(prev_id);
 		std::ofstream f(node_path(node, plat), std::ios::binary);
 		proto_node.SerializeToOstream(&f);
-		if (!node->items_id.empty()) {
-			PlaylistItemsCache::update_title(node->playlist.title, node->items_id, plat);
-		}
 		
 		prev_id = node->playlist.id;
 		free_and_advance_node(&node);
@@ -293,7 +293,7 @@ Node load_node(const std::string& id, Platform plat) {
 	return node;
 }
 
-void save_node(const Node& node, Platform plat, bool update_items) {
+void save_node(const Node& node, Platform plat) {
 	proto::CacheNode tmp;
 	auto proto_node = create_proto_node(&node);
 	std::fstream f(dir(plat) / node.playlist.id, std::ios::binary|std::ios::out|std::ios::in);
@@ -303,12 +303,9 @@ void save_node(const Node& node, Platform plat, bool update_items) {
 	f.clear();
 	f.seekp(0);
 	proto_node.SerializeToOstream(&f);
-	if (!node.items_id.empty() && update_items) {
-		PlaylistItemsCache::update_title(node.playlist.title, node.items_id, plat);
-	}
 }
 
-void delete_node(Node& node, Platform plat) {
+void remove_node(Node& node, Platform plat) {
 	proto::CacheNode tmp;
 	{
 		std::ifstream file(dir(plat) / node.playlist.id);

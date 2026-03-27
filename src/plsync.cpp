@@ -67,6 +67,8 @@ int main(int argc, char *argv[]) {
 		return run_init(!is_yt_init, !is_sp_init);
 	}
 
+	// TODO reduce the number of files by putting all
+	// seperate command files into this single file
 	const char *command = parse_args(argc, argv);
 	if (strcmp(command, "init") == 0) {
 		return run_init(true, true);

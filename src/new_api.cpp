@@ -16,6 +16,8 @@
 
 using namespace nlohmann;
 
+// TODO reduce the number of files by bringing spotify
+// and youtube implementation files into this single file
 namespace API {
 
 std::string append_params(const std::string &url, const Params &params) {

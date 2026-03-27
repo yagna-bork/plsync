@@ -43,12 +43,12 @@ struct Head {
 
 Head* load(Platform plat);
 void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, const std::string& etag);
-void cleanup(Head* head, Platform plat);
+void save(Head* head, Platform plat);
 
 /* Providing an invalid id is undefined behaviour */
 Node load_node(const std::string& id, Platform plat);
-void save_node(const Node& node, Platform plat, bool update_items = true);
-void delete_node(Node& id, Platform plat);
+void save_node(const Node& node, Platform plat);
+void remove_node(Node& id, Platform plat);
 void create_node(const Node& node, Platform plat);
 
 bool load_head(Platform plat, Head& res);
@@ -111,7 +111,7 @@ struct Handle {
 	Platform plat;
 	
 	Handle(Platform plat): head(load(plat)), plat(plat) {}
-	~Handle() { cleanup(head, plat);  }
+	~Handle() { save(head, plat);  }
 
 	const_iterator cbefore_begin();
 	const_iterator cbegin();

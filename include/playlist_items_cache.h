@@ -11,10 +11,9 @@ struct PlaylistInfo {
 	Platform plat;
 	std::string id;
 	std::string items_etag;
-	std::string title;
 
-	PlaylistInfo(Platform plat, const std::string& id, const std::string& items_etag, const std::string& title) 
-		: plat(plat), id(id), items_etag(items_etag), title(title)
+	PlaylistInfo(Platform plat, const std::string& id, const std::string& items_etag) 
+		: plat(plat), id(id), items_etag(items_etag)
 	{
 	}
 };
@@ -29,7 +28,6 @@ PlaylistItems load(const std::string& id);
 std::vector<PlaylistItems> load_all();
 void save(const PlaylistItems& pl_items);
 void remove(const std::string& id);
-void update_title(const std::string& title, const std::string& items_id, Platform plat);
 
 }
 #endif

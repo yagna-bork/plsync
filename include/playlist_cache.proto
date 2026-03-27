@@ -1,5 +1,7 @@
 edition = "2024";
 
+// TODO reduce the number of files by bringing all the
+// proto files into a single file called cache.proto
 package proto;
 
 message CacheHead {

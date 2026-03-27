@@ -79,7 +79,7 @@ static void track(int argc, char *argv[]) {
 		if (modified) {
 			if (modified_playlist.id.empty()) {
 				// playlist was deleted
-				delete_node(node, plat);
+				remove_node(node, plat);
 				throw std::invalid_argument("");
 			} else {
 				node.playlist = modified_playlist;
@@ -130,9 +130,9 @@ static void track(int argc, char *argv[]) {
 		if (!node.items_id.empty()) {
 			continue;
 		}
-		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"", node.playlist.title);
+		pl_items.tracked_playlists.emplace_back(plat, node.playlist.id, /*items_etag=*/"");
 		node.items_id = pl_items.id;
-		save_node(node, plat, /*update_items=*/false);
+		save_node(node, plat);
 	}
 	PlaylistItemsCache::save(pl_items);
 }
