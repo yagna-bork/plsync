@@ -10,14 +10,15 @@ message CacheHead {
 
 message Playlist {
 	string id = 1;
-	string etag = 2;
-	string version = 3;
-	string title = 4;
-	bool is_private = 5;
-	int32 items = 6;
-	string short_id = 7;
-	string items_id = 8;
-	string items_etag = 9;
+	bytes id_hash = 2;
+	string etag = 3;
+	string version = 4;
+	string title = 5;
+	bool is_private = 6;
+	int32 items = 7;
+	bytes short_id = 8;
+	string items_id = 9;
+	string items_etag = 10;
 }
 
 message CacheNode {
@@ -25,7 +26,6 @@ message CacheNode {
 	string prev = 2;
 	Playlist playlist = 3;
 	string items_id = 4;
-	bytes id_hash = 5;
 }
 
 enum Platform {

@@ -7,7 +7,6 @@
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
-#include <iostream> // TODO remove
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 

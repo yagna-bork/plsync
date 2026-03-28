@@ -72,19 +72,18 @@ static void track(int argc, char *argv[]) {
 		// check sid is valid
 		std::string id = sid_to_id_lookup(hex_to_bin(sid), plat);
 		Node node = load_node(id, plat);
-		node.playlist.short_id = sid;
 	
 		// check playlist wasn't deleted
 		std::string access_tkn = get_or_refresh_access_tkn(plat, curl);
 		Playlist modified_playlist;
-		bool modified = API::get_playlist(plat, curl.get(), access_tkn, id, node.playlist.etag, modified_playlist);
+		bool modified = API::get_playlist(plat, curl.get(), access_tkn, node.playlist.id, node.playlist.etag, modified_playlist);
 		if (modified) {
 			if (modified_playlist.id.empty()) {
 				// playlist was deleted
 				remove_node(node, plat);
 				throw std::invalid_argument("");
 			} else {
-				node.playlist = modified_playlist;
+				node.playlist = std::move(modified_playlist);
 				save_node(node, plat);
 			}
 		}

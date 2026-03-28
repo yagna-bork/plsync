@@ -50,14 +50,6 @@ int run_tracked(int argc, char* argv[]) {
 
 	auto curl = get_curl();
 	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
-	for (auto& pl_items: cache) {
-		for (auto& [plat, pl]: pl_items.tracked) {
-			std::string id_hash;
-			sha256(pl.id, id_hash);
-			pl.short_id = std::string(id_hash.begin(), id_hash.begin() + plat_to_sid_len[plat]);
-		}
-	}
-
 	try {
 		update_playlist_items_cache(cache, curl);
 	} catch (const TokenStorageAccessError& e) {

@@ -53,17 +53,20 @@ int run_untracked(int argc, char *argv[]) {
 		std::cerr << "Something went wrong. Try again.\n";
 		return 1;
 	}
-
-	int sid_len;
 	if (modified) {
 		Cache::update(cache.head, cache.plat, modified_playlists, modified_etag);
-		sid_len = Cache::calculate_short_id_len(cache.head);
-		Cache::fill_short_ids(cache.head, sid_len);
+	}
+
+	bool were_sids_modified = modified;
+	int new_sid_len = Cache::calculate_short_id_len(cache.head);
+	if (new_sid_len != cache.head->sid_len) {
+		std::cout << "here\n";
+		Cache::update_short_ids(cache.head, new_sid_len);
+		were_sids_modified = true;
+	}
+	if (were_sids_modified) {
+		std::cout << "here\n";
 		update_sid_to_id_map(cache.head, cache.plat);
-	} else {
-		sid_len = cache.head->sid_len;
-		// TODO there is no need for this. just store short_id in the files
-		Cache::fill_short_ids(cache.head, sid_len);
 	}
 
 	size_t longest_title = 0;
@@ -71,7 +74,7 @@ int run_untracked(int argc, char *argv[]) {
 		longest_title = std::max(longest_title, utf8_len(pl.title));
 	}
 
-	int id_pad = std::max(1, sid_len*2+1 - 2);
+	int id_pad = std::max(1, static_cast<int>(cache.head->sid_len) * 2 - 1);
 	int title_pad = std::max(size_t(1), longest_title - 4);
 	std::stringstream heading_ss;
 	heading_ss << "Id" << std::string(id_pad, ' ') 
@@ -87,7 +90,7 @@ int run_untracked(int argc, char *argv[]) {
 		if (!it.ptr.node->items_id.empty()) {
 			continue;
 		}
-		id_pad = std::max(1, 3 - sid_len*2); 
+		id_pad = std::max(1, 3 - static_cast<int>(cache.head->sid_len) * 2); 
 		int title_pad = std::max(longest_title, size_t(5)) + 1 - utf8_len(it->title);
 		std::string privacy_type = it->is_private ? "private" : "public";
 		int privacy_pad = it->is_private ? 1 : 2;

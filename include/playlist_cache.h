@@ -27,10 +27,9 @@ struct Node {
 	Node* next;
 	PtrUnion prev;
 	bool was_changed;
-	std::string id_hash;
 
 	Node() {}
-	Node(const Playlist& pl) : was_changed(true), playlist(pl) { sha256(playlist.id, id_hash); }
+	Node(const Playlist& pl) : was_changed(true), playlist(pl) {}
 	Node(const proto::CacheNode& proto_node);
 };
 
@@ -55,7 +54,7 @@ bool load_head(Platform plat, Head& res);
 
 /* Determine min characters of id_hash that make them all unique */
 std::size_t calculate_short_id_len(Head* head);
-void fill_short_ids(Head* head, std::size_t short_id_len);
+void update_short_ids(Head* head, std::size_t short_id_len);
 
 template <bool is_const>
 struct Iterator {

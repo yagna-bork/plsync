@@ -98,14 +98,13 @@ void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::s
 			auto& [plat, pl] = curr->tracked[i];
 			auto node = PlaylistCache::load_node(pl.id, plat);
 			pl.title = node.playlist.title;
+			pl.short_id = node.playlist.short_id;
 
 			const auto& access_tkn = plat_to_access_tkn[plat];
 			Playlist modified_playlist;
 			if (API::get_playlist(plat, curl.get(), access_tkn, pl.id, node.playlist.etag, modified_playlist)) {
 				if (modified_playlist.id.empty()) {
 					// playlist was deleted
-					// TODO this should be saved in the node already
-					node.playlist.short_id = pl.short_id;
 					remove_node(node, plat);
 					curr->tracked.erase(curr->tracked.begin() + i);
 					curr->was_changed = true;

@@ -16,13 +16,15 @@
 
 namespace fs = std::filesystem;
 
-// TODO reduce number of tiles by bringing
+// TODO reduce number of files by bringing
 // playlist_items_cache and sid_to_id_map files
 // into this single file
 namespace PlaylistCache {
 
 void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
 	pl.id = std::string(proto_pl.id());
+	pl.id_hash = std::string(proto_pl.id_hash());
+	pl.short_id = std::string(proto_pl.short_id());
 	pl.etag = std::string(proto_pl.etag());
 	pl.version = std::string(proto_pl.version());
 	pl.title = std::string(proto_pl.title());
@@ -31,7 +33,7 @@ void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
 }
 
 Node::Node(const proto::CacheNode& proto_node)
-	: id_hash(proto_node.id_hash()), items_id(proto_node.items_id()), was_changed(false)
+	: items_id(proto_node.items_id()), was_changed(false)
 {
 	update_playlist(playlist, proto_node.playlist());
 }
@@ -87,10 +89,11 @@ inline void free_and_advance_node(Node** ptr) {
 proto::CacheNode create_proto_node(const Node* node) {
 	proto::CacheNode proto_node;
 	proto_node.set_items_id(node->items_id);
-	proto_node.set_id_hash(node->id_hash);
 
 	auto proto_pl = proto_node.mutable_playlist();
 	proto_pl->set_id(node->playlist.id);
+	proto_pl->set_id_hash(node->playlist.id_hash);
+	proto_pl->set_short_id(node->playlist.short_id);
 	proto_pl->set_etag(node->playlist.etag);
 	proto_pl->set_version(node->playlist.version);
 	proto_pl->set_title(node->playlist.title);
@@ -225,7 +228,9 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists, c
 			continue;
 		}
 
-		Node* new_node = new Node(playlists[i]);
+		Node* new_node = new Node(std::move(playlists[i]));
+		std::string sid(new_node->playlist.id_hash.data(), head->sid_len);
+		new_node->playlist.short_id = std::move(sid);
 		if (curr.ptr.is_head) {
 			set_prev(new_node, curr.ptr.head);
 		} else {
@@ -240,7 +245,7 @@ std::size_t calculate_short_id_len(Head* head) {
 	std::vector<std::string> id_hashes;
 	Node* node = head->next;
 	while (node) {
-		id_hashes.emplace_back(node->id_hash);
+		id_hashes.emplace_back(node->playlist.id_hash);
 		node = node->next;
 	}
 
@@ -269,17 +274,12 @@ std::size_t calculate_short_id_len(Head* head) {
 	return sid_len;
 }
 
-void fill_short_ids(Head* head, std::size_t sid_len) {
-	if (sid_len != head->sid_len) {
-		head->sid_len = sid_len;
-		head->was_changed = true;
-	}
-
-	Node* node = head->next;
-	while (node) {
-		std::string short_id(node->id_hash.data(), sid_len);
-		node->playlist.short_id = short_id;
-		node = node->next;
+void update_short_ids(Head* head, std::size_t sid_len) {
+	head->sid_len = sid_len;
+	head->was_changed = true;
+	for (auto it = begin(head); it != end(); ++it) {
+		std::string sid(it->id_hash.begin(), it->id_hash.begin() + sid_len);
+		it->short_id = std::move(sid);
 	}
 }
 
@@ -290,7 +290,6 @@ Node load_node(const std::string& id, Platform plat) {
 		proto_node.ParseFromIstream(&f);
 	}
 	Node node(proto_node);
-	update_playlist(node.playlist, proto_node.playlist());
 	return node;
 }
 
@@ -306,7 +305,6 @@ void save_node(const Node& node, Platform plat) {
 	proto_node.SerializeToOstream(&f);
 }
 
-// TODO remove from sid_to_id_map too
 void remove_node(Node& node, Platform plat) {
 	proto::CacheNode tmp;
 	{
