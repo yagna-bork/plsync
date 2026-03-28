@@ -50,6 +50,14 @@ int run_tracked(int argc, char* argv[]) {
 
 	auto curl = get_curl();
 	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
+	for (auto& pl_items: cache) {
+		for (auto& [plat, pl]: pl_items.tracked) {
+			std::string id_hash;
+			sha256(pl.id, id_hash);
+			pl.short_id = std::string(id_hash.begin(), id_hash.begin() + plat_to_sid_len[plat]);
+		}
+	}
+
 	try {
 		update_playlist_items_cache(cache, curl);
 	} catch (const TokenStorageAccessError& e) {
@@ -72,13 +80,10 @@ int run_tracked(int argc, char* argv[]) {
 			std::cout << '\n';
 		}
 		for (const auto& [plat, pl]: pl_items.tracked) {
-			std::string id_hash;
-			sha256(pl.id, id_hash);
-			std::string sid(id_hash.begin(), id_hash.begin() + plat_to_sid_len[plat]);
 			size_t plat_pad = 9 - platform_title(plat).size();
-			id_pad = (longest_sid - sid.size())*2 + 1;
+			id_pad = (longest_sid - pl.short_id.size())*2 + 1;
 			std::cout << platform_title(plat) << std::string(plat_pad, ' ') 
-					  << bin_to_hex(sid) << std::string(id_pad, ' ')
+					  << bin_to_hex(pl.short_id) << std::string(id_pad, ' ')
 					  << pl.title << '\n';
 		}
 		std::cout << pl_items.song_hashes.size() << " song(s)\n";

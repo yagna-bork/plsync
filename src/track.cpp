@@ -9,6 +9,7 @@
 #include <iostream>
 #include <utility>
 #include <unordered_set>
+#include <unordered_map>
 #include <stdexcept>
 #include <curl/curl.h>
 
@@ -27,6 +28,9 @@ static std::unordered_map<Platform, std::string> parse_args(int argc, char *argv
 		throw std::invalid_argument("");
 	}
 
+	// TODO change input format to unambiguous plat,[sid]
+	// because an sid could look like a platform e.g. yt
+	// and confuse the parsing algo
 	std::unordered_map<Platform, std::string> plat_to_sid;
 	Platform prev_plat = Platform::INVALID;
 	for (int i = 0; i != argc; i++) {
@@ -39,7 +43,7 @@ static std::unordered_map<Platform, std::string> parse_args(int argc, char *argv
 			prev_plat = plat;
 			continue;
 		}
-		if (prev_plat == Platform::INVALID || plat_to_sid.count(plat) || std::strlen(argv[i]) % 2 != 0) {
+		if (prev_plat == Platform::INVALID || !plat_to_sid[prev_plat].empty() || std::strlen(argv[i]) % 2 != 0) {
 			throw std::invalid_argument("");
 		}
 		plat_to_sid[prev_plat] = argv[i];
@@ -67,10 +71,8 @@ static void track(int argc, char *argv[]) {
 
 		// check sid is valid
 		std::string id = sid_to_id_lookup(hex_to_bin(sid), plat);
-		if (id.empty()) {
-			throw std::invalid_argument("");
-		}
 		Node node = load_node(id, plat);
+		node.playlist.short_id = sid;
 	
 		// check playlist wasn't deleted
 		std::string access_tkn = get_or_refresh_access_tkn(plat, curl);
@@ -106,7 +108,6 @@ static void track(int argc, char *argv[]) {
 	if (items_id.empty()) {
 		pl_items.id = bin_to_hex(rndstr(16));
 	} else {
-		// TODO test
 		pl_items = load_playlist_items(items_id);
 	}
 
@@ -143,7 +144,7 @@ int run_track(int argc, char *argv[]) {
 		return 0;
 	} catch (const std::invalid_argument& e) {
 		print_usage();
-	} catch (const SidToIdMapUninitialisedError& e) {
+	} catch (const SidOutOfRangeError& e) {
 		print_usage();
 	} catch (const std::exception& e) {
 		std::cerr << "Something went wrong please try again\n";

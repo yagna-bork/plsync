@@ -46,17 +46,35 @@ std::string sid_to_id_lookup(const std::string& sid, Platform plat) {
 		proto_map.ParseFromIstream(&file);
 	}
 
-	if (proto_map.buckets_size() < NUM_BUCKETS) {
-		throw SidToIdMapUninitialisedError();
+	if (proto_map.buckets_size() == 0) {
+		throw SidOutOfRangeError();
 	}
 
-	auto sid_hash = std::hash<std::string>{}(sid);
-	auto bucket = sid_hash % NUM_BUCKETS;
+	auto bucket = std::hash<std::string>{}(sid) % NUM_BUCKETS;
 	for (const auto& pair: proto_map.buckets(bucket).pairs()) {
-		if (pair.short_id() != sid) continue;
+		if (pair.short_id() != sid) {
+			continue;
+		}
 		return std::string(pair.id());
 	}
-	return "";
+	throw SidOutOfRangeError();
+}
+
+void remove_sid_to_id_entry(const std::string& sid, Platform plat) {
+	ProtoMap proto_map;
+	auto file = ensure_bin_file<std::fstream>(file_path(plat), std::ios::in | std::ios::out);
+	proto_map.ParseFromIstream(&file);
+	auto bucket_idx = std::hash<std::string>{}(sid) % NUM_BUCKETS;
+	auto* proto_bucket = proto_map.mutable_buckets(bucket_idx);
+	for (int i = 0; i != proto_bucket->pairs_size(); i++) {
+		if (proto_bucket->pairs(i).short_id() != sid) {
+			continue;
+		}
+		proto_bucket->mutable_pairs()->DeleteSubrange(i, 1);
+		proto_map.SerializeToOstream(&file);
+		return;
+	}
+	throw SidOutOfRangeError();
 }
 
 Map update_sid_to_id_map(Cache::Head* head, Platform plat) {

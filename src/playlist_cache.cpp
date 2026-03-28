@@ -4,6 +4,7 @@
 #include "../include/cache.pb.h"
 #include "../include/util.h"
 #include "../include/playlist_items_cache.h"
+#include "../include/sid_to_id_map.h"
 #include <cassert>
 #include <algorithm>
 #include <vector>
@@ -341,6 +342,8 @@ void remove_node(Node& node, Platform plat) {
 		file.seekp(0);
 		tmp.SerializeToOstream(&file);
 	}
+	assert(!node.playlist.short_id.empty());
+	remove_sid_to_id_entry(node.playlist.short_id, plat);
 	node = Node();
 }
 

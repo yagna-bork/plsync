@@ -64,7 +64,7 @@ int run_untrack(int argc, char* argv[]) {
 	} catch (const std::invalid_argument& e) {
 		print_usage();
 		return 1;
-	} catch (const SidToIdMapUninitialisedError& e) {
+	} catch (const SidOutOfRangeError& e) {
 		print_usage();
 		return 1;
 	}

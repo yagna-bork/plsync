@@ -62,6 +62,7 @@ int run_untracked(int argc, char *argv[]) {
 		update_sid_to_id_map(cache.head, cache.plat);
 	} else {
 		sid_len = cache.head->sid_len;
+		// TODO there is no need for this. just store short_id in the files
 		Cache::fill_short_ids(cache.head, sid_len);
 	}
 
