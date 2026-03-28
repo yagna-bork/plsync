@@ -1,7 +1,7 @@
 #ifndef GUARD_NEW_API_H
 #define GUARD_NEW_API_H
 #include "platform.h"
-#include "models.h"
+#include "cache.h"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -51,8 +51,6 @@ long POST(
 	const std::string &access_tkn = ""
 );
 
-std::string fields_to_string(const Fields& fields);
-
 /* 
  * Returns whether playlist was modified.
  * res will be an empty playlist i.e. id attribute is empty 
@@ -63,4 +61,28 @@ bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn, cons
 Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title);
 
 } // namespace API
+
+
+
+namespace NewYoutubeAPI {
+
+const std::string base_url = "https://www.googleapis.com/youtube/v3";
+
+bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
+
+} // namespace NewYoutubeAPI
+
+
+
+namespace NewSpotifyAPI {
+
+const std::string base_url = "https://api.spotify.com/v1";
+
+bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
+
+} // namespace NewSpotifyAPI
 #endif

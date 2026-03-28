@@ -6,6 +6,7 @@ static const std::vector<std::string> titles = {
 	,"Test"
 #endif
 };
+
 static const std::vector<std::string> abbrevs = {
 	"yt", "sp"
 #ifndef NDEBUG

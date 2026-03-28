@@ -1,5 +1,6 @@
 #ifndef GUARD_UTIL_H
 #define GUARD_UTIL_H
+#include "platform.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <string>
@@ -15,6 +16,34 @@
  * A collection of functions used by this project
  * that could be useful for other projects too.
  */
+
+/* read keychain for OAuth tokens */
+class TokenStorageAccessError : public std::runtime_error {
+public:
+	TokenStorageAccessError() : std::runtime_error("") {}
+};
+
+bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t duration);
+bool save_refresh_tkn(Platform platform, const std::string &tkn);
+
+/* 
+ * Get access token or refresh it if it's expired.
+ * Only call this if you're sure that refresh_token 
+ * is valid. Use is_refresh_tkn_valid to check
+ * otherwise you must initialise the platform,
+ * see 'init.h'.
+ */
+bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl, std::string &tkn);
+// TODO make this the only way to handle token_store errors
+/* throws TokenStorageAccessError on storage access or API::RequestError on token refresh failure */
+std::string get_or_refresh_access_tkn(Platform platform, std::shared_ptr<CURL> curl);
+bool get_refresh_tkn(Platform platform, std::string &tkn);
+
+bool is_refresh_tkn_valid(Platform platform);
+
+/* read config file */
+std::string get_setting(std::string name);
+std::string get_setting(std::string name, Platform platform);
 
 bool sha256(const std::string &s, std::string &digest);
 

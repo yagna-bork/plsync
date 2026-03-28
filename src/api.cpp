@@ -1,6 +1,5 @@
 #include "../include/api.h"
 #include "../include/util.h"
-#include "../include/config.h"
 #include "../include/platform.h"
 #include "../include/youtube_api.h"
 #include "../include/spotify_api.h"

@@ -1,8 +1,6 @@
 #include "../include/new_api.h"
-#include "../include/new_spotify_api.h"
-#include "../include/new_youtube_api.h"
 #include "../include/platform.h"
-#include "../include/models.h"
+#include "../include/cache.h"
 #include "../include/util.h"
 #include <algorithm>
 #include <string>
@@ -16,11 +14,23 @@
 
 using namespace nlohmann;
 
-// TODO reduce the number of files by bringing spotify
-// and youtube implementation files into this single file
 namespace API {
 
-std::string append_params(const std::string &url, const Params &params) {
+static std::string fields_to_string(const Fields& fields) {
+	std::string fields_str;
+	for (int i = 0; i != fields.size(); i++) {
+		const auto &field = fields[i];
+		if (i > 0) {
+			fields_str.push_back('&');
+		}
+		fields_str.append(field.first);
+		fields_str.push_back('=');
+		fields_str.append(field.second);
+	}
+	return fields_str;
+}
+
+static std::string append_params(const std::string &url, const Params &params) {
 	std::ostringstream ss(url, std::ios::ate);
 	for (std::size_t i = 0; i != params.size(); i++) {
 		char sep = (i == 0) ? '?' : '&';
@@ -29,7 +39,7 @@ std::string append_params(const std::string &url, const Params &params) {
 	return ss.str();
 }
 
-std::string decompress_gzip(std::filesystem::path file) {
+static std::string decompress_gzip(std::filesystem::path file) {
 	gzFile_s* gzf = gzopen(file.c_str(), "rb");
 	if (!gzf) {
 		gzclose(gzf);
@@ -50,7 +60,7 @@ std::string decompress_gzip(std::filesystem::path file) {
 	return decompressed;
 }
 
-long status_code(CURL* curl) {
+static long status_code(CURL* curl) {
 	long status_code;
 	if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code) != CURLE_OK) {
 		throw RequestError("couldn't retrieve http status code");
@@ -139,20 +149,6 @@ long POST(
 	return status_code(curl);
 }
 
-std::string fields_to_string(const Fields& fields) {
-	std::string fields_str;
-	for (int i = 0; i != fields.size(); i++) {
-		const auto &field = fields[i];
-		if (i > 0) {
-			fields_str.push_back('&');
-		}
-		fields_str.append(field.first);
-		fields_str.push_back('=');
-		fields_str.append(field.second);
-	}
-	return fields_str;
-}
-
 bool get_playlist(
 	Platform plat, CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
 ) {
@@ -181,4 +177,132 @@ Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tk
 	}
 }
 
+} // namespace API
+
+
+
+
+
+namespace NewYoutubeAPI {
+
+bool get_playlist(
+	CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
+) {
+	std::string url = base_url + "/playlists";
+	API::Params params = {
+		{"id", id},
+		{"part", "id,snippet,status,contentDetails"},
+		{
+			"fields", 
+			"etag,items("
+				"id,etag,snippet/title,status/privacyStatus,contentDetails/itemCount"
+			")"
+		},
+	};
+	nlohmann::json resp;
+	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
+
+	if (status_code == 304L) {
+		return false;
+	} else if (status_code == 200L) {
+		if (resp["items"].size() == 0) {
+			res = Playlist();
+			return true;
+		}
+		res.id = resp["items"][0]["id"]; 
+		// the api has a seperate etag for the resource containing 
+		// a single playlist and the playlist resource itself
+		res.etag = resp["etag"];
+		res.version = resp["items"][0]["etag"];
+		res.title = resp["items"][0]["snippet"]["title"];
+		res.is_private = (resp["items"][0]["status"]["privacyStatus"] == "private");
+		res.items = resp["items"][0]["contentDetails"]["itemCount"];
+		return true;
+	} else {
+		throw API::RequestError("Invalid response from youtube");
+	}
 }
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
+	std::string url = base_url + "/playlists";
+	API::Params params = {{"part", "id,snippet,status,contentDetails"}};
+	nlohmann::json data;
+	data["snippet"]["title"] = title;
+	data["snippet"]["description"] = "Created by plsync";
+	data["status"]["privacyStatus"] = "private";
+
+	nlohmann::json resp;
+	long status_code = API::POST(curl, url, data.dump(), resp, "application/json", params, access_tkn);
+	if (status_code != 200) {
+		throw API::RequestError("Invalid response from google");
+	}
+	return Playlist(
+		std::move(resp["id"]),
+		"",
+		std::move(resp["etag"]),
+		std::move(resp["snippet"]["title"]),
+		resp["status"]["privacyStatus"] == "private",
+		resp["contentDetails"]["itemCount"]
+	);
+}
+
+} // namespace NewYoutubeAPI
+
+
+
+
+
+namespace NewSpotifyAPI {
+
+bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res) {
+	std::ostringstream url(base_url, std::ios::ate);
+	url << "/playlists/" << id;
+	json resp;
+	// TODO fields query param
+	long response_code = API::GET(curl, url.str(), resp, {}, access_tkn, etag);
+
+	if (response_code == 304L) {
+		return false;
+	} else if (response_code == 404L) {
+		res = Playlist();
+		return true;
+	} else if (response_code == 200L) {
+		res.id = resp["id"]; 
+		res.title = resp["name"];
+		res.is_private = !resp["public"];
+		res.items = resp["items"]["total"];
+		res.version = resp["snapshot_id"];
+
+		// get etag from response header
+		struct curl_header* header;
+		if (curl_easy_header(curl, "etag", 0, CURLH_HEADER, -1, &header) != CURLHE_OK) {
+			throw API::RequestError("couldn't read etag header");
+		}
+		const char* etag = header->value;
+		const char* beg = std::find(etag, etag+std::strlen(etag), '"') + 1;
+		const char* end = std::find(beg, etag+std::strlen(etag), '"');
+		end = std::find(beg, end, '='); // base64 can have trailing eq signs
+		res.etag = std::string(beg, end);
+		return true;
+	} else {
+		throw API::RequestError("invalid response from spotify");
+	}
+}
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
+	std::string url = base_url;
+	url += "/me/playlists";
+	json data;
+	data["name"] = title;
+	data["public"] = false;
+	data["description"] = "Created by plsync";
+
+	json resp;
+	long status_code = API::POST(curl, url, data.dump(), resp, "application/json", {}, access_tkn);
+	if (status_code != 201) {
+		throw API::RequestError("invalid response from spotify");
+	}
+	return Playlist(resp["id"], "", resp["snapshot_id"], resp["name"], !resp["public"], 0);
+}
+
+} // namespace NewSpotifyAPI

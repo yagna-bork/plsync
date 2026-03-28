@@ -1,7 +1,7 @@
 #ifndef GUARD_YOUTUBE_API_H
 #define GUARD_YOUTUBE_API_H
 #include "api.h"
-#include "models.h"
+#include "cache.h"
 #include <memory>
 #include <string>
 #include <curl/curl.h>

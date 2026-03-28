@@ -1,7 +1,7 @@
 #ifndef GUARD_API_H
 #define GUARD_API_H
 #include "platform.h"
-#include "models.h"
+#include "cache.h"
 #include <ctime>
 #include <string>
 #include <filesystem>

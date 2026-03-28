@@ -1,6 +1,6 @@
 #include "../include/spotify_api.h"
-#include "../include/config.h"
-#include "../include/models.h"
+#include "../include/util.h"
+#include "../include/cache.h"
 #include <cstdint>
 #include <algorithm>
 #include <string>

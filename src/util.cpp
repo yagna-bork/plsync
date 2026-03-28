@@ -1,5 +1,7 @@
 #include "../include/util.h"
 #include "../include/emoji_codepoint_ranges.h"
+#include "../include/api.h"
+#include "../include/client_secret.h"
 #include <cassert>
 #include <limits.h>
 #include <string>
@@ -9,6 +11,174 @@
 #include <numeric>
 #include <openssl/evp.h>
 #include <utf8proc.h>
+#include <libcred.hpp>
+
+static const std::string KEYCHAIN_SERVICE = "plsync-token-service";
+
+bool save_access_tkn(Platform platform, const std::string &tkn, std::time_t duration) {
+	std::string acc = platform_title_lower(platform) + "-access-token";
+	std::string expiry = std::to_string(time(nullptr) + duration);
+	std::string pwd = tkn + ":" + expiry;
+	std::string err;
+	return libcred::set_password(KEYCHAIN_SERVICE, acc, pwd, &err) == libcred::SUCCESS;
+}
+
+bool save_refresh_tkn(Platform platform, const std::string &tkn) {
+	std::string acc = platform_title_lower(platform) + "-refresh-token";
+	std::string err;
+	return libcred::set_password(KEYCHAIN_SERVICE, acc, tkn, &err) == libcred::SUCCESS;
+}
+
+template <class T>
+static T stot(const std::string &s) {
+	const char *type = typeid(T).name();
+	if (strcmp(type, "i") == 0) {
+		return std::stoi(s);
+	} else if (strcmp(type, "l") == 0) {
+		return std::stol(s);
+	} else if (strcmp(type, "x") == 0) {
+		return std::stoll(s);
+	} else {
+		throw std::domain_error("type must be int, long or long long");
+	}
+}
+
+static bool get_access_tkn(Platform platform, std::string &tkn, std::time_t &expiry) {
+	std::string acc = platform_title_lower(platform) + "-access-token";
+	std::string pass, err;
+	if (libcred::get_password(KEYCHAIN_SERVICE, acc, &pass, &err) != libcred::SUCCESS) {
+		return false;
+	}
+	std::string::iterator sep = std::find(pass.begin(), pass.end(), ':');
+	tkn = std::string(pass.begin(), sep);
+	std::string expiry_str(sep+1, pass.end());
+	expiry = stot<std::time_t>(expiry_str);
+	return true;
+}
+
+static bool get_access_tkn(Platform platform, std::string &tkn) {
+	std::time_t _;
+	return get_access_tkn(platform, tkn, _);
+}
+
+static bool get_access_tkn(Platform platform, std::time_t &expiry) {
+	std::string  _;
+	return get_access_tkn(platform, _, expiry);
+}
+
+bool get_refresh_tkn(Platform platform, std::string &tkn) {
+	std::string acc = platform_title_lower(platform) + "-refresh-token";
+	std::string err;
+	return libcred::get_password(KEYCHAIN_SERVICE, acc, &tkn, &err) == libcred::SUCCESS;
+}
+
+static bool is_access_tkn_valid(Platform platform) {
+	std::time_t expiry;
+	if(!get_access_tkn(platform, expiry)) {
+		// not in keychain
+		return false;
+	}
+	return expiry > time(nullptr);
+}
+
+bool is_refresh_tkn_valid(Platform platform) {
+	std::string _;
+	return get_refresh_tkn(platform, _);
+}
+
+bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl, std::string &tkn) {
+	if (is_access_tkn_valid(platform)) {
+		return get_access_tkn(platform, tkn);
+	}
+
+	std::string refresh_tkn;
+	if (!get_refresh_tkn(platform, refresh_tkn)) {
+		return false;
+	}
+
+	std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
+	BaseAuthAPI::AccessTokenResponse resp;
+	try {
+		resp = api->refresh_access_tkn(refresh_tkn);
+	} catch (const BaseAuthAPI::RequestError &e) { 
+		return false;
+	}
+
+	save_access_tkn(platform, resp.access_tkn, resp.access_duration);
+	tkn = std::move(resp.access_tkn);
+	if (platform == Platform::SPOTIFY && !save_refresh_tkn(platform, resp.refresh_tkn)) {
+		return false;
+	}
+	return true;
+}
+
+std::string get_or_refresh_access_tkn(Platform platform, std::shared_ptr<CURL> curl) {
+	std::string tkn;
+	if (is_access_tkn_valid(platform)) {
+		if (!get_access_tkn(platform, tkn)) {
+			throw TokenStorageAccessError();
+		}
+		return tkn;
+	}
+
+	std::string refresh_tkn;
+	if (!get_refresh_tkn(platform, refresh_tkn)) {
+		throw TokenStorageAccessError();
+	}
+	std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
+	BaseAuthAPI::AccessTokenResponse resp = api->refresh_access_tkn(refresh_tkn);
+	save_access_tkn(platform, resp.access_tkn, resp.access_duration);
+	if (platform == Platform::SPOTIFY && !save_refresh_tkn(platform, resp.refresh_tkn)) {
+		throw TokenStorageAccessError();
+	}
+	return std::move(resp.access_tkn);
+}
+
+
+
+
+static std::unordered_map<std::string, std::string> CONFIG;
+// TODO change for prod
+static std::string CONFIG_PATH = "plsync.cfg";
+
+void load_config() {
+	// TODO raise exception if something anything wrong
+	std::ifstream config(CONFIG_PATH);
+	if (!config) {
+		throw std::runtime_error("Config file not found. Reinstall plsync");
+	}
+	std::string line, name, val;
+	std::string::iterator sep;
+	while(std::getline(config, line)) {
+		sep = std::find(line.begin(), line.end(), '=');
+		name = std::string(line.begin(), sep);
+		val = std::string(sep+1, line.end());
+		CONFIG[name] = val;
+	}
+	// fucking google...
+	CONFIG["yt_client_secret"] = CLIENT_NOT_SO_SECRET;
+}
+
+std::string get_setting(std::string name, const std::string prefix) {
+	if (CONFIG.empty()) {
+		load_config();
+	}
+	name = prefix + name;
+	assert(CONFIG.count(name) != 0);
+	return CONFIG[name];
+}
+
+std::string get_setting(std::string name) {
+	return get_setting(name, /*prefix=*/"");
+}
+
+std::string get_setting(std::string name, Platform platform) {
+	return get_setting(name, platform_abbrev(platform) + "_");
+}
+
+
+
+
 
 // https://docs.openssl.org/master/man7/ossl-guide-libcrypto-introduction/#using-algorithms-in-applications
 bool sha256(const std::string &s, std::string &res) {
