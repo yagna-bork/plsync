@@ -324,10 +324,11 @@ static bool parse_song_from_html(CURL* curl, const std::string& video_id, API::S
 		throw API::RequestError("curl request failed");
 	}
 
-	size_t attrs_beg = html_data.rfind("videoAttributeViewModel") - 2;
+	size_t attrs_beg = html_data.rfind("videoAttributeViewModel");
 	if (attrs_beg == html_data.npos) {
 		return false;
 	}
+	attrs_beg -= 2; // retreat to start of json object
 	size_t i = attrs_beg;
 	size_t num_open_brackets = 0;
 	while (i == attrs_beg || num_open_brackets) {
@@ -399,7 +400,17 @@ bool get_playlist_items(
 			continue;
 		}
 		API::Song song;
-		if (!parse_song_from_html(curl, id, song)) {
+		if (parse_song_from_html(curl, id, song)) {
+			songs.push_back(std::move(song));
+			continue;
+		}
+
+		std::string title = item["snippet"]["title"];
+		auto hyphen = std::find(title.begin(), title.end(), '-');
+		if (hyphen != title.end()) {
+			song.artist = std::string(title.begin(), hyphen-1);
+			song.track = std::string(hyphen + 2, title.end());
+		} else {
 			song.artist = item["snippet"]["videoOwnerChannelTitle"];
 			song.track = item["snippet"]["title"];
 		}
