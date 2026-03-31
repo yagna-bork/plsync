@@ -14,6 +14,8 @@ public:
 
 using Params = std::vector<std::pair<std::string, std::string>>;
 using Fields = Params;
+using Song = std::pair<std::string, std::string>;
+using Songs = std::vector<Song>;
 
 /* 
  * Performs a GET request at the specified url.
@@ -60,6 +62,10 @@ bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn, cons
 
 Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title);
 
+bool get_playlist_items(
+	Platform plat, CURL* curl, const std::string& access_tkn, const std::string& playlist_id, Songs& out_songs, std::string& in_out_etag
+);
+
 } // namespace API
 
 
@@ -72,6 +78,10 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
 
+bool get_playlist_items(
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& out_songs, std::string& in_out_etag
+);
+
 } // namespace NewYoutubeAPI
 
 
@@ -83,6 +93,10 @@ const std::string base_url = "https://api.spotify.com/v1";
 bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res);
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
+
+bool get_playlist_items(
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& songs_out, std::string& in_out_etag
+);
 
 } // namespace NewSpotifyAPI
 #endif

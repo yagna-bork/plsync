@@ -325,7 +325,7 @@ static bool parse_tracked_args(int argc, char* argv[]) {
 	return true;
 }
 
-int save_cache_quit(std::forward_list<PlaylistItems>& cache) {
+int save_cache_quit(PlaylistItemsCache& cache) {
 	save_playlist_items_cache(cache);
 	std::cerr << "Something went wrong. Please try again.\n";
 	return 1;
@@ -347,9 +347,9 @@ int run_tracked(int argc, char* argv[]) {
 	}
 
 	auto curl = get_curl();
-	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
+	PlaylistItemsCache cache = load_playlist_items_cache();
 	try {
-		update_playlist_items_cache(cache, curl);
+		update_playlist_items_cache(cache, curl, get_access_tokens(curl));
 	} catch (const TokenStorageAccessError& e) {
 		return save_cache_quit(cache);
 	} catch (const API::RequestError& e) {
@@ -469,24 +469,37 @@ static bool parse_sync_args(int argc, char* argv[]) {
 	return true;
 }
 
+int sync(PlaylistItemsCache& cache) {
+	std::cout << "Syncing...";
+
+	std::shared_ptr<CURL> curl = get_curl();
+	std::vector<std::string> plat_to_access_tkn = get_access_tokens(curl);
+	update_playlist_items_cache(cache, curl, plat_to_access_tkn);
+
+	for (PlaylistItems& pl_items: cache) {
+		for (std::pair<Platform, Playlist>& p: pl_items.tracked) {
+			API::Songs songs;
+			bool modified = API::get_playlist_items(
+				p.first, curl.get(), plat_to_access_tkn[p.first], p.second.id, songs, p.second.items_etag
+			);
+		}
+	}
+	std::cout << " Done!\n";
+	return 0;
+}
+
 int run_sync(int argc, char* argv[]) {
 	if (!parse_sync_args(argc, argv)) {
 		return 0;
 	}
-	std::cout << "Syncing...";
-
-	auto curl = get_curl();
-	std::forward_list<PlaylistItems> cache = load_playlist_items_cache();
+	PlaylistItemsCache cache = load_playlist_items_cache();
 	try {
-		update_playlist_items_cache(cache, curl);
+		return sync(cache);
 	} catch (const TokenStorageAccessError& e) {
 		return save_cache_quit(cache);
 	} catch (const API::RequestError& e) {
 		return save_cache_quit(cache);
 	}
-
-	std::cout << " Done!\n";
-	return 0;
 }
 
 

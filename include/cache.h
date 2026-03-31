@@ -202,10 +202,15 @@ struct PlaylistItems {
 	bool was_changed;
 };
 
-std::forward_list<PlaylistItems> load_playlist_items_cache();
-/* Can throw TokenStorageAccessError and API::RequestError on failure */
-void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::shared_ptr<CURL> curl);
-void save_playlist_items_cache(const std::forward_list<PlaylistItems>& cache);
+using PlaylistItemsCache = std::forward_list<PlaylistItems>;
+
+PlaylistItemsCache load_playlist_items_cache();
+
+/* Can throw API::RequestError on failure */
+void update_playlist_items_cache(
+	PlaylistItemsCache& cache, std::shared_ptr<CURL> curl, const std::vector<std::string>& plat_to_access_token
+);
+void save_playlist_items_cache(const PlaylistItemsCache& cache);
 
 PlaylistItems load_playlist_items(const std::string& id);
 void save_playlist_items(const PlaylistItems& pl_items);

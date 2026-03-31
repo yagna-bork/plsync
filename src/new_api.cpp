@@ -177,6 +177,21 @@ Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tk
 	}
 }
 
+bool get_playlist_items(
+	Platform plat, CURL* curl, const std::string& access_tkn, const std::string& playlist_id, Songs& out_songs, std::string& in_out_etag
+) {
+	switch (plat) {
+		case Platform::YOUTUBE:
+			return NewYoutubeAPI::get_playlist_items(curl, access_tkn, playlist_id, out_songs, in_out_etag);
+			break;
+		case Platform::SPOTIFY:
+			return NewSpotifyAPI::get_playlist_items(curl, access_tkn, playlist_id, out_songs, in_out_etag);
+			break;
+		default:
+			throw std::domain_error("function not yet implemented for " + platform_title_lower(plat));
+	}
+}
+
 } // namespace API
 
 
@@ -184,6 +199,48 @@ Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tk
 
 
 namespace NewYoutubeAPI {
+
+long _GET_paginated(
+	CURL* curl,
+	const std::string& url, 
+	json &resp, 
+	API::Params& params, 
+	const std::string& access_tkn = ""
+) {
+	json next_page;
+	long status_code = API::GET(curl, url, next_page, params, access_tkn);
+	if (status_code != 200L) {
+		return status_code;
+	}
+	std::move(next_page["items"].begin(), next_page["items"].end(), std::back_inserter(resp["items"]));
+
+	if (next_page.contains("nextPageToken")) {
+		params.back().second = next_page["nextPageToken"];
+		return _GET_paginated(curl, url, resp, params, access_tkn);
+	} else {
+		return status_code;
+	}
+}
+
+static long GET_paginated(
+	CURL* curl,
+	const std::string &url, 
+	json &resp, 
+	API::Params &params, 
+	const std::string &access_tkn = "", 
+	const std::string &etag = ""
+) {
+	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
+	if(status_code != 200L) {
+		return status_code;
+	}
+	if (resp.contains("nextPageToken")) {
+		params.emplace_back("pageToken", resp["nextPageToken"]);
+		return _GET_paginated(curl, url, resp, params, access_tkn);
+	} else {
+		return status_code;
+	}
+}
 
 bool get_playlist(
 	CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
@@ -199,7 +256,7 @@ bool get_playlist(
 			")"
 		},
 	};
-	nlohmann::json resp;
+	json resp;
 	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
 
 	if (status_code == 304L) {
@@ -226,12 +283,12 @@ bool get_playlist(
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
 	std::string url = base_url + "/playlists";
 	API::Params params = {{"part", "id,snippet,status,contentDetails"}};
-	nlohmann::json data;
+	json data;
 	data["snippet"]["title"] = title;
 	data["snippet"]["description"] = "Created by plsync";
 	data["status"]["privacyStatus"] = "private";
 
-	nlohmann::json resp;
+	json resp;
 	long status_code = API::POST(curl, url, data.dump(), resp, "application/json", params, access_tkn);
 	if (status_code != 200) {
 		throw API::RequestError("Invalid response from google");
@@ -244,6 +301,67 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 		resp["status"]["privacyStatus"] == "private",
 		resp["contentDetails"]["itemCount"]
 	);
+}
+
+bool get_playlist_items(
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& songs, std::string& etag
+) {
+	// Get playlist items
+	std::string url = "https://www.googleapis.com/youtube/v3/playlistItems";
+	API::Params params = {
+		{"part", "snippet,contentDetails"}, 
+		{"playlistId", playlist_id},
+		{"maxResults", "50"}
+	};
+	json pl_items_resp;
+	long status_code = GET_paginated(curl, url, pl_items_resp, params, access_tkn, etag);
+
+	if (status_code == 304L) {
+		return false;
+	} else if (status_code != 200L) {
+		throw API::RequestError("Invalid response from google");
+	}
+	etag = pl_items_resp["etag"];
+	const json& pl_items = pl_items_resp["items"];
+
+	url = "https://www.googleapis.com/youtube/v3/videos";
+	params = {{"part", "id,snippet"}, {"maxResults", "50"}, {"id", ""}};
+	std::unordered_map<std::string, std::string> video_id_to_category_id;
+	
+	// Get previously unseen videos' categoryIds
+	// has to be batched because videos.list endpoint 
+	// has a upper limit of 50 ids per request
+	for (int i = 0; i < pl_items.size(); i += 50) {
+		std::ostringstream video_ids;
+		for (int j = 0; (i+j != pl_items.size()) && (j != 50); j++) {
+			if (j > 0) {
+				video_ids << ',';
+			}
+			const std::string& id = pl_items[i+j]["snippet"]["resourceId"]["videoId"];
+			video_ids << id;
+		}
+		params.back().second = video_ids.str();
+		json videos_resp;
+		status_code = API::GET(curl, url, videos_resp, params, access_tkn);
+		const json& videos = videos_resp["items"];
+
+		for (const json& vid: videos) {
+			const std::string& id = vid["id"];
+			const std::string& category_id = vid["snippet"]["categoryId"];
+			video_id_to_category_id[id] = category_id;
+		}
+	}
+
+	for (const json& item: pl_items) {
+		const std::string& id = item["snippet"]["resourceId"]["videoId"];
+		if (video_id_to_category_id[id] != "10") {
+			continue;
+		}
+		const std::string& title = item["snippet"]["title"];
+		const std::string& artist = item["snippet"]["videoOwnerChannelTitle"];
+		songs.emplace_back(title, artist);
+	}
+	return false;
 }
 
 } // namespace NewYoutubeAPI
@@ -303,6 +421,12 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 		throw API::RequestError("invalid response from spotify");
 	}
 	return Playlist(resp["id"], "", resp["snapshot_id"], resp["name"], !resp["public"], 0);
+}
+
+bool get_playlist_items(
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& out_songs, std::string& in_out_etag
+) {
+	return false;
 }
 
 } // namespace NewSpotifyAPI

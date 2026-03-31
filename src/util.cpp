@@ -434,3 +434,15 @@ size_t utf8_len(const std::string& str) {
 	len += grapheme_width;
 	return len;
 }
+
+std::vector<std::string> get_access_tokens(std::shared_ptr<CURL> curl) {
+	std::vector<std::string> plat_to_access_tkn(Platform::INVALID);
+	for (int i = Platform::YOUTUBE; i != Platform::INVALID; i++) {
+		Platform plat = static_cast<Platform>(i);
+		#ifndef NDEBUG 
+		if (plat == Platform::TEST) continue; 
+		#endif
+		plat_to_access_tkn[plat] = get_or_refresh_access_tkn(plat, curl);
+	}
+	return plat_to_access_tkn;
+}

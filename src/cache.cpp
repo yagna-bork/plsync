@@ -339,6 +339,9 @@ void remove_node(Node& node, Platform plat) {
 	node = Node();
 }
 
+// TODO new sid need to registered, need to recalculate sid_len too
+// might as well load in whole cache, add node, and recalulate sid_len
+// then save entire cache again
 void create_node(const Node& node, Platform plat) {
 	proto::CacheHead head;
 	std::string next;
@@ -445,24 +448,17 @@ PlaylistItems load_playlist_items(const std::string& id) {
 	return load_from_path(playlist_items_cache_dir() / id);
 }
 
-std::forward_list<PlaylistItems> load_playlist_items_cache() {
-	std::forward_list<PlaylistItems> cache;
+PlaylistItemsCache load_playlist_items_cache() {
+	PlaylistItemsCache cache;
 	for (const auto& path: fs::directory_iterator(playlist_items_cache_dir())) {
 		cache.push_front(load_from_path(path.path()));
 	}
 	return cache;
 }
 
-void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::shared_ptr<CURL> curl) {
-	std::vector<std::string> plat_to_access_tkn(Platform::INVALID);
-	for (int i = Platform::YOUTUBE; i != Platform::INVALID; i++) {
-		Platform plat = static_cast<Platform>(i);
-#ifndef NDEBUG 
-		if (plat == Platform::TEST) continue; 
-#endif
-		plat_to_access_tkn[plat] = get_or_refresh_access_tkn(plat, curl);
-	}
-
+void update_playlist_items_cache(
+	PlaylistItemsCache& cache, std::shared_ptr<CURL> curl, const std::vector<std::string>& plat_to_access_tkn
+) {
 	auto prev = cache.before_begin();
 	auto curr = cache.begin();
 	while (curr != cache.end()) {
@@ -500,7 +496,7 @@ void update_playlist_items_cache(std::forward_list<PlaylistItems>& cache, std::s
 	}
 }
 
-void save_playlist_items_cache(const std::forward_list<PlaylistItems>& cache) {
+void save_playlist_items_cache(const PlaylistItemsCache& cache) {
 	std::unordered_set<std::string> deleted_ids;
 	for (const auto& e: fs::directory_iterator(playlist_items_cache_dir())) {
 		deleted_ids.insert(e.path().filename());

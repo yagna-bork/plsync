@@ -154,4 +154,7 @@ std::string bin_to_hex(const std::string& data);
 std::string hex_to_bin(const std::string& hex_str);
 
 size_t utf8_len(const std::string& s);
+
+/* May throw TokenStorageAccessError */
+std::vector<std::string> get_access_tokens(std::shared_ptr<CURL> curl);
 #endif
