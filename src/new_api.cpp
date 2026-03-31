@@ -178,7 +178,12 @@ Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tk
 }
 
 bool get_playlist_items(
-	Platform plat, CURL* curl, const std::string& access_tkn, const std::string& playlist_id, Songs& out_songs, std::string& in_out_etag
+	Platform plat, 
+	CURL* curl, 
+	const std::string& access_tkn, 
+	const std::string& playlist_id, 
+	std::vector<Song>& out_songs, 
+	std::string& in_out_etag
 ) {
 	switch (plat) {
 		case Platform::YOUTUBE:
@@ -303,8 +308,44 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 	);
 }
 
+static bool parse_song_from_html(CURL* curl, const std::string& video_id, API::Song& out_song) {
+	std::string url = "https://www.youtube.com/watch?v=" + video_id;
+	std::string html_data;
+	curl_easy_reset(curl);
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+	curl_slist_raii headers;
+	headers.append("Accept: text/html");
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &html_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
+	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		throw API::RequestError("curl request failed");
+	}
+
+	size_t attrs_beg = html_data.rfind("videoAttributeViewModel") - 2;
+	if (attrs_beg == html_data.npos) {
+		return false;
+	}
+	size_t i = attrs_beg;
+	size_t num_open_brackets = 0;
+	while (i == attrs_beg || num_open_brackets) {
+		if (html_data[i] == '{') {
+			num_open_brackets++;
+		} else if (html_data[i] == '}') {
+			num_open_brackets--;
+		}
+		i++;
+	}
+	json attrs = json::parse(std::string(html_data.begin() + attrs_beg, html_data.begin() + i));
+	out_song.artist = attrs["videoAttributeViewModel"]["subtitle"];
+	out_song.track = attrs["videoAttributeViewModel"]["title"];
+	return true;
+}
+
 bool get_playlist_items(
-	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& songs, std::string& etag
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, std::vector<API::Song>& songs, std::string& etag
 ) {
 	// Get playlist items
 	std::string url = "https://www.googleapis.com/youtube/v3/playlistItems";
@@ -357,9 +398,12 @@ bool get_playlist_items(
 		if (video_id_to_category_id[id] != "10") {
 			continue;
 		}
-		const std::string& title = item["snippet"]["title"];
-		const std::string& artist = item["snippet"]["videoOwnerChannelTitle"];
-		songs.emplace_back(title, artist);
+		API::Song song;
+		if (!parse_song_from_html(curl, id, song)) {
+			song.artist = item["snippet"]["videoOwnerChannelTitle"];
+			song.track = item["snippet"]["title"];
+		}
+		songs.push_back(std::move(song));
 	}
 	return false;
 }
@@ -424,7 +468,11 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 }
 
 bool get_playlist_items(
-	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, API::Songs& out_songs, std::string& in_out_etag
+	CURL* curl, 
+	const std::string& access_tkn, 
+	const std::string& playlist_id, 
+	std::vector<API::Song>& out_songs, 
+	std::string& in_out_etag
 ) {
 	return false;
 }

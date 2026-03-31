@@ -1,0 +1,30 @@
+%Artist - %Song
+high coverage but many false positives 
+	%Artist - %Song (%Artist2 Remix)
+	%Artist ft. %Artist2 - %Song
+	%Artist - %Song ft. %Artist2 [Official Video] random-junk...
+
+Spotify treats ft artists as co-artists but even youtube music doesn't sometimes so that would defo mess up hash comparison
+
+Youtube content id tagging false positive because featured artists don't show up in the artists section
+
+Problem case:
+
+Problem case:
+When two existing playlist have same song but platforms have slightly different metadata about song leading to unequal hashes
+	Single source of trust across all platforms, probably spotify, even for spotify itself
+	Hash of the first result on spotify is used as the hash for songs on every other platform
+	Even on spotify multiple different metadata versions for one song but top result should be same for all versions
+
+Web scrap to get Music in this video info: videoAttributeViewModel
+<div class="yt-video-attribute-view-model__metadata" role="group">
+	<h1 class="yt-video-attribute-view-model__title">Out of the Blue</h1>
+	<h4 class="yt-video-attribute-view-model__subtitle"><span>Freak Slug</span></h4>
+	<span class="yt-video-attribute-view-model__secondary-subtitle">
+		<span class="yt-core-attributed-string yt-core-attributed-string--white-space-pre-wrap" style=""><span class="" style="font-weight: 400;"><a class="yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color" tabindex="0" href="/playlist?list=OLAK5uy_mbbhsB20e_3fU5Iwoxe64xFn5fZBm8Q3I&amp;playnext=1&amp;index=1" target="" force-new-state="true">Out of the Blue</a></span></span></span></div>
+Fallback to title %artist - %song format
+Fallback to title = song & channel = artist
+
+Cache formatted like artist:title:single_source_hash
+Use spotify as a single source of truth hash
+Print in debug mode when song couldn't be parsed to expand parsing in the future with better couter-examples

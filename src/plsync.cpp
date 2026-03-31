@@ -471,14 +471,13 @@ static bool parse_sync_args(int argc, char* argv[]) {
 
 int sync(PlaylistItemsCache& cache) {
 	std::cout << "Syncing...";
-
 	std::shared_ptr<CURL> curl = get_curl();
 	std::vector<std::string> plat_to_access_tkn = get_access_tokens(curl);
 	update_playlist_items_cache(cache, curl, plat_to_access_tkn);
 
 	for (PlaylistItems& pl_items: cache) {
 		for (std::pair<Platform, Playlist>& p: pl_items.tracked) {
-			API::Songs songs;
+			std::vector<API::Song> songs;
 			bool modified = API::get_playlist_items(
 				p.first, curl.get(), plat_to_access_tkn[p.first], p.second.id, songs, p.second.items_etag
 			);
