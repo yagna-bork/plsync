@@ -203,17 +203,19 @@ bool get_playlist_items(
 
 
 
+using namespace API;
+
 namespace NewYoutubeAPI {
 
 long _GET_paginated(
 	CURL* curl,
 	const std::string& url, 
 	json &resp, 
-	API::Params& params, 
+	Params& params, 
 	const std::string& access_tkn = ""
 ) {
 	json next_page;
-	long status_code = API::GET(curl, url, next_page, params, access_tkn);
+	long status_code = GET(curl, url, next_page, params, access_tkn);
 	if (status_code != 200L) {
 		return status_code;
 	}
@@ -231,11 +233,11 @@ static long GET_paginated(
 	CURL* curl,
 	const std::string &url, 
 	json &resp, 
-	API::Params &params, 
+	Params &params, 
 	const std::string &access_tkn = "", 
 	const std::string &etag = ""
 ) {
-	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
+	long status_code = GET(curl, url, resp, params, access_tkn, etag);
 	if(status_code != 200L) {
 		return status_code;
 	}
@@ -251,7 +253,7 @@ bool get_playlist(
 	CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res
 ) {
 	std::string url = base_url + "/playlists";
-	API::Params params = {
+	Params params = {
 		{"id", id},
 		{"part", "id,snippet,status,contentDetails"},
 		{
@@ -262,7 +264,7 @@ bool get_playlist(
 		},
 	};
 	json resp;
-	long status_code = API::GET(curl, url, resp, params, access_tkn, etag);
+	long status_code = GET(curl, url, resp, params, access_tkn, etag);
 
 	if (status_code == 304L) {
 		return false;
@@ -281,22 +283,22 @@ bool get_playlist(
 		res.items = resp["items"][0]["contentDetails"]["itemCount"];
 		return true;
 	} else {
-		throw API::RequestError("Invalid response from youtube");
+		throw RequestError("Invalid response from youtube");
 	}
 }
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title) {
 	std::string url = base_url + "/playlists";
-	API::Params params = {{"part", "id,snippet,status,contentDetails"}};
+	Params params = {{"part", "id,snippet,status,contentDetails"}};
 	json data;
 	data["snippet"]["title"] = title;
 	data["snippet"]["description"] = "Created by plsync";
 	data["status"]["privacyStatus"] = "private";
 
 	json resp;
-	long status_code = API::POST(curl, url, data.dump(), resp, "application/json", params, access_tkn);
+	long status_code = POST(curl, url, data.dump(), resp, "application/json", params, access_tkn);
 	if (status_code != 200) {
-		throw API::RequestError("Invalid response from google");
+		throw RequestError("Invalid response from google");
 	}
 	return Playlist(
 		std::move(resp["id"]),
@@ -308,7 +310,7 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 	);
 }
 
-static bool parse_song_from_html(CURL* curl, const std::string& video_id, API::Song& out_song) {
+static bool parse_song_from_html(CURL* curl, const std::string& video_id, Song& out_song) {
 	std::string url = "https://www.youtube.com/watch?v=" + video_id;
 	std::string html_data;
 	curl_easy_reset(curl);
@@ -321,7 +323,7 @@ static bool parse_song_from_html(CURL* curl, const std::string& video_id, API::S
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
 	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 	if (curl_easy_perform(curl) != CURLE_OK) {
-		throw API::RequestError("curl request failed");
+		throw RequestError("curl request failed");
 	}
 
 	size_t attrs_beg = html_data.rfind("videoAttributeViewModel");
@@ -346,11 +348,11 @@ static bool parse_song_from_html(CURL* curl, const std::string& video_id, API::S
 }
 
 bool get_playlist_items(
-	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, std::vector<API::Song>& songs, std::string& etag
+	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, std::vector<Song>& songs, std::string& etag
 ) {
 	// Get playlist items
 	std::string url = "https://www.googleapis.com/youtube/v3/playlistItems";
-	API::Params params = {
+	Params params = {
 		{"part", "snippet,contentDetails"}, 
 		{"playlistId", playlist_id},
 		{"maxResults", "50"}
@@ -361,7 +363,7 @@ bool get_playlist_items(
 	if (status_code == 304L) {
 		return false;
 	} else if (status_code != 200L) {
-		throw API::RequestError("Invalid response from google");
+		throw RequestError("Invalid response from google");
 	}
 	etag = pl_items_resp["etag"];
 	const json& pl_items = pl_items_resp["items"];
@@ -384,7 +386,7 @@ bool get_playlist_items(
 		}
 		params.back().second = video_ids.str();
 		json videos_resp;
-		status_code = API::GET(curl, url, videos_resp, params, access_tkn);
+		status_code = GET(curl, url, videos_resp, params, access_tkn);
 		const json& videos = videos_resp["items"];
 
 		for (const json& vid: videos) {
@@ -399,7 +401,7 @@ bool get_playlist_items(
 		if (video_id_to_category_id[id] != "10") {
 			continue;
 		}
-		API::Song song;
+		Song song;
 		if (parse_song_from_html(curl, id, song)) {
 			songs.push_back(std::move(song));
 			continue;
@@ -432,7 +434,7 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 	url << "/playlists/" << id;
 	json resp;
 	// TODO fields query param
-	long response_code = API::GET(curl, url.str(), resp, {}, access_tkn, etag);
+	long response_code = GET(curl, url.str(), resp, {}, access_tkn, etag);
 
 	if (response_code == 304L) {
 		return false;
@@ -449,7 +451,7 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 		// get etag from response header
 		struct curl_header* header;
 		if (curl_easy_header(curl, "etag", 0, CURLH_HEADER, -1, &header) != CURLHE_OK) {
-			throw API::RequestError("couldn't read etag header");
+			throw RequestError("couldn't read etag header");
 		}
 		const char* etag = header->value;
 		const char* beg = std::find(etag, etag+std::strlen(etag), '"') + 1;
@@ -458,7 +460,7 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 		res.etag = std::string(beg, end);
 		return true;
 	} else {
-		throw API::RequestError("invalid response from spotify");
+		throw RequestError("invalid response from spotify");
 	}
 }
 
@@ -471,9 +473,9 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 	data["description"] = "Created by plsync";
 
 	json resp;
-	long status_code = API::POST(curl, url, data.dump(), resp, "application/json", {}, access_tkn);
+	long status_code = POST(curl, url, data.dump(), resp, "application/json", {}, access_tkn);
 	if (status_code != 201) {
-		throw API::RequestError("invalid response from spotify");
+		throw RequestError("invalid response from spotify");
 	}
 	return Playlist(resp["id"], "", resp["snapshot_id"], resp["name"], !resp["public"], 0);
 }
@@ -482,7 +484,7 @@ bool get_playlist_items(
 	CURL* curl, 
 	const std::string& access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<API::Song>& out_songs, 
+	std::vector<Song>& out_songs, 
 	std::string& in_out_etag
 ) {
 	return false;
