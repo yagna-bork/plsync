@@ -262,6 +262,26 @@ std::string urlencode64(const std::string &s, bool pad) {
 	return encoded;
 }
 
+static bool is_unreserved(char c) {
+	return ('a' <= c && c <= 'z') || 
+		   ('A' <= c && c <= 'Z') || 
+		   (c == '-') || (c == '.') || (c == '_') || (c == '~');
+}
+
+// https://en.wikipedia.org/wiki/Percent-encoding
+std::string urlencode(const std::string& s) {
+	int n = s.size();
+	std::ostringstream res;
+	for (int i = 0; i != n; i++) {
+		if (is_unreserved(s[i])) {
+			res << s[i];
+		} else {
+			res << '%' << bin_to_hex(s[i]);
+		}
+	}
+	return res.str();
+}
+
 std::vector<std::string> split(const std::string &s, const std::string &ss) {
 	std::vector<std::string> res;
 	std::string::const_iterator j, i = s.cbegin();
@@ -348,6 +368,21 @@ std::string bin_to_hex(const std::string& data) {
 		res.push_back(hex_bit(byte >> 4)); // most significant nibble 
 		res.push_back(hex_bit(byte & 15)); // least significant nibble
 	}
+	return res;
+}
+
+char hex_bit_upper(char nibble) {
+	if (nibble <= 9) {
+		return '0' + nibble;
+	} else {
+		return 'A' + nibble - 10;
+	}
+}
+
+std::string bin_to_hex(char c) {
+	std::string res;
+	res.push_back(hex_bit_upper(c >> 4)); // most significant nibble 
+	res.push_back(hex_bit_upper(c & 15)); // least significant nibble
 	return res;
 }
 

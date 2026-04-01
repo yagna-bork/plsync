@@ -49,6 +49,8 @@ bool sha256(const std::string &s, std::string &digest);
 
 std::string urlencode64(const std::string &s, bool pad = false);
 
+std::string urlencode(const std::string &s);
+
 template <class RndIt> 
 RndIt find_range(RndIt first1, RndIt last1, RndIt first2, RndIt last2) {
 	if (first1 == last1) {
@@ -151,6 +153,7 @@ FstreamT ensure_bin_file(const std::filesystem::path& file, std::ios::openmode m
 inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy_init(), curl_easy_cleanup); }
 
 std::string bin_to_hex(const std::string& data);
+std::string bin_to_hex(char c);
 std::string hex_to_bin(const std::string& hex_str);
 
 size_t utf8_len(const std::string& s);

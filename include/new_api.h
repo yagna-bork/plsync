@@ -16,7 +16,7 @@ using Params = std::vector<std::pair<std::string, std::string>>;
 using Fields = Params;
 
 struct Song {
-	std::string artist;
+	std::vector<std::string> artists;
 	std::string track;
 };
 
@@ -113,6 +113,8 @@ bool get_playlist_items(
 	std::vector<API::Song>& songs_out, 
 	std::string& in_out_etag
 );
+
+API::Song search_song(CURL* curl, const std::string& access_tkn, const API::Song& song);
 
 } // namespace NewSpotifyAPI
 #endif

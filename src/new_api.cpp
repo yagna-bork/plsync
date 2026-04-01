@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <ios>
+#include <regex>
 #include <stdexcept>
 #include <filesystem>
 #include <curl/curl.h>
@@ -342,13 +343,36 @@ static bool parse_song_from_html(CURL* curl, const std::string& video_id, Song& 
 		i++;
 	}
 	json attrs = json::parse(std::string(html_data.begin() + attrs_beg, html_data.begin() + i));
-	out_song.artist = attrs["videoAttributeViewModel"]["subtitle"];
-	out_song.track = attrs["videoAttributeViewModel"]["title"];
+	out_song.artists.push_back(std::move(attrs["videoAttributeViewModel"]["subtitle"]));
+	out_song.track = std::move(attrs["videoAttributeViewModel"]["title"]);
+	return true;
+}
+
+static bool parse_song_from_title(const std::string& title, Song& out_song) {
+	std::regex re(
+		"^([\\w][\\w ]*(, [\\w][\\w ]*)*) - ([\\w][\\w ]*)"
+		"( \\(?(ft\\.|feat\\.|featuring|with|w/) ([\\w][\\w ]*(, [\\w][\\w ]*)*)\\)?)?$"
+	);
+	std::smatch m;
+	if (!std::regex_match(title, m, re)) {
+		return false;
+	}
+
+	out_song.track = std::string(m[3].first, m[3].second);
+	out_song.artists = split(std::string(m[1].first, m[1].second), ", ");
+	if (!m[6].matched) {
+		std::vector<std::string> features = split(std::string(m[6].first, m[6].second), ", ");
+		std::move(features.begin(), features.end(), std::back_inserter(out_song.artists));
+	}
 	return true;
 }
 
 bool get_playlist_items(
-	CURL* curl, const std::string& access_tkn, const std::string& playlist_id, std::vector<Song>& songs, std::string& etag
+	CURL* curl, 
+	const std::string& access_tkn, 
+	const std::string& playlist_id, 
+	std::vector<Song>& songs, 
+	std::string& etag
 ) {
 	// Get playlist items
 	std::string url = "https://www.googleapis.com/youtube/v3/playlistItems";
@@ -366,7 +390,7 @@ bool get_playlist_items(
 		throw RequestError("Invalid response from google");
 	}
 	etag = pl_items_resp["etag"];
-	const json& pl_items = pl_items_resp["items"];
+	json& pl_items = pl_items_resp["items"];
 
 	url = "https://www.googleapis.com/youtube/v3/videos";
 	params = {{"part", "id,snippet"}, {"maxResults", "50"}, {"id", ""}};
@@ -396,29 +420,21 @@ bool get_playlist_items(
 		}
 	}
 
-	for (const json& item: pl_items) {
+	for (json& item: pl_items) {
 		const std::string& id = item["snippet"]["resourceId"]["videoId"];
 		if (video_id_to_category_id[id] != "10") {
 			continue;
 		}
 		Song song;
-		if (parse_song_from_html(curl, id, song)) {
-			songs.push_back(std::move(song));
-			continue;
-		}
-
-		std::string title = item["snippet"]["title"];
-		auto hyphen = std::find(title.begin(), title.end(), '-');
-		if (hyphen != title.end()) {
-			song.artist = std::string(title.begin(), hyphen-1);
-			song.track = std::string(hyphen + 2, title.end());
-		} else {
-			song.artist = item["snippet"]["videoOwnerChannelTitle"];
-			song.track = item["snippet"]["title"];
+		std::string& title = item["snippet"]["title"].get_ref<std::string&>();
+		std::string& channel = item["snippet"]["videoOwnerChannelTitle"].get_ref<std::string&>();
+		if (!parse_song_from_html(curl, id, song) && !parse_song_from_title(title, song)) {
+			song.artists.push_back(channel);
+			song.track = std::move(title);
 		}
 		songs.push_back(std::move(song));
 	}
-	return false;
+	return true;
 }
 
 } // namespace NewYoutubeAPI
@@ -488,6 +504,32 @@ bool get_playlist_items(
 	std::string& in_out_etag
 ) {
 	return false;
+}
+
+Song search_song(CURL* curl, const std::string& access_tkn, const Song& song) {
+	std::string url = "https://api.spotify.com/v1/search";
+	std::ostringstream query; 
+	query << "track:" << song.track;
+	for (const std::string& artist: song.artists) {
+		query << " artist:" << artist;
+	}
+	Params params = {{"type", "track"}, {"limit", "1"}, {"q", urlencode(query.str())}};
+	json resp;
+	long response_code = GET(curl, url, resp, params, access_tkn);
+	if (response_code != 200L) {
+		throw RequestError("invalid response from spotify");
+	}
+	if (!resp.contains("tracks") || resp["tracks"].empty()) {
+		return {};
+	}
+
+	json& search_res = resp["tracks"]["items"][0];
+	Song song_res;
+	song_res.track = std::move(search_res["name"]);
+	for (json& artist: search_res["artists"]) {
+		song_res.artists.push_back(std::move(artist["name"]));
+	}
+	return song_res;
 }
 
 } // namespace NewSpotifyAPI
