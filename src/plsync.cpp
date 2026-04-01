@@ -470,7 +470,7 @@ static bool parse_sync_args(int argc, char* argv[]) {
 }
 
 int sync(PlaylistItemsCache& cache) {
-	std::cout << "Syncing... ";
+	std::cout << "Syncing... " << std::flush;
 	std::shared_ptr<CURL> curl = get_curl();
 	std::vector<std::string> plat_to_access_tkn = get_access_tokens(curl);
 	update_playlist_items_cache(cache, curl, plat_to_access_tkn);
@@ -485,6 +485,7 @@ int sync(PlaylistItemsCache& cache) {
 			// convert from platform specific song to spotify song
 			// to have a single source of truth for each songs artists and title
 			// to get consistent hash among different versions across platforms
+			// and even within spotify itself
 			std::vector<API::Song> sp_songs;
 			for (const API::Song& s: plat_songs) {
 				API::Song sp_song = NewSpotifyAPI::search_song(curl.get(), plat_to_access_tkn[Platform::SPOTIFY], s);

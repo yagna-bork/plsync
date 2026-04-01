@@ -375,7 +375,7 @@ bool get_playlist_items(
 	std::string& etag
 ) {
 	// Get playlist items
-	std::string url = "https://www.googleapis.com/youtube/v3/playlistItems";
+	std::string url = base_url + "/playlistItems";
 	Params params = {
 		{"part", "snippet,contentDetails"}, 
 		{"playlistId", playlist_id},
@@ -445,6 +445,44 @@ bool get_playlist_items(
 
 namespace NewSpotifyAPI {
 
+static std::string read_etag_header(CURL* curl) {
+	struct curl_header* header;
+	CURLHcode status = curl_easy_header(curl, "etag", 0, CURLH_HEADER, -1, &header);
+	if (status == CURLHE_MISSING) {
+		return "";
+	}
+	if (status != CURLHE_OK) {
+		throw RequestError("couldn't read etag header");
+	}
+	return std::string(header->value);
+}
+
+static long GET_paginated(
+	CURL* curl, const std::string &url, json &initial_page, Params &params, const std::string& access_tkn, std::string &etag
+) {
+	std::size_t limit = 50, offset = 0;
+	params.emplace_back("limit", std::to_string(limit));
+	params.emplace_back("offset", std::to_string(offset));
+	
+	long status_code = GET(curl, url, initial_page, params, access_tkn, etag);
+	if (status_code < 200 || status_code >= 300) {
+		return status_code;
+	}
+	etag = read_etag_header(curl);
+	std::size_t total = initial_page["total"];
+
+	for (offset = limit; offset < total; offset += limit) {
+		params.back().second = std::to_string(offset);
+		json next_page;
+		status_code = GET(curl, url, next_page, params, access_tkn);
+		if (status_code < 200 || status_code >= 300) {
+			return status_code;
+		}
+		std::move(next_page["items"].begin(), next_page["items"].end(), std::back_inserter(initial_page["items"]));
+	}
+	return status_code;
+}
+
 bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& id, const std::string& etag, Playlist& res) {
 	std::ostringstream url(base_url, std::ios::ate);
 	url << "/playlists/" << id;
@@ -503,11 +541,29 @@ bool get_playlist_items(
 	std::vector<Song>& out_songs, 
 	std::string& in_out_etag
 ) {
-	return false;
+	std::string url = base_url + "/playlists/" + playlist_id + "/items";
+	Params params = {{"fields", "total,items.item(artists.name,name)"}};
+	json resp;
+	long status_code = GET_paginated(curl, url, resp, params, access_tkn, in_out_etag);
+	if (status_code == 304L) {
+		return false;
+	} else if (status_code != 200L) {
+		throw RequestError("invalid response from spotify");
+	}
+	for (json& item: resp["items"]) {
+		std::vector<std::string> artists;
+		for (json& artist: item["item"]["artists"]) {
+			artists.push_back(std::move(artist["name"].get_ref<std::string&>()));
+		}
+		out_songs.push_back({
+			std::move(artists), std::move(item["item"]["name"].get_ref<std::string&>())
+		});
+	}
+	return true;
 }
 
 Song search_song(CURL* curl, const std::string& access_tkn, const Song& song) {
-	std::string url = "https://api.spotify.com/v1/search";
+	std::string url = base_url + "/search";
 	std::ostringstream query; 
 	query << "track:" << song.track;
 	for (const std::string& artist: song.artists) {

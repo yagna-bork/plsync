@@ -153,7 +153,7 @@ FstreamT ensure_bin_file(const std::filesystem::path& file, std::ios::openmode m
 inline std::shared_ptr<CURL> get_curl() { return std::shared_ptr<CURL>(curl_easy_init(), curl_easy_cleanup); }
 
 std::string bin_to_hex(const std::string& data);
-std::string bin_to_hex(char c);
+std::string bin_to_hex(unsigned char c);
 std::string hex_to_bin(const std::string& hex_str);
 
 size_t utf8_len(const std::string& s);
