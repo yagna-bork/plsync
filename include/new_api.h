@@ -65,18 +65,17 @@ bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn, cons
 
 Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_playlist_items(
-	Platform plat, 
+bool get_song_hashes(
+	Platform plat,
 	CURL* curl, 
-	const std::string& access_tkn, 
+	const std::string& plat_access_tkn, 
+	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<Song>& out_songs, 
+	std::vector<std::string>& out_song_hashes, 
 	std::string& in_out_etag
 );
 
 } // namespace API
-
-
 
 namespace NewYoutubeAPI {
 
@@ -86,11 +85,12 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_playlist_items(
+bool get_song_hashes(
 	CURL* curl, 
-	const std::string& access_tkn, 
+	const std::string& yt_access_tkn, 
+	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<API::Song>& out_songs, 
+	std::vector<std::string>& out_song_hashes, 
 	std::string& in_out_etag
 );
 
@@ -106,11 +106,11 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_playlist_items(
+bool get_song_hashes(
 	CURL* curl, 
 	const std::string& access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<API::Song>& songs_out, 
+	std::vector<std::string>& song_hashes_out, 
 	std::string& in_out_etag
 );
 

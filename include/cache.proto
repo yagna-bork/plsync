@@ -57,3 +57,17 @@ message SidToIdMap {
 	// map type exists but doing it manually for fun
 	repeated Bucket buckets = 1;
 }
+
+message PlaylistItemIdToSongHashMap {
+	message Entry {
+		string playlist_item_id = 1;
+		bytes song_hash = 2;
+	}
+
+	message Bucket {
+		repeated Entry entries = 1;
+	}
+
+	// map type exists but doing it manually for fun
+	repeated Bucket buckets = 1;
+}

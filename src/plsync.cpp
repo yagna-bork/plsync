@@ -476,28 +476,17 @@ int sync(PlaylistItemsCache& cache) {
 	update_playlist_items_cache(cache, curl, plat_to_access_tkn);
 
 	for (PlaylistItems& pl_items: cache) {
-		for (std::pair<Platform, Playlist>& p: pl_items.tracked) {
-			std::vector<API::Song> plat_songs;
-			bool modified = API::get_playlist_items(
-				p.first, curl.get(), plat_to_access_tkn[p.first], p.second.id, plat_songs, p.second.items_etag
+		for (std::pair<Platform, Playlist>& pair: pl_items.tracked) {
+			std::vector<std::string> song_hashes;
+			bool modified = API::get_song_hashes(
+				pair.first, 
+				curl.get(),
+				plat_to_access_tkn[pair.first], 
+				plat_to_access_tkn[Platform::SPOTIFY], 
+				pair.second.id, 
+				song_hashes, 
+				pair.second.items_etag
 			);
-			
-			// convert from platform specific song to spotify song
-			// to have a single source of truth for each songs artists and title
-			// to get consistent hash among different versions across platforms
-			// and even within spotify itself
-			std::vector<API::Song> sp_songs;
-			for (const API::Song& s: plat_songs) {
-				API::Song sp_song = NewSpotifyAPI::search_song(curl.get(), plat_to_access_tkn[Platform::SPOTIFY], s);
-				if (sp_song.artists.empty()) {
-					#ifndef NDEBUG   
-					std::cerr << "Failed obtain single source song for: " 
-							  << s.artists[0] << " - " << s.track << '\n';
-					#endif
-					continue;
-				}
-				sp_songs.push_back(std::move(sp_song));
-			}
 		}
 	}
 	std::cout << "Done!\n";

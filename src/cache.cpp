@@ -555,14 +555,14 @@ using ProtoMap = proto::SidToIdMap;
 namespace fs = std::filesystem;
 namespace Cache = PlaylistCache;
 
-fs::path file_path(Platform plat) {
+fs::path sid_to_id_map_dir(Platform plat) {
 	return fs::path(get_setting("cache_dir")) / "sid_to_id_map" / platform_title_lower(plat);
 }
 
 Map load_sid_to_id_map(Platform plat) {
 	ProtoMap proto_map;
 	{
-		auto file = ensure_bin_file<std::ifstream>(file_path(plat));
+		auto file = ensure_bin_file<std::ifstream>(sid_to_id_map_dir(plat));
 		proto_map.ParseFromIstream(&file);
 	}
 
@@ -580,7 +580,7 @@ Map load_sid_to_id_map(Platform plat) {
 std::string sid_to_id_lookup(const std::string& sid, Platform plat) {
 	ProtoMap proto_map;
 	{
-		auto file = ensure_bin_file<std::ifstream>(file_path(plat));
+		auto file = ensure_bin_file<std::ifstream>(sid_to_id_map_dir(plat));
 		proto_map.ParseFromIstream(&file);
 	}
 
@@ -600,7 +600,7 @@ std::string sid_to_id_lookup(const std::string& sid, Platform plat) {
 
 void remove_sid_to_id_entry(const std::string& sid, Platform plat) {
 	ProtoMap proto_map;
-	auto file = ensure_bin_file<std::fstream>(file_path(plat), std::ios::in | std::ios::out);
+	auto file = ensure_bin_file<std::fstream>(sid_to_id_map_dir(plat), std::ios::in | std::ios::out);
 	proto_map.ParseFromIstream(&file);
 	auto bucket_idx = std::hash<std::string>{}(sid) % NUM_BUCKETS;
 	auto* proto_bucket = proto_map.mutable_buckets(bucket_idx);
@@ -638,6 +638,45 @@ void save_sid_to_id_map(const Map& map, Platform plat) {
 		proto_pair->set_id(pair.second);
 	}
 	
-	auto file = ensure_bin_file<std::ofstream>(file_path(plat));
+	auto file = ensure_bin_file<std::ofstream>(sid_to_id_map_dir(plat));
+	proto_map.SerializeToOstream(&file);
+}
+
+
+
+static inline fs::path song_cache_dir(Platform plat) {
+	return fs::path(get_setting("cache_dir")) / "song_cache" / platform_title_lower(plat);
+}
+
+SongCache load_song_cache(Platform plat) {
+	proto::PlaylistItemIdToSongHashMap proto_map;
+	{
+		auto file = ensure_bin_file<std::ifstream>(song_cache_dir(plat));
+		proto_map.ParseFromIstream(&file);
+	}
+	
+	SongCache cache;
+	for (const auto& bucket: proto_map.buckets()) {
+		for (const auto& e: bucket.entries()) {
+			cache[std::string(e.playlist_item_id())] = std::string(e.song_hash());
+		}
+	}
+	return cache;
+}
+
+void save_song_cache(const SongCache& cache, Platform plat) {
+	proto::PlaylistItemIdToSongHashMap proto_map;
+	for (std::size_t i = 0; i != NUM_BUCKETS; i++) {
+		proto_map.add_buckets();
+	}
+
+	for (const auto& [item_id, song_hash]: cache) {
+		std::size_t bucket = std::hash<std::string>{}(item_id) % NUM_BUCKETS; 
+		auto* proto_pair = proto_map.mutable_buckets(bucket)->add_entries();
+		proto_pair->set_playlist_item_id(item_id);
+		proto_pair->set_song_hash(song_hash);
+	}
+	
+	auto file = ensure_bin_file<std::ofstream>(song_cache_dir(plat));
 	proto_map.SerializeToOstream(&file);
 }

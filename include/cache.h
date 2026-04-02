@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <map>
 
 struct Playlist {
 	std::string id;
@@ -233,4 +234,11 @@ void remove_sid_to_id_entry(const std::string& sid, Platform plat);
 
 SidToIdMap update_sid_to_id_map(PlaylistCache::Head* head, Platform plat);
 void save_sid_to_id_map(const SidToIdMap& map, Platform plat);
+
+
+
+using SongCache = std::unordered_map<std::string, std::string>;
+
+SongCache load_song_cache(Platform plat);
+void save_song_cache(const SongCache& cache, Platform plat);
 #endif
