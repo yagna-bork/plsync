@@ -192,24 +192,24 @@ Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tk
 	}
 }
 
-bool get_song_hashes(
+bool get_song_counts(
 	Platform plat,
 	CURL* curl, 
 	const std::string& plat_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& out_song_hashes, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	switch (plat) {
 		case Platform::YOUTUBE:
-			return NewYoutubeAPI::get_song_hashes(
-				curl, plat_access_tkn, sp_access_tkn, playlist_id, out_song_hashes, in_out_etag
+			return NewYoutubeAPI::get_song_counts(
+				curl, plat_access_tkn, sp_access_tkn, playlist_id, out_song_counts, in_out_etag
 			);
 			break;
 		case Platform::SPOTIFY:
-			return NewSpotifyAPI::get_song_hashes(
-				curl, plat_access_tkn, playlist_id, out_song_hashes, in_out_etag
+			return NewSpotifyAPI::get_song_counts(
+				curl, plat_access_tkn, playlist_id, out_song_counts, in_out_etag
 			);
 			break;
 		default:
@@ -386,12 +386,12 @@ static bool parse_song_from_title(const std::string& title, Song& out_song) {
 	return true;
 }
 
-bool get_song_hashes(
+bool get_song_counts(
 	CURL* curl, 
 	const std::string& yt_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& out_song_hashes, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	std::string url = base_url + "/playlistItems";
@@ -410,14 +410,14 @@ bool get_song_hashes(
 	}
 	in_out_etag = pl_items_resp["etag"];
 	json& pl_items = pl_items_resp["items"];
-	SongCache cache = load_song_cache(Platform::YOUTUBE);
+	SongCache song_cache = load_song_cache(Platform::YOUTUBE);
 
 	std::vector<json*> new_pl_items;
 	std::unordered_set<std::string> vid_ids_set;
 	for (json& item: pl_items) {
 		const std::string& id = item["snippet"]["resourceId"]["videoId"].get_ref<std::string&>();
-		if (cache.count(id)) {
-			out_song_hashes.push_back(cache[id]);
+		if (song_cache.count(id)) {
+			insert_song_counts(out_song_counts, song_cache[id]);
 		} else {
 			new_pl_items.push_back(&item);
 			vid_ids_set.insert(id);
@@ -452,8 +452,8 @@ bool get_song_hashes(
 
 	for (json* item: new_pl_items) {
 		std::string id = item->at("snippet")["resourceId"]["videoId"];
-		if (cache.count(id)) {
-			out_song_hashes.push_back(cache[id]);
+		if (song_cache.count(id)) {
+			insert_song_counts(out_song_counts, song_cache[id]);
 			continue;
 		}
 		if (video_id_to_category_id[id] != "10") {
@@ -468,16 +468,15 @@ bool get_song_hashes(
 			song.track = std::move(title);
 		}
 
-		API::Song sp_song = NewSpotifyAPI::search_song(curl, sp_access_tkn, song);
+		Song sp_song = NewSpotifyAPI::search_song(curl, sp_access_tkn, song);
 		if (sp_song.artists.empty()) {
 			std::cerr << "Ignoring videoId: " << id << ". Failed to determine artist and title information.\n";
 			continue;
 		}
-		std::string song_hash = get_song_hash(sp_song);
-		out_song_hashes.push_back(song_hash);
-		cache[id] = song_hash;
+		insert_song_counts(out_song_counts, sp_song);
+		song_cache[id] = std::move(sp_song);
 	}
-	save_song_cache(cache, Platform::YOUTUBE);
+	save_song_cache(song_cache, Platform::YOUTUBE);
 	return true;
 }
 
@@ -578,11 +577,11 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::s
 	return Playlist(resp["id"], "", resp["snapshot_id"], resp["name"], !resp["public"], 0);
 }
 
-bool get_song_hashes(
+bool get_song_counts(
 	CURL* curl, 
 	const std::string& access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& out_song_hashes, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	std::string url = base_url + "/playlists/" + playlist_id + "/items";
@@ -594,27 +593,26 @@ bool get_song_hashes(
 	} else if (status_code != 200L) {
 		throw RequestError("invalid response from spotify");
 	}
+
 	for (json& item: resp["items"]) {
-		std::vector<std::string> artists;
+		Song song;
 		for (json& artist: item["item"]["artists"]) {
-			artists.push_back(std::move(artist["name"].get_ref<std::string&>()));
+			song.artists.push_back(std::move(artist["name"].get_ref<std::string&>()));
 		}
-		Song song = {
-			std::move(artists), 
-			std::move(item["item"]["name"].get_ref<std::string&>())
-		};
-		out_song_hashes.push_back(get_song_hash(song));
+		song.track = std::move(item["item"]["name"].get_ref<std::string&>());
+		insert_song_counts(out_song_counts, song);
 	}
 	return true;
 }
 
 Song search_song(CURL* curl, const std::string& access_tkn, const Song& song) {
-	std::string url = base_url + "/search";
 	std::ostringstream query; 
 	query << "track:" << song.track;
 	for (const std::string& artist: song.artists) {
 		query << " artist:" << artist;
 	}
+
+	std::string url = base_url + "/search";
 	Params params = {{"type", "track"}, {"limit", "1"}, {"q", urlencode(query.str())}};
 	json resp;
 	long response_code = GET(curl, url, resp, params, access_tkn);

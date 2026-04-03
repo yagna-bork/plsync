@@ -15,11 +15,6 @@ public:
 using Params = std::vector<std::pair<std::string, std::string>>;
 using Fields = Params;
 
-struct Song {
-	std::vector<std::string> artists;
-	std::string track;
-};
-
 /* 
  * Performs a GET request at the specified url.
  * Throws RequestError if the request couldn't be made.
@@ -65,13 +60,13 @@ bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn, cons
 
 Playlist create_playlist(Platform plat, CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_song_hashes(
+bool get_song_counts(
 	Platform plat,
 	CURL* curl, 
 	const std::string& plat_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& out_song_hashes, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 );
 
@@ -85,12 +80,12 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_song_hashes(
+bool get_song_counts(
 	CURL* curl, 
 	const std::string& yt_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& out_song_hashes, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 );
 
@@ -106,15 +101,15 @@ bool get_playlist(CURL* curl, const std::string& access_tkn, const std::string& 
 
 Playlist create_playlist(CURL* curl, const std::string& access_tkn, const std::string& title);
 
-bool get_song_hashes(
+bool get_song_counts(
 	CURL* curl, 
-	const std::string& access_tkn, 
+	const std::string& yt_access_tkn, 
 	const std::string& playlist_id, 
-	std::vector<std::string>& song_hashes_out, 
+	std::unordered_map<Song, int>& out_song_counts, 
 	std::string& in_out_etag
 );
 
-API::Song search_song(CURL* curl, const std::string& access_tkn, const API::Song& song);
+Song search_song(CURL* curl, const std::string& access_tkn, const Song& song);
 
 } // namespace NewSpotifyAPI
 #endif

@@ -376,7 +376,11 @@ int run_tracked(int argc, char* argv[]) {
 					  << bin_to_hex(pl.short_id) << std::string(id_pad, ' ')
 					  << pl.title << '\n';
 		}
-		std::cout << pl_items.song_hashes.size() << " song(s)\n";
+		size_t num_songs = 0;
+		for (const auto& [_, cnt]: pl_items.song_counts) {
+			num_songs += cnt;
+		}
+		std::cout << num_songs << " song(s)\n";
 	}
 	save_playlist_items_cache(cache);
 	return 0;
@@ -477,14 +481,14 @@ int sync(PlaylistItemsCache& cache) {
 
 	for (PlaylistItems& pl_items: cache) {
 		for (std::pair<Platform, Playlist>& pair: pl_items.tracked) {
-			std::vector<std::string> song_hashes;
-			bool modified = API::get_song_hashes(
+			std::unordered_map<Song, int> song_counts;
+			bool modified = API::get_song_counts(
 				pair.first, 
 				curl.get(),
 				plat_to_access_tkn[pair.first], 
 				plat_to_access_tkn[Platform::SPOTIFY], 
 				pair.second.id, 
-				song_hashes, 
+				song_counts, 
 				pair.second.items_etag
 			);
 		}

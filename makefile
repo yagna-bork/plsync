@@ -48,7 +48,7 @@ obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h 
 obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 	clang++ -o obj/cache.pb.o -c $(CXX) src/cache.pb.cc $(DEBUG_OR_PROD)
 
-obj/new_api.o: src/new_api.cpp include/new_api.h
+obj/new_api.o: src/new_api.cpp include/new_api.h include/cache.h include/platform.h include/util.h
 	clang++ -o obj/new_api.o -c $(CXX) src/new_api.cpp $(DEBUG_OR_PROD)
 
 obj/cache.o: include/cache.h src/cache.cpp include/util.h include/cache.pb.h include/new_api.h

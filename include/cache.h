@@ -196,17 +196,37 @@ struct Handle {
 
 
 
+struct Song {
+	std::vector<std::string> artists;
+	std::string track;
+};
+
+template<>
+struct std::hash<Song> {
+	size_t operator()(const Song& song) const {
+		size_t seed = song.artists.size();
+		std::hash<std::string> hasher;
+		for (const std::string& artist: song.artists) {
+			seed ^= hasher(artist) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		}
+		return seed ^ hasher(song.track);
+	}
+};
+
+bool operator==(const Song& s1, const Song& s2);
+
 struct PlaylistItems {
 	std::string id;
 	std::vector<std::pair<Platform, Playlist>> tracked;
-	std::vector<std::string> song_hashes;
+	std::unordered_map<Song, size_t> song_counts;
 	bool was_changed;
 };
+
+void insert_song_counts(std::unordered_map<Song, int>& song_counts, const Song& song);
 
 using PlaylistItemsCache = std::forward_list<PlaylistItems>;
 
 PlaylistItemsCache load_playlist_items_cache();
-
 /* Can throw API::RequestError on failure */
 void update_playlist_items_cache(
 	PlaylistItemsCache& cache, std::shared_ptr<CURL> curl, const std::vector<std::string>& plat_to_access_token
@@ -237,7 +257,7 @@ void save_sid_to_id_map(const SidToIdMap& map, Platform plat);
 
 
 
-using SongCache = std::unordered_map<std::string, std::string>;
+using SongCache = std::unordered_map<std::string, Song>;
 
 SongCache load_song_cache(Platform plat);
 void save_song_cache(const SongCache& cache, Platform plat);

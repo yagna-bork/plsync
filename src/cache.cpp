@@ -419,7 +419,7 @@ static Platform get_platform(proto::Platform plat) {
 	}
 }
 
-static proto::PlaylistItems get_proto_items(const fs::path &path) {
+static proto::PlaylistItems get_proto_pl_items(const fs::path &path) {
 	proto::PlaylistItems proto_items;
 	{
 		auto file = ensure_bin_file<std::ifstream>(path);
@@ -428,20 +428,49 @@ static proto::PlaylistItems get_proto_items(const fs::path &path) {
 	return proto_items;
 }
 
-PlaylistItems load_from_path(const fs::path& path) {
-	PlaylistItems items;
-	auto proto_items = get_proto_items(path);
-	for (const auto& p: proto_items.tracked()) {
-		items.tracked.emplace_back(
+static Song get_song(const proto::Song& proto_song) {
+	Song song;
+	for (const auto& artist: proto_song.artists()) {
+		song.artists.emplace_back(artist);
+	}
+	song.track = std::string(proto_song.track());
+	return song;
+}
+
+static proto::Song get_proto_song(const Song& song) {
+	proto::Song proto_song;
+	for (const std::string& artist: song.artists) {
+		proto_song.add_artists(artist);
+	}
+	proto_song.set_track(song.track);
+	return proto_song;
+}
+
+static PlaylistItems load_from_path(const fs::path& path) {
+	PlaylistItems pl_items;
+	auto proto_pl_items = get_proto_pl_items(path);
+	for (const auto& p: proto_pl_items.tracked()) {
+		pl_items.tracked.emplace_back(
 			get_platform(p.plat()), 
 			Playlist(std::string(p.playlist().id()), std::string(p.playlist().items_etag()))
 		);
 	}
-	for (const auto& song: proto_items.song_hashes()) {
-		items.song_hashes.emplace_back(song);
+	for (const auto& song_cnt_pair: proto_pl_items.song_cnt_pairs()) {
+		pl_items.song_counts[get_song(song_cnt_pair.song())] = song_cnt_pair.cnt();
 	}
-	items.id = path.filename();
-	return items;
+	pl_items.id = path.filename();
+	return pl_items;
+}
+
+bool operator==(const Song& s1, const Song& s2) {
+	return s1.artists == s2.artists && s1.track == s2.track;
+}
+
+void insert_song_counts(std::unordered_map<Song, int>& song_counts, const Song& song) {
+	if (!song_counts.count(song)) {
+		song_counts[song] = 0;
+	}
+	++song_counts[song];
 }
 
 PlaylistItems load_playlist_items(const std::string& id) {
@@ -518,21 +547,23 @@ void save_playlist_items_cache(const PlaylistItemsCache& cache) {
 void save_playlist_items(const PlaylistItems& pl_items) {
 	proto::PlaylistItems proto_items;
 	for (const auto& [plat, pl]: pl_items.tracked) {
-		auto proto_pair = proto_items.add_tracked();
-		proto_pair->set_plat(get_proto_platform(plat));
-		proto_pair->mutable_playlist()->set_id(pl.id);
-		proto_pair->mutable_playlist()->set_items_etag(pl.items_etag);
+		auto* pair = proto_items.add_tracked();
+		pair->set_plat(get_proto_platform(plat));
+		pair->mutable_playlist()->set_id(pl.id);
+		pair->mutable_playlist()->set_items_etag(pl.items_etag);
 	}
-	for (const auto& song: pl_items.song_hashes) {
-		proto_items.add_song_hashes(song);
+	for (const auto& [song, count]: pl_items.song_counts) {
+		auto* pair = proto_items.add_song_cnt_pairs();
+		*pair->mutable_song() = get_proto_song(song);
+		pair->set_cnt(count);
 	}
 	auto file = ensure_bin_file<std::ofstream>(playlist_items_cache_dir() / pl_items.id);
 	proto_items.SerializeToOstream(&file);
 }
 
 void remove_playlist_items(const std::string& id) {
-	auto items = get_proto_items(playlist_items_cache_dir() / id);
-	for (const auto& p: items.tracked()) {
+	auto pl_items = get_proto_pl_items(playlist_items_cache_dir() / id);
+	for (const auto& p: pl_items.tracked()) {
 		Platform plat = get_platform(p.plat());
 		auto node = PlaylistCache::load_node(std::string(p.playlist().id()), plat);
 		if (node.playlist.id.empty()) {
@@ -649,7 +680,7 @@ static inline fs::path song_cache_dir(Platform plat) {
 }
 
 SongCache load_song_cache(Platform plat) {
-	proto::PlaylistItemIdToSongHashMap proto_map;
+	proto::PlaylistItemIdToSongMap proto_map;
 	{
 		auto file = ensure_bin_file<std::ifstream>(song_cache_dir(plat));
 		proto_map.ParseFromIstream(&file);
@@ -658,23 +689,23 @@ SongCache load_song_cache(Platform plat) {
 	SongCache cache;
 	for (const auto& bucket: proto_map.buckets()) {
 		for (const auto& e: bucket.entries()) {
-			cache[std::string(e.playlist_item_id())] = std::string(e.song_hash());
+			cache[std::string(e.playlist_item_id())] = get_song(e.song());
 		}
 	}
 	return cache;
 }
 
 void save_song_cache(const SongCache& cache, Platform plat) {
-	proto::PlaylistItemIdToSongHashMap proto_map;
+	proto::PlaylistItemIdToSongMap proto_map;
 	for (std::size_t i = 0; i != NUM_BUCKETS; i++) {
 		proto_map.add_buckets();
 	}
 
-	for (const auto& [item_id, song_hash]: cache) {
+	for (const auto& [item_id, song]: cache) {
 		std::size_t bucket = std::hash<std::string>{}(item_id) % NUM_BUCKETS; 
 		auto* proto_pair = proto_map.mutable_buckets(bucket)->add_entries();
 		proto_pair->set_playlist_item_id(item_id);
-		proto_pair->set_song_hash(song_hash);
+		*proto_pair->mutable_song() = get_proto_song(song);
 	}
 	
 	auto file = ensure_bin_file<std::ofstream>(song_cache_dir(plat));

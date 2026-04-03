@@ -34,14 +34,25 @@ enum Platform {
 	INVALID = 2;
 }
 
+message Song {
+	repeated string artists = 1;
+	string track = 2;
+}
+
 message PairPlatformPlaylist {
 	Platform plat = 1;
 	Playlist playlist = 2;
 }
 
+
 message PlaylistItems {
+	message SongCountPair {
+		Song song = 1;
+		uint32 cnt = 2;
+	}
+
 	repeated PairPlatformPlaylist tracked = 1;
-	repeated bytes song_hashes = 2;
+	repeated SongCountPair song_cnt_pairs = 2;
 }
 
 message SidToIdMap {
@@ -58,10 +69,10 @@ message SidToIdMap {
 	repeated Bucket buckets = 1;
 }
 
-message PlaylistItemIdToSongHashMap {
+message PlaylistItemIdToSongMap {
 	message Entry {
 		string playlist_item_id = 1;
-		bytes song_hash = 2;
+		Song song = 2;
 	}
 
 	message Bucket {
