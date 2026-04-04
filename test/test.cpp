@@ -1,6 +1,7 @@
-#include "test_token_store.h"
+//#include "test_token_store.h" TODO
 #include "test_api.h"
-// #include "test_playlist_cache.h"
+// #include "test_playlist_cache.h" TODO
+#include "test_playlist_diff.h"
 #include "test_util.h"
 #include "../include/platform.h"
 #include <iostream>
@@ -24,5 +25,9 @@ int main() {
 	std::cout << "\n\nUtil tests\n";
 	std::cout << "----------\n";
 	TestUtil::run();
+
+	std::cout << "\n\nSongs diff tests\n";
+	std::cout << "----------\n";
+	TestPlaylistDiff::run();
 	return 0;
 }

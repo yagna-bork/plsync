@@ -466,11 +466,99 @@ bool operator==(const Song& s1, const Song& s2) {
 	return s1.artists == s2.artists && s1.track == s2.track;
 }
 
-void insert_song_counts(std::unordered_map<Song, int>& song_counts, const Song& song) {
+void insert_song_counts(SongCounts& song_counts, const Song& song) {
 	if (!song_counts.count(song)) {
 		song_counts[song] = 0;
 	}
 	++song_counts[song];
+}
+
+PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs) {
+	auto it = lhs.begin();
+	while (it != lhs.end()) {
+		const size_t& hash = it->first;
+		int& count = it->second;
+		if (!rhs.count(hash) || rhs[hash] == 0) {
+			++it;
+			continue;
+		}
+
+		int min_count = std::min(count, rhs[hash]);
+		count -= min_count;
+		rhs[hash] -= min_count;
+
+		if (rhs[hash] == 0) {
+			rhs.erase(hash);
+		}
+		if (count == 0) {
+			it = lhs.erase(it);
+		} else {
+			++it;
+		}
+	}
+	return {std::move(lhs), std::move(rhs)};
+}
+
+PlaylistDiff& operator+=(PlaylistDiff& lhs, const PlaylistDiff& rhs) {
+	for (const auto& [hash, count]: rhs.added) {
+		if (lhs.added.count(hash)) {
+			lhs.added[hash] = std::max(lhs.added[hash], count);
+		} else if (lhs.removed.count(hash)) {
+			if (lhs.removed[hash] < count) {
+				lhs.removed.erase(hash);
+				lhs.added[hash] = count;
+			}
+		} else {
+			lhs.added[hash] = count;
+		}
+	}
+
+	for (const auto& [hash, count]: rhs.removed) {
+		if (lhs.removed.count(hash)) {
+			lhs.removed[hash] = std::max(lhs.removed[hash], count);
+		} else if (lhs.added.count(hash)) {
+			if (lhs.added[hash] < count) {
+				lhs.added.erase(hash);
+				lhs.removed[hash] = count;
+			}
+		} else {
+			lhs.removed[hash] = count;
+		}
+	}
+	return lhs;
+}
+
+PlaylistDiff operator-(const PlaylistDiff& lhs, const PlaylistDiff& rhs) {
+	std::unordered_map<size_t, int> flat_diff;
+	for (const auto& [hash, count]: lhs.added) {
+		flat_diff[hash] = count;
+	}
+	for (const auto& [hash, count]: lhs.removed) {
+		flat_diff[hash] = -count;
+	}
+	
+	for (const auto& [hash, count]: rhs.added) {
+		if (!flat_diff.count(hash)) {
+			flat_diff[hash] = 0;
+		}
+		flat_diff[hash] -= count;
+	}
+	for (const auto& [hash, count]: rhs.removed) {
+		if (!flat_diff.count(hash)) {
+			flat_diff[hash] = 0;
+		}
+		flat_diff[hash] += count;
+	}
+
+	PlaylistDiff res;
+	for (const auto& [hash, count]: flat_diff) {
+		if (count > 0) {
+			res.added[hash] = count;
+		} else if (count < 0) {
+			res.removed[hash] = -count;
+		}
+	}
+	return res;
 }
 
 PlaylistItems load_playlist_items(const std::string& id) {

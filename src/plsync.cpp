@@ -481,7 +481,7 @@ int sync(PlaylistItemsCache& cache) {
 
 	for (PlaylistItems& pl_items: cache) {
 		for (std::pair<Platform, Playlist>& pair: pl_items.tracked) {
-			std::unordered_map<Song, int> song_counts;
+			SongCounts song_counts;
 			bool modified = API::get_song_counts(
 				pair.first, 
 				curl.get(),

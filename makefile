@@ -2,7 +2,6 @@ CXX = -std=c++20
 VCPKG = $(HOME)/Applications/vcpkg/installed/x64-osx-dynamic/lib
 LIBS = -L$(VCPKG) -lcred `pkg-config --libs openssl libcurl zlib protobuf libutf8proc`
 OBJS = obj/util.o obj/platform.o obj/api.o obj/youtube_api.o obj/spotify_api.o obj/new_api.o obj/cache.pb.o obj/cache.o
-TEST_OBJS = obj/platform.o obj/api.o obj/youtube_api.o obj/spotify_api.o obj/util.o
 NDEBUG = -D NDEBUG
 DEBUG_SYM = -g -O0
 # TODO in prod enable NDEBUG to ignore asserts and ignore DEBUG_SYM
@@ -62,6 +61,6 @@ bin/make_emoji_codepoint_ranges_h: scripts/make_emoji_codepoint_ranges_h.cpp
 
 # tests
 # TODO for prod need to make vcpkg install within project
-tests bin/test: test/* $(TEST_OBJS)
-	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(TEST_OBJS) $(DEBUG_OR_PROD)
+tests bin/test: test/* $(OBJS)
+	clang++ -o bin/test test/test.cpp $(CXX) $(LIBS) $(OBJS) $(DEBUG_OR_PROD)
 	install_name_tool -change @rpath/libcred.1.dylib $(VCPKG)/libcred.1.dylib bin/test

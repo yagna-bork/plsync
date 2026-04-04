@@ -198,7 +198,7 @@ bool get_song_counts(
 	const std::string& plat_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::unordered_map<Song, int>& out_song_counts, 
+	SongCounts& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	switch (plat) {
@@ -391,7 +391,7 @@ bool get_song_counts(
 	const std::string& yt_access_tkn, 
 	const std::string& sp_access_tkn, 
 	const std::string& playlist_id, 
-	std::unordered_map<Song, int>& out_song_counts, 
+	SongCounts& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	std::string url = base_url + "/playlistItems";
@@ -581,7 +581,7 @@ bool get_song_counts(
 	CURL* curl, 
 	const std::string& access_tkn, 
 	const std::string& playlist_id, 
-	std::unordered_map<Song, int>& out_song_counts, 
+	SongCounts& out_song_counts, 
 	std::string& in_out_etag
 ) {
 	std::string url = base_url + "/playlists/" + playlist_id + "/items";

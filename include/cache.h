@@ -200,6 +200,7 @@ struct Song {
 	std::vector<std::string> artists;
 	std::string track;
 };
+bool operator==(const Song& s1, const Song& s2);
 
 template<>
 struct std::hash<Song> {
@@ -213,19 +214,27 @@ struct std::hash<Song> {
 	}
 };
 
-bool operator==(const Song& s1, const Song& s2);
+using SongCounts = std::unordered_map<Song, int>;
+void insert_song_counts(SongCounts& song_counts, const Song& song);
+
+using SongHashCounts = std::unordered_map<size_t, int>;
+struct PlaylistDiff {
+	SongHashCounts added;
+	SongHashCounts removed;
+	bool operator==(const PlaylistDiff&) const = default;
+};
+PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs);
+PlaylistDiff& operator+=(PlaylistDiff& lhs, const PlaylistDiff& rhs);
+PlaylistDiff operator-(const PlaylistDiff& lhs, const PlaylistDiff& rhs);
 
 struct PlaylistItems {
 	std::string id;
 	std::vector<std::pair<Platform, Playlist>> tracked;
-	std::unordered_map<Song, size_t> song_counts;
+	SongCounts song_counts;
 	bool was_changed;
 };
 
-void insert_song_counts(std::unordered_map<Song, int>& song_counts, const Song& song);
-
 using PlaylistItemsCache = std::forward_list<PlaylistItems>;
-
 PlaylistItemsCache load_playlist_items_cache();
 /* Can throw API::RequestError on failure */
 void update_playlist_items_cache(
@@ -239,26 +248,23 @@ void remove_playlist_items(const std::string& id);
 
 
 
-using SidToIdMap = std::unordered_map<std::string, std::string>;
-
 class SidOutOfRangeError : public std::out_of_range {
 public:
 	SidOutOfRangeError(): std::out_of_range("lookup attempted before map was initialised") {}
 };
 
+using SidToIdMap = std::unordered_map<std::string, std::string>;
 SidToIdMap load_sid_to_id_map(Platform plat);
+SidToIdMap update_sid_to_id_map(PlaylistCache::Head* head, Platform plat);
+void save_sid_to_id_map(const SidToIdMap& map, Platform plat);
 
 /* These functions may throw SidOutOrRangeError */
 std::string sid_to_id_lookup(const std::string& sid, Platform plat);
 void remove_sid_to_id_entry(const std::string& sid, Platform plat);
 
-SidToIdMap update_sid_to_id_map(PlaylistCache::Head* head, Platform plat);
-void save_sid_to_id_map(const SidToIdMap& map, Platform plat);
-
 
 
 using SongCache = std::unordered_map<std::string, Song>;
-
 SongCache load_song_cache(Platform plat);
 void save_song_cache(const SongCache& cache, Platform plat);
 #endif
