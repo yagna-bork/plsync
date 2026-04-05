@@ -480,17 +480,50 @@ int sync(PlaylistItemsCache& cache) {
 	update_playlist_items_cache(cache, curl, plat_to_access_tkn);
 
 	for (PlaylistItems& pl_items: cache) {
+		// precompute the hashes for performance because a lot of 
+		// comparisons will be made by the diffing algorithm
+		SongHashCounts songh_counts;
+		std::hash<Song> hasher;
+		for (const auto& [song, count]: pl_items.song_counts) {
+			songh_counts[hasher(song)] = count;
+		}
+
+		std::vector<PlaylistDiff> changes;
+		std::unordered_map<size_t, Song> songh_to_song;
+		PlaylistDiff net_change;
 		for (std::pair<Platform, Playlist>& pair: pl_items.tracked) {
-			SongCounts song_counts;
+			SongCounts mod_song_counts;
 			bool modified = API::get_song_counts(
 				pair.first, 
 				curl.get(),
 				plat_to_access_tkn[pair.first], 
 				plat_to_access_tkn[Platform::SPOTIFY], 
 				pair.second.id, 
-				song_counts, 
+				mod_song_counts, 
 				pair.second.items_etag
 			);
+			
+			if (modified) {
+				SongHashCounts mod_songh_counts;
+				for (const auto& [song, count]: mod_song_counts) {
+					size_t hash = hasher(song);
+					mod_songh_counts[hash] = count;
+					if (!songh_to_song.count(hash)) {
+						songh_to_song[hash] = song;
+					}
+				}
+
+				PlaylistDiff change = mod_songh_counts - songh_counts;
+				net_change += change;
+				changes.push_back(std::move(change));
+			} else {
+				changes.emplace_back();
+			}
+		}
+		
+		for (int i = 0; i != pl_items.tracked.size(); i++) {
+			PlaylistDiff to_change = net_change - changes[i];
+			// API::update_playlist(pl_items.tracked[i].plat, pl_items.tracked[i].id, to_change);
 		}
 	}
 	std::cout << "Done!\n";
