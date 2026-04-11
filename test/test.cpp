@@ -3,6 +3,7 @@
 // #include "test_playlist_cache.h" TODO
 #include "../include/platform.h"
 #include "test_playlist_diff.h"
+#include "test_playlist_tree.h"
 #include "test_util.h"
 #include <iostream>
 #include <string>
@@ -27,7 +28,11 @@ int main() {
     TestUtil::run();
 
     std::cout << "\n\nSongs diff tests\n";
-    std::cout << "----------\n";
+    std::cout << "----------------\n";
     TestPlaylistDiff::run();
+
+    std::cout << "\n\nPlaylist tree tests\n";
+    std::cout << "-------------------\n";
+    TestPlaylistTree::run();
     return 0;
 }

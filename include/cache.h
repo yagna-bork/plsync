@@ -5,6 +5,7 @@
 #include "util.h"
 #include <cassert>
 #include <cstddef>
+#include <filesystem>
 #include <map>
 #include <string>
 #include <utility>
@@ -115,6 +116,19 @@ struct Playlist {
     }
 };
 
+/* playlist-tree-start */
+std::filesystem::path
+playlist_tree_path_from_id_hash(const std::string& id_hash, Platform plat);
+void playlist_tree_path_sid_from_id_hash(const std::string& id_hash,
+                                         Platform plat,
+                                         std::filesystem::path& out_path,
+                                         std::string& out_sid);
+std::filesystem::path playlist_tree_path_from_sid(const std::string& sid,
+                                                  Platform plat);
+std::filesystem::path playlist_tree_add(const std::string& id_hash,
+                                        Platform plat);
+void playlist_tree_remove(const std::string& id_hash, Platform plat);
+
 namespace PlaylistCache {
 
 struct Node;
@@ -204,7 +218,6 @@ template <bool is_const> struct Iterator {
     bool operator!=(const Iterator& rhs) { return !(*this == rhs); }
 
     Iterator& operator++() {
-        ptr.node = (ptr.is_head) ? ptr.head->next : ptr.node->next;
         ptr.is_head = false;
         return *this;
     }

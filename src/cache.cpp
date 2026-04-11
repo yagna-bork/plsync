@@ -8,10 +8,119 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace fs = std::filesystem;
+
+inline fs::path get_ensure_root(Platform plat) {
+    fs::path root = fs::path(get_setting("cache_dir")) / "playlist_tree" /
+                    platform_title_lower(plat);
+    fs::create_directories(root);
+    return root;
+}
+
+inline bool is_leaf(const fs::directory_iterator& it) {
+    return it != fs::end(it) && it->is_regular_file();
+}
+
+void tree_search(const std::string& id_hash, fs::path dir, int depth,
+                 fs::path& out_path, std::string& out_sid) {
+    auto it = fs::directory_iterator(dir);
+    if (is_leaf(it)) {
+        assert(it->path().filename() == bin_to_hex(id_hash));
+        out_path = it->path();
+        out_sid = std::string(id_hash.begin(), id_hash.begin() + depth);
+        return;
+    } else {
+        assert(fs::exists(dir / bin_to_hex(id_hash[depth], /*upper=*/false)));
+        tree_search(id_hash, dir / bin_to_hex(id_hash[depth], /*upper=*/false),
+                    depth + 1, out_path, out_sid);
+    }
+}
+
+fs::path playlist_tree_path_from_id_hash(const std::string& id_hash,
+                                         Platform plat) {
+    std::string _;
+    fs::path path;
+    playlist_tree_path_sid_from_id_hash(id_hash, plat, path, _);
+    return path;
+}
+
+void playlist_tree_path_sid_from_id_hash(const std::string& id_hash,
+                                         Platform plat, fs::path& out_path,
+                                         std::string& out_sid) {
+    return tree_search(id_hash, get_ensure_root(plat), /*depth=*/0, out_path,
+                       out_sid);
+}
+
+fs::path playlist_tree_path_from_sid(const std::string& sid, Platform plat) {
+    fs::path path = get_ensure_root(plat);
+    for (char c : sid) {
+        path /= bin_to_hex(c, /*upper=*/false);
+    }
+    auto it = fs::directory_iterator(path);
+    assert(is_leaf(it));
+    return it->path();
+}
+
+fs::path tree_add(fs::path dir, const std::string& id_hash, int depth) {
+    auto it = fs::directory_iterator(dir);
+    if (is_leaf(it)) {
+        fs::path leaf = it->path();
+        std::string other_id_hash_hex = leaf.filename().string();
+        std::string byte_hex(other_id_hash_hex.data() + 2 * depth, 2);
+        fs::path subdir = dir / byte_hex;
+        fs::create_directory(subdir);
+        fs::rename(leaf, subdir / other_id_hash_hex);
+        return tree_add(dir, id_hash, depth);
+    }
+
+    fs::path subdir = dir / bin_to_hex(id_hash[depth], /*upper=*/false);
+    if (fs::exists(subdir)) {
+        return tree_add(subdir, id_hash, depth + 1);
+    }
+
+    fs::path path = subdir / bin_to_hex(id_hash);
+    ensure_bin_file<std::ofstream>(path);
+    return path;
+}
+
+fs::path playlist_tree_add(const std::string& id_hash, Platform plat) {
+    return tree_add(get_ensure_root(plat), id_hash, /*depth=*/0);
+}
+
+void trim_path(fs::path dir, Platform plat) {
+    if (dir == get_ensure_root(plat)) {
+        return;
+    }
+
+    auto it = fs::directory_iterator(dir);
+    if (++it != fs::end(it)) {
+        // there is more than one subtree, path can't be trimmed further
+        return;
+    }
+
+    it = fs::directory_iterator(dir);
+    auto sub_it = fs::directory_iterator(it->path());
+    if (!is_leaf(sub_it)) {
+        // the other subtree has nested subtrees, path can't be trimmed further
+        return;
+    }
+    // trim path by moving leaf up one level into dir
+    fs::rename(sub_it->path(), dir / sub_it->path().filename());
+    fs::remove(it->path());
+    trim_path(dir.parent_path(), plat);
+}
+
+void playlist_tree_remove(const std::string& id_hash, Platform plat) {
+    fs::path leaf = playlist_tree_path_from_id_hash(id_hash, plat);
+    assert(fs::exists(leaf));
+    fs::remove(leaf);
+    fs::remove(leaf.parent_path());
+    trim_path(leaf.parent_path().parent_path(), plat);
+}
 
 namespace PlaylistCache {
 
@@ -682,7 +791,6 @@ std::size_t NUM_BUCKETS = 500;
 
 using Map = SidToIdMap;
 using ProtoMap = proto::SidToIdMap;
-namespace fs = std::filesystem;
 namespace Cache = PlaylistCache;
 
 fs::path sid_to_id_map_dir(Platform plat) {

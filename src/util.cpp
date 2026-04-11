@@ -144,16 +144,19 @@ std::string get_or_refresh_access_tkn(Platform platform,
     return std::move(resp.access_tkn);
 }
 
-static std::unordered_map<std::string, std::string> CONFIG;
-// TODO change for prod
-static std::string CONFIG_PATH = "plsync.cfg";
+const std::unordered_map<std::string, std::string>& get_config() {
+    static std::unordered_map<std::string, std::string> CONFIG;
+    // TODO change for prod
+    static std::string CONFIG_PATH = "plsync.cfg";
+    if (!CONFIG.empty()) {
+        return CONFIG;
+    }
 
-void load_config() {
-    // TODO raise exception if something anything wrong
     std::ifstream config(CONFIG_PATH);
     if (!config) {
         throw std::runtime_error("Config file not found. Reinstall plsync");
     }
+
     std::string line, name, val;
     std::string::iterator sep;
     while (std::getline(config, line)) {
@@ -164,12 +167,11 @@ void load_config() {
     }
     // fucking google...
     CONFIG["yt_client_secret"] = CLIENT_NOT_SO_SECRET;
+    return CONFIG;
 }
 
 std::string get_setting(std::string name, const std::string prefix) {
-    if (CONFIG.empty()) {
-        load_config();
-    }
+    auto CONFIG = get_config();
     name = prefix + name;
     assert(CONFIG.count(name) != 0);
     return CONFIG[name];
@@ -280,7 +282,7 @@ std::string urlencode(const std::string& s) {
         if (is_unreserved(s[i])) {
             res << s[i];
         } else {
-            res << '%' << bin_to_hex(s[i]);
+            res << '%' << bin_to_hex(s[i], /*upper=*/true);
         }
     }
     return res.str();
@@ -357,7 +359,7 @@ bool ensure_tmpdir(std::filesystem::path& tmpdir) {
 }
 
 // nibble = half a byte hehe
-static char hex_bit(char nibble) {
+static char hex_bit_lower(char nibble) {
     if (nibble <= 9) {
         return '0' + nibble;
     } else {
@@ -368,8 +370,10 @@ static char hex_bit(char nibble) {
 std::string bin_to_hex(const std::string& data) {
     std::string res;
     for (unsigned char byte : data) {
-        res.push_back(hex_bit(byte >> 4)); // most significant nibble
-        res.push_back(hex_bit(byte & 15)); // least significant nibble
+        // most significant nibble
+        res.push_back(hex_bit_lower(byte >> 4));
+        // least significant nibble
+        res.push_back(hex_bit_lower(byte & 15));
     }
     return res;
 }
@@ -382,10 +386,12 @@ static char hex_bit_upper(char nibble) {
     }
 }
 
-std::string bin_to_hex(unsigned char c) {
+std::string bin_to_hex(unsigned char c, bool upper) {
     std::string res;
-    res.push_back(hex_bit_upper(c >> 4)); // most significant nibble
-    res.push_back(hex_bit_upper(c & 15)); // least significant nibble
+    unsigned char msn = c >> 4;
+    unsigned char lsn = c & 15;
+    res.push_back(upper ? hex_bit_upper(msn) : hex_bit_lower(msn));
+    res.push_back(upper ? hex_bit_upper(lsn) : hex_bit_lower(lsn));
     return res;
 }
 

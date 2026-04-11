@@ -160,7 +160,7 @@ inline std::shared_ptr<CURL> get_curl() {
 }
 
 std::string bin_to_hex(const std::string& data);
-std::string bin_to_hex(unsigned char c);
+std::string bin_to_hex(unsigned char c, bool upper);
 std::string hex_to_bin(const std::string& hex_str);
 
 size_t utf8_len(const std::string& s);
