@@ -1,15 +1,15 @@
 #ifndef GUARD_PLATFORM_H
 #define GUARD_PLATFORM_H
-#include <vector>
 #include <string>
+#include <vector>
 
-enum Platform { 
-	YOUTUBE, 
-	SPOTIFY,
+enum Platform {
+    YOUTUBE,
+    SPOTIFY,
 #ifndef NDEBUG
-	TEST,
+    TEST,
 #endif
-	INVALID
+    INVALID
 };
 
 /* Name of platform in capital case e.g. Youtube */
