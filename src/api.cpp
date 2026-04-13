@@ -19,6 +19,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <vector>
 #include <zlib.h>
 
 std::string BaseAPI::full_url(const std::string& endpoint,
@@ -274,12 +275,12 @@ bool BaseAuthAPI::collect_auth_code() {
 
     // stuff those pesky params into a map
     std::size_t buff_sz = 1024;
-    char buff[buff_sz];
-    size_t bytes_recv = recv(sockfd, buff, buff_sz, 0);
+    std::vector<char> buff(buff_sz);
+    size_t bytes_recv = recv(sockfd, buff.data(), buff_sz, 0);
     std::unordered_map<std::string, std::string> params;
     std::string param, val;
-    char* beg = std::find(buff, buff + bytes_recv, '?') + 1;
-    char* end = std::find(beg, buff + bytes_recv, ' ');
+    char* beg = std::find(buff.data(), buff.data() + bytes_recv, '?') + 1;
+    char* end = std::find(beg, buff.data() + bytes_recv, ' ');
     char *amp, *eq;
     do {
         amp = std::find(beg, end, '&');

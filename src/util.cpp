@@ -1,7 +1,7 @@
-#include "../include/util.h"
 #include "../include/api.h"
 #include "../include/client_secret.h"
 #include "../include/emoji_codepoint_ranges.h"
+#include "../include/util.h"
 #include <cassert>
 #include <filesystem>
 #include <fstream>
@@ -203,14 +203,14 @@ bool sha256(const std::string& s, std::string& res) {
     }
 
     int digest_len = EVP_MD_get_size(sha256.get());
-    unsigned char digest[digest_len];
-    if (!EVP_DigestFinal_ex(ctx.get(), digest, nullptr)) {
+    std::vector<unsigned char> digest(digest_len);
+    if (!EVP_DigestFinal_ex(ctx.get(), digest.data(), nullptr)) {
         return false;
     }
 
     size_t pad_len = std::max(size_t(0), digest_len - res.size());
     std::fill_n(std::back_inserter(res), pad_len, 0);
-    std::copy(digest, digest + digest_len, res.begin());
+    std::copy(digest.begin(), digest.end(), res.begin());
     return true;
 }
 
