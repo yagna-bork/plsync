@@ -256,13 +256,18 @@ struct Handle {
 
 } // namespace PlaylistCache
 
-/* playlist diffing start */
+/* playlist-diff-start */
 struct Song {
     std::vector<std::string> artists;
     std::string track;
-};
-bool operator==(const Song& s1, const Song& s2);
 
+    bool operator==(const Song& rhs) const {
+        return artists == rhs.artists && track == rhs.track;
+    }
+};
+
+// https://stackoverflow.com/a/27216842
+// https://stackoverflow.com/a/20602159
 template <> struct std::hash<Song> {
     size_t operator()(const Song& song) const {
         size_t seed = song.artists.size();
@@ -275,25 +280,30 @@ template <> struct std::hash<Song> {
 };
 
 using SongCounts = std::unordered_map<Song, int>;
-void insert_song_counts(SongCounts& song_counts, const Song& song);
 
+struct PlaylistDiff;
 using SongHashCounts = std::unordered_map<size_t, int>;
+PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs);
+
 struct PlaylistDiff {
     SongHashCounts added;
     SongHashCounts removed;
-    bool operator==(const PlaylistDiff&) const = default;
-};
-PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs);
-PlaylistDiff& operator+=(PlaylistDiff& lhs, const PlaylistDiff& rhs);
-PlaylistDiff operator-(const PlaylistDiff& lhs, const PlaylistDiff& rhs);
 
-/* PlaylistItemsCache start */
+    bool operator==(const PlaylistDiff&) const = default;
+    PlaylistDiff& operator+=(const PlaylistDiff& rhs);
+    PlaylistDiff operator-(const PlaylistDiff& rhs) const;
+};
+
+/* playlist-items-cache-start */
 struct PlaylistItems {
     std::string id;
     std::vector<std::pair<Platform, Playlist>> tracked;
     SongCounts song_counts;
     bool was_changed;
 };
+PlaylistItems load_playlist_items(const std::string& id);
+void save_playlist_items(const PlaylistItems& pl_items);
+void remove_playlist_items(const std::string& id);
 
 using PlaylistItemsCache = std::forward_list<PlaylistItems>;
 PlaylistItemsCache load_playlist_items_cache();
@@ -302,10 +312,6 @@ void update_playlist_items_cache(
     PlaylistItemsCache& cache, std::shared_ptr<CURL> curl,
     const std::vector<std::string>& plat_to_access_token);
 void save_playlist_items_cache(const PlaylistItemsCache& cache);
-
-PlaylistItems load_playlist_items(const std::string& id);
-void save_playlist_items(const PlaylistItems& pl_items);
-void remove_playlist_items(const std::string& id);
 
 /* SidToIdMap start */
 class SidOutOfRangeError : public std::out_of_range {

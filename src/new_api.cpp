@@ -1,5 +1,5 @@
-#include "../include/new_api.h"
 #include "../include/cache.h"
+#include "../include/new_api.h"
 #include "../include/platform.h"
 #include "../include/util.h"
 #include <algorithm>
@@ -83,6 +83,13 @@ static std::string get_song_hash(const Song& song) {
     std::string hash;
     sha256(str.str(), hash);
     return hash;
+}
+
+static void song_counts_insert(SongCounts& song_counts, const Song& song) {
+    if (!song_counts.count(song)) {
+        song_counts[song] = 0;
+    }
+    ++song_counts[song];
 }
 
 long GET(CURL* curl, const std::string& url, json& jresp, const Params& params,
@@ -392,7 +399,7 @@ bool get_song_counts(CURL* curl, const std::string& yt_access_tkn,
         const std::string& id =
             item["snippet"]["resourceId"]["videoId"].get_ref<std::string&>();
         if (song_cache.count(id)) {
-            insert_song_counts(out_song_counts, song_cache[id]);
+            song_counts_insert(out_song_counts, song_cache[id]);
         } else {
             new_pl_items.push_back(&item);
             vid_ids_set.insert(id);
@@ -428,7 +435,7 @@ bool get_song_counts(CURL* curl, const std::string& yt_access_tkn,
     for (json* item : new_pl_items) {
         std::string id = item->at("snippet")["resourceId"]["videoId"];
         if (song_cache.count(id)) {
-            insert_song_counts(out_song_counts, song_cache[id]);
+            song_counts_insert(out_song_counts, song_cache[id]);
             continue;
         }
         if (video_id_to_category_id[id] != "10") {
@@ -454,7 +461,7 @@ bool get_song_counts(CURL* curl, const std::string& yt_access_tkn,
                 << ". Failed to determine artist and title information.\n";
             continue;
         }
-        insert_song_counts(out_song_counts, sp_song);
+        song_counts_insert(out_song_counts, sp_song);
         song_cache[id] = std::move(sp_song);
     }
     save_song_cache(song_cache, Platform::YOUTUBE);
@@ -583,7 +590,7 @@ bool get_song_counts(CURL* curl, const std::string& access_tkn,
                 std::move(artist["name"].get_ref<std::string&>()));
         }
         song.track = std::move(item["item"]["name"].get_ref<std::string&>());
-        insert_song_counts(out_song_counts, song);
+        song_counts_insert(out_song_counts, song);
     }
     return true;
 }
