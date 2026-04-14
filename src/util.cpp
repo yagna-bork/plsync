@@ -2,14 +2,14 @@
 #include "../include/client_secret.h"
 #include "../include/emoji_codepoint_ranges.h"
 #include "../include/util.h"
+#include <algorithm>
 #include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <libcred.hpp>
-#include <limits.h>
-#include <numeric>
 #include <openssl/evp.h>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <utf8proc.h>
 
@@ -186,35 +186,35 @@ std::string get_setting(std::string name, Platform platform) {
 }
 
 // https://docs.openssl.org/master/man7/ossl-guide-libcrypto-introduction/#using-algorithms-in-applications
-bool sha256(const std::string& s, std::string& res) {
+static std::string sha(const std::string& type, const std::string& s) {
     std::unique_ptr<EVP_MD_CTX, void (&)(EVP_MD_CTX*)> ctx(EVP_MD_CTX_new(),
                                                            EVP_MD_CTX_free);
     if (!ctx) {
-        return false;
+        throw std::runtime_error("failed to generate sha digest");
     }
-    std::unique_ptr<EVP_MD, void (&)(EVP_MD*)> sha256(
-        EVP_MD_fetch(nullptr, "SHA256", nullptr), EVP_MD_free);
-    if (!sha256) {
-        return false;
+    std::unique_ptr<EVP_MD, void (&)(EVP_MD*)> algo(
+        EVP_MD_fetch(nullptr, type.c_str(), nullptr), EVP_MD_free);
+    if (!algo) {
+        throw std::runtime_error("failed to generate sha digest");
     }
-    if (!EVP_DigestInit_ex(ctx.get(), sha256.get(), nullptr)) {
-        return false;
+    if (!EVP_DigestInit_ex(ctx.get(), algo.get(), nullptr)) {
+        throw std::runtime_error("failed to generate sha digest");
     }
     if (!EVP_DigestUpdate(ctx.get(), s.data(), s.size())) {
-        return false;
+        throw std::runtime_error("failed to generate sha digest");
     }
 
-    int digest_len = EVP_MD_get_size(sha256.get());
+    int digest_len = EVP_MD_get_size(algo.get());
     std::vector<unsigned char> digest(digest_len);
     if (!EVP_DigestFinal_ex(ctx.get(), digest.data(), nullptr)) {
-        return false;
+        throw std::runtime_error("failed to generate sha digest");
     }
-
-    size_t pad_len = std::max(size_t(0), digest_len - res.size());
-    std::fill_n(std::back_inserter(res), pad_len, 0);
-    std::copy(digest.begin(), digest.end(), res.begin());
-    return true;
+    return std::string(digest.begin(), digest.end());
 }
+
+std::string sha256(const std::string& s) { return sha("SHA256", s); }
+
+std::string sha1(const std::string& s) { return sha("SHA1", s); }
 
 char getb64char(int value) {
     if (value < 26) {

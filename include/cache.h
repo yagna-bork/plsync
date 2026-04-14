@@ -38,16 +38,12 @@ struct Playlist {
     Playlist(std::string&& id, std::string&& etag, std::string&& version,
              std::string&& title, bool is_private, std::size_t items,
              std::string&& short_id = "")
-        : id(std::move(id)), etag(std::move(etag)), version(std::move(version)),
-          title(std::move(title)), is_private(is_private), items(items),
-          short_id(short_id) {
-        sha256(this->id, id_hash);
-    }
+        : id(std::move(id)), id_hash(sha1(this->id)), etag(std::move(etag)),
+          version(std::move(version)), title(std::move(title)),
+          is_private(is_private), items(items), short_id(short_id) {}
 
     Playlist(const std::string& id, const std::string& items_etag)
-        : id(id), items_etag(items_etag) {
-        sha256(id, id_hash);
-    }
+        : id_hash(sha1(id)), id(id), items_etag(items_etag) {}
 
     Playlist(const Playlist& other) = default;
     Playlist(Playlist&& other) = default;

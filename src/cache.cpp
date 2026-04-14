@@ -396,10 +396,8 @@ void update_short_ids(Head* head, std::size_t sid_len) {
 
 Node load_node(const std::string& id, Platform plat) {
     proto::CacheNode proto_node;
-    {
-        std::ifstream f(playlist_cache_dir(plat) / id, std::ios::binary);
-        proto_node.ParseFromIstream(&f);
-    }
+    std::ifstream f(playlist_cache_dir(plat) / id, std::ios::binary);
+    proto_node.ParseFromIstream(&f);
     Node node(proto_node);
     return node;
 }

@@ -38,10 +38,10 @@ obj/platform.o: src/platform.cpp include/platform.h
 obj/api.o: src/api.cpp include/api.h include/util.h include/platform.h
 	clang++ -o obj/api.o -c $(CXX) src/api.cpp $(DEBUG_OR_PROD)
 
-obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h include/api.h
+obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h include/api.h include/cache.h
 	clang++ -o obj/youtube_api.o -c $(CXX) src/youtube_api.cpp $(DEBUG_OR_PROD)
 
-obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h
+obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h include/cache.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
 obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h

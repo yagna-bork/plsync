@@ -49,7 +49,9 @@ bool is_refresh_tkn_valid(Platform platform);
 std::string get_setting(std::string name);
 std::string get_setting(std::string name, Platform platform);
 
-bool sha256(const std::string& s, std::string& digest);
+/* Throws std::runtime_error upon failure */
+std::string sha256(const std::string& s);
+std::string sha1(const std::string& s);
 
 std::string urlencode64(const std::string& s, bool pad = false);
 

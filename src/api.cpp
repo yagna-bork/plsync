@@ -196,10 +196,7 @@ std::string BaseAuthAPI::generate_code_verifier() {
 
 std::string BaseAuthAPI::get_auth_url() {
     verifier = generate_code_verifier();
-    std::string digest;
-    if (!sha256(verifier, digest)) {
-        throw std::runtime_error("Failed to hash verifier");
-    }
+    std::string digest = sha256(verifier);
     std::string challenge = urlencode64(digest);
     state = urlencode64(rndstr(128));
 

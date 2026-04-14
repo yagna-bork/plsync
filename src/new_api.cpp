@@ -80,9 +80,7 @@ static std::string get_song_hash(const Song& song) {
         str << song.artists[i];
     }
     str << ':' << song.track;
-    std::string hash;
-    sha256(str.str(), hash);
-    return hash;
+    return sha256(str.str());
 }
 
 static void song_counts_insert(SongCounts& song_counts, const Song& song) {
