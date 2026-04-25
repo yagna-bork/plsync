@@ -74,7 +74,7 @@ void test_add_double_long_conflict() {
     fs::remove_all(root);
 }
 
-void test_search_no_conflict() {
+void test_search_hash_id_no_conflict() {
     fs::path root = get_ensure_root(Platform::TEST);
     fs::create_directory(root / "61");
     fs::create_directory(root / "62");
@@ -96,7 +96,7 @@ void test_search_no_conflict() {
     fs::remove_all(root);
 }
 
-void test_search_conflict() {
+void test_search_hash_id_conflict() {
     fs::path root = get_ensure_root(Platform::TEST);
     fs::create_directories(root / "61" / "61");
     fs::create_directories(root / "61" / "62");
@@ -116,6 +116,69 @@ void test_search_conflict() {
         std::cout << "test_search_conflict(): PASSED\n";
     }
     fs::remove_all(root);
+}
+
+void test_search_hash_id_non_existent() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directory(root / "61");
+    std::ofstream file1(root / "61" / "61");
+    fs::path p = playlist_tree_path_from_id_hash("b", Platform::TEST);
+    if (!p.empty()) {
+        std::cout << "test_search_non_existent(): FAILED\n";
+    } else {
+        std::cout << "test_search_non_existent(): PASSED\n";
+    }
+}
+
+void test_search_sid_no_conflict() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directory(root / "61");
+    fs::create_directory(root / "62");
+    std::ofstream file1(root / "61" / "61");
+    std::ofstream file2(root / "62" / "62");
+
+    fs::path leaf1 = playlist_tree_path_from_sid("a", Platform::TEST);
+    fs::path leaf2 = playlist_tree_path_from_sid("b", Platform::TEST);
+
+    bool fail = leaf1 != root / "61" / "61" || leaf2 != root / "62" / "62";
+    if (fail) {
+        std::cout << "test_search_sid_no_conflict(): FAILED\n";
+    } else {
+        std::cout << "test_search_sid_no_conflict(): PASSED\n";
+    }
+    fs::remove_all(root);
+}
+
+void test_search_sid_conflict() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directories(root / "61" / "61");
+    fs::create_directories(root / "61" / "62");
+    std::ofstream file1(root / "61" / "61" / "6161");
+    std::ofstream file2(root / "61" / "62" / "6162");
+
+    fs::path leaf1 = playlist_tree_path_from_sid("aa", Platform::TEST);
+    fs::path leaf2 = playlist_tree_path_from_sid("ab", Platform::TEST);
+
+    bool fail = leaf1 != root / "61" / "61" / "6161" ||
+                leaf2 != root / "61" / "62" / "6162";
+    if (fail) {
+        std::cout << "test_search_sid_conflict(): FAILED\n";
+    } else {
+        std::cout << "test_search_sid_conflict(): PASSED\n";
+    }
+    fs::remove_all(root);
+}
+
+void test_search_sid_non_existent() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directory(root / "61");
+    std::ofstream file1(root / "61" / "61");
+    fs::path p = playlist_tree_path_from_sid("b", Platform::TEST);
+    if (!p.empty()) {
+        std::cout << "test_search_sid_non_existent(): FAILED\n";
+    } else {
+        std::cout << "test_search_sid_non_existent(): PASSED\n";
+    }
 }
 
 void test_remove_base_scenario() {
@@ -191,19 +254,77 @@ void test_remove_long_conflict() {
     fs::remove_all(root);
 }
 
+void test_height_no_conflict() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directory(root / "61");
+    fs::create_directory(root / "62");
+    std::ofstream file1(root / "61" / "61");
+    std::ofstream file2(root / "62" / "62");
+
+    if (playlist_tree_height(Platform::TEST) != 1) {
+        std::cout << "test_height_no_conflict(): FAILED\n";
+    } else {
+        std::cout << "test_height_no_conflict(): PASSED\n";
+    }
+    fs::remove_all(root);
+}
+
+void test_height_short_conflict() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::create_directories(root / "61" / "61");
+    fs::create_directories(root / "61" / "62");
+    std::ofstream file1(root / "61" / "61" / "6161");
+    std::ofstream file2(root / "61" / "62" / "6162");
+
+    if (playlist_tree_height(Platform::TEST) != 2) {
+        std::cout << "test_height_short_conflict(): FAILED\n";
+    } else {
+        std::cout << "test_height_short_conflict(): PASSED\n";
+    }
+    fs::remove_all(root);
+}
+
+void test_height_long_conflict() {
+    fs::path root = get_ensure_root(Platform::TEST);
+    fs::path dir1 = root / "61" / "62" / "63" / "64" / "65" / "66" / "67" /
+                    "68" / "69" / "6a" / "6b";
+    fs::path dir2 = root / "61" / "62" / "63" / "64" / "65" / "66" / "67" /
+                    "68" / "69" / "6a" / "6c";
+    fs::create_directories(dir1);
+    fs::create_directories(dir2);
+    std::ofstream file1(dir1 / "6162636465666768696a6b");
+    std::ofstream file2(dir1 / "6162636465666768696a6c");
+
+    if (playlist_tree_height(Platform::TEST) != 11) {
+        std::cout << "test_height_long_conflict(): FAILED\n";
+    } else {
+        std::cout << "test_height_long_conflict(): PASSED\n";
+    }
+    fs::remove_all(root);
+}
+
 void run() {
     test_add_single();
     test_add_double_no_conflict();
     test_add_double_short_conflict();
     test_add_double_long_conflict();
 
-    test_search_no_conflict();
-    test_search_conflict();
+    test_search_hash_id_no_conflict();
+    test_search_hash_id_conflict();
+    test_search_hash_id_non_existent();
+
+    test_search_sid_no_conflict();
+    test_search_sid_conflict();
+    test_search_sid_non_existent();
 
     test_remove_base_scenario();
     test_remove_no_conflict();
     test_remove_short_conflict();
     test_remove_long_conflict();
+
+    test_height_no_conflict();
+    test_height_short_conflict();
+    test_height_long_conflict();
 }
 
 } // namespace TestPlaylistTree

@@ -9,7 +9,7 @@ enum Platform {
 #ifndef NDEBUG
     TEST,
 #endif
-    INVALID
+    INVALID // mark end of enum when iterating over it
 };
 
 /* Name of platform in capital case e.g. Youtube */

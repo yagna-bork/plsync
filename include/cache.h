@@ -29,21 +29,20 @@ struct Playlist {
     std::string title;
     bool is_private = false;
     std::size_t items = 0;
-    std::string short_id;
     std::string items_id;
     std::string items_etag;
 
     Playlist() {}
 
     Playlist(std::string&& id, std::string&& etag, std::string&& version,
-             std::string&& title, bool is_private, std::size_t items,
-             std::string&& short_id = "")
+             std::string&& title, bool is_private, std::size_t items)
         : id(std::move(id)), id_hash(sha1(this->id)), etag(std::move(etag)),
           version(std::move(version)), title(std::move(title)),
-          is_private(is_private), items(items), short_id(short_id) {}
+          is_private(is_private), items(items) {}
 
-    Playlist(const std::string& id, const std::string& items_etag)
-        : id_hash(sha1(id)), id(id), items_etag(items_etag) {}
+    Playlist(const std::string& id, const std::string& id_hash,
+             const std::string& items_etag)
+        : id(id), id_hash(id_hash), items_etag(items_etag) {}
 
     Playlist(const Playlist& other) = default;
     Playlist(Playlist&& other) = default;
@@ -56,7 +55,6 @@ struct Playlist {
         etag = (!rhs.etag.empty()) ? rhs.etag : etag;
         version = (!rhs.version.empty()) ? rhs.version : version;
         title = (!rhs.title.empty()) ? rhs.title : title;
-        short_id = (!rhs.short_id.empty()) ? rhs.short_id : short_id;
         items_id = (!rhs.items_id.empty()) ? rhs.items_id : items_id;
         items_etag = (!rhs.items_etag.empty()) ? rhs.items_etag : items_etag;
         is_private = (is_private == rhs.is_private) ? is_private : true;
@@ -71,41 +69,43 @@ struct Playlist {
         } else {
             tmp = std::move(rhs.id);
         }
+
         if (!rhs.id_hash.empty()) {
             id_hash = std::move(rhs.id_hash);
         } else {
             tmp = std::move(rhs.id_hash);
         }
+
         if (!rhs.etag.empty()) {
             etag = std::move(rhs.etag);
         } else {
             tmp = std::move(rhs.etag);
         }
+
         if (!rhs.version.empty()) {
             version = std::move(rhs.version);
         } else {
             tmp = std::move(rhs.version);
         }
+
         if (!rhs.title.empty()) {
             title = std::move(rhs.title);
         } else {
             tmp = std::move(rhs.title);
         }
-        if (!rhs.short_id.empty()) {
-            short_id = std::move(rhs.short_id);
-        } else {
-            tmp = std::move(rhs.short_id);
-        }
+
         if (!rhs.items_id.empty()) {
             items_id = std::move(rhs.items_id);
         } else {
             tmp = std::move(rhs.items_id);
         }
+
         if (!rhs.items_etag.empty()) {
             items_etag = std::move(rhs.items_etag);
         } else {
             tmp = std::move(rhs.items_etag);
         }
+
         is_private = (is_private == rhs.is_private) ? is_private : true;
         items = std::max(is_private, rhs.is_private);
         return *this;
@@ -113,6 +113,7 @@ struct Playlist {
 };
 
 /* playlist-tree-start */
+/* id_hash and sid expected in binary format, not hex */
 std::filesystem::path
 playlist_tree_path_from_id_hash(const std::string& id_hash, Platform plat);
 void playlist_tree_path_sid_from_id_hash(const std::string& id_hash,
@@ -121,6 +122,7 @@ void playlist_tree_path_sid_from_id_hash(const std::string& id_hash,
                                          std::string& out_sid);
 std::filesystem::path playlist_tree_path_from_sid(const std::string& sid,
                                                   Platform plat);
+int playlist_tree_height(Platform plat);
 std::filesystem::path playlist_tree_add(const std::string& id_hash,
                                         Platform plat);
 void playlist_tree_remove(const std::string& id_hash, Platform plat);
@@ -154,16 +156,17 @@ struct Head {
     Node* next;
     bool was_changed;
     std::string etag;
-    std::size_t sid_len;
 };
 
 Head* load(Platform plat);
 void update(Head* head, Platform plat, const std::vector<Playlist>& playlists,
             const std::string& etag);
 void save(Head* head, Platform plat);
+void cleanup(Head* head, Platform plat);
 
 /* Providing an invalid id is undefined behaviour */
-Node load_node(const std::string& id, Platform plat);
+Node load_node_id_hash(const std::string& id_hash, Platform plat);
+Node load_node_sid(const std::string& sid, Platform plat);
 void save_node(const Node& node, Platform plat);
 void remove_node(Node& node, Platform plat);
 void create_node(const Node& node, Platform plat);
@@ -214,6 +217,7 @@ template <bool is_const> struct Iterator {
     bool operator!=(const Iterator& rhs) { return !(*this == rhs); }
 
     Iterator& operator++() {
+        ptr.node = (ptr.is_head) ? ptr.head->next : ptr.node->next;
         ptr.is_head = false;
         return *this;
     }
@@ -240,7 +244,8 @@ struct Handle {
     Platform plat;
 
     Handle(Platform plat) : head(load(plat)), plat(plat) {}
-    ~Handle() { save(head, plat); }
+
+    ~Handle() { cleanup(head, plat); }
 
     const_iterator cbefore_begin();
     const_iterator cbegin();

@@ -5,11 +5,17 @@
 #include "../include/platform.h"
 #include "../include/util.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
+#include <iomanip>
+#include <ios>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -82,7 +88,7 @@ int run_init(bool init_youtube, bool init_spotify) {
 const std::string untracked_description =
     "Display information about playlists which are not being tracked";
 
-static void print_untracked_usage() {
+void print_untracked_usage() {
     std::cout << "usage: plsync untracked <platform>\n\n"
               << untracked_description << "\n\n"
               << "Options:\n"
@@ -90,7 +96,7 @@ static void print_untracked_usage() {
                  "either be 'yt' or a prefix of 'youtube' and 'spotify'\n";
 }
 
-static Platform parse_untracked_args(int argc, char* argv[]) {
+Platform parse_untracked_args(int argc, char* argv[]) {
     if (argc != 1 || strcmp(argv[0], "-h") == 0 ||
         strcmp(argv[0], "--help") == 0) {
         print_untracked_usage();
@@ -116,9 +122,9 @@ int run_untracked(int argc, char* argv[]) {
         BaseDataAPI::get_api(platform, curl, tkn);
 
     PlaylistCache::Handle cache(platform);
-    bool modified;
     std::vector<Playlist> modified_playlists;
     std::string modified_etag = cache.head->etag;
+    bool modified;
     try {
         modified = api->get_playlists(modified_playlists, modified_etag);
     } catch (const BaseAPI::RequestError& e) {
@@ -129,45 +135,39 @@ int run_untracked(int argc, char* argv[]) {
         PlaylistCache::update(cache.head, cache.plat, modified_playlists,
                               modified_etag);
     }
-
-    bool were_sids_modified = modified;
-    int new_sid_len = PlaylistCache::calculate_short_id_len(cache.head);
-    if (new_sid_len != cache.head->sid_len) {
-        PlaylistCache::update_short_ids(cache.head, new_sid_len);
-        were_sids_modified = true;
-    }
-    if (were_sids_modified) {
-        update_sid_to_id_map(cache.head, cache.plat);
-    }
+    PlaylistCache::save(cache.head, cache.plat);
 
     size_t longest_title = 0;
-    for (const Playlist& pl : cache) {
-        longest_title = std::max(longest_title, utf8_len(pl.title));
+    for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
+        longest_title = std::max(longest_title, utf8_len(it->title));
     }
 
-    int id_pad = std::max(1, static_cast<int>(cache.head->sid_len) * 2 - 1);
-    int title_pad = std::max(size_t(1), longest_title - 4);
+    int sid_len = playlist_tree_height(platform);
+    int id_wd = std::max(2, sid_len * 2) + 1;
+    int privacy_wd = strlen("private") + 1;
+
     std::stringstream heading_ss;
-    heading_ss << "Id" << std::string(id_pad, ' ') << "Title"
-               << std::string(title_pad, ' ') << "Privacy " << "Items";
+    heading_ss << std::left << std::setw(id_wd) << "Id"
+               << std::setw(longest_title + 1) << "Title"
+               << std::setw(privacy_wd) << "Privacy" << std::setw(0) << "Items";
     std::string heading = heading_ss.str();
     std::cout << heading << '\n';
     std::cout << std::string(heading.size(), '-') << '\n';
 
+    std::cout << std::left;
     // TODO sort
-    // TODO use setw but also use manual padding with title
     for (auto it = cache.cbegin(); it != cache.cend(); ++it) {
         if (!it.ptr.node->items_id.empty()) {
             continue;
         }
-        id_pad = std::max(1, 3 - static_cast<int>(cache.head->sid_len) * 2);
+        std::string sid = bin_to_hex(it->id_hash.substr(0, sid_len));
         int title_pad =
             std::max(longest_title, size_t(5)) + 1 - utf8_len(it->title);
         std::string privacy_type = it->is_private ? "private" : "public";
         int privacy_pad = it->is_private ? 1 : 2;
-        std::cout << bin_to_hex(it->short_id) << std::string(id_pad, ' ')
-                  << it->title << std::string(title_pad, ' ') << privacy_type
-                  << std::string(privacy_pad, ' ') << it->items << '\n';
+        std::cout << std::setw(id_wd) << sid << std::setw(0) << it->title
+                  << std::string(title_pad, ' ') << std::setw(privacy_wd)
+                  << privacy_type << it->items << '\n';
     }
     return 0;
 }
@@ -175,7 +175,7 @@ int run_untracked(int argc, char* argv[]) {
 /* track-start */
 const std::string track_description = "Start tracking an untracked playlist";
 
-static void print_track_usage() {
+void print_track_usage() {
     std::cout << "usage: plsync track <platform> <playlist-id>\n\n"
               << track_description << "\n\n"
               << "Options:\n"
@@ -185,8 +185,8 @@ static void print_track_usage() {
                  "<untracked> for the playlist to track\n";
 }
 
-static std::unordered_map<Platform, std::string>
-parse_track_args(int argc, char* argv[]) {
+std::unordered_map<Platform, std::string> parse_track_args(int argc,
+                                                           char* argv[]) {
     if (argc < 3) {
         throw std::invalid_argument("");
     }
@@ -223,7 +223,7 @@ parse_track_args(int argc, char* argv[]) {
     return plat_to_sid;
 }
 
-static void track(int argc, char* argv[]) {
+void track(int argc, char* argv[]) {
     std::unordered_map<Platform, std::string> plat_to_sid =
         parse_track_args(argc, argv);
     std::shared_ptr<CURL> curl = get_curl();
@@ -238,8 +238,11 @@ static void track(int argc, char* argv[]) {
         }
 
         // check sid is valid
-        std::string id = sid_to_id_lookup(hex_to_bin(sid), plat);
-        PlaylistCache::Node node = PlaylistCache::load_node(id, plat);
+        PlaylistCache::Node node =
+            PlaylistCache::load_node_sid(hex_to_bin(sid), plat);
+        if (node.playlist.id.empty()) {
+            throw std::invalid_argument("");
+        }
 
         // check playlist wasn't deleted
         std::string access_tkn = get_or_refresh_access_tkn(plat, curl);
@@ -296,13 +299,14 @@ static void track(int argc, char* argv[]) {
 
     // and finally track the provided playlists
     for (auto& pair : plat_to_node) {
-        auto& plat = pair.first;
-        auto& node = pair.second;
+        const Platform& plat = pair.first;
+        PlaylistCache::Node& node = pair.second;
         if (!node.items_id.empty()) {
             continue;
         }
-        pl_items.tracked.emplace_back(
-            plat, Playlist(node.playlist.id, /*items_etag=*/""));
+        pl_items.tracked.emplace_back(plat, Playlist(node.playlist.id,
+                                                     node.playlist.id_hash,
+                                                     /*items_etag=*/""));
         node.items_id = pl_items.id;
         save_node(node, plat);
     }
@@ -327,11 +331,11 @@ int run_track(int argc, char* argv[]) {
 const std::string tracked_description =
     "Display information about which playlists are being tracked";
 
-static void print_tracked_usage() {
+void print_tracked_usage() {
     std::cout << "usage: plsync tracked\n\n" << tracked_description << '\n';
 }
 
-static bool parse_tracked_args(int argc, char* argv[]) {
+bool parse_tracked_args(int argc, char* argv[]) {
     if (argc > 0) {
         print_tracked_usage();
         return false;
@@ -349,18 +353,8 @@ int run_tracked(int argc, char* argv[]) {
     if (!parse_tracked_args(argc, argv)) {
         return 0;
     }
-    std::vector<std::size_t> plat_to_sid_len(Platform::INVALID, 0);
-    size_t longest_sid = 0;
-    for (int i = 0; i != Platform::INVALID; i++) {
-        Platform plat = static_cast<Platform>(i);
-        PlaylistCache::Head head;
-        if (PlaylistCache::load_head(plat, head)) {
-            plat_to_sid_len[plat] = head.sid_len;
-            longest_sid = std::max(longest_sid, head.sid_len);
-        }
-    }
 
-    auto curl = get_curl();
+    std::shared_ptr<CURL> curl = get_curl();
     PlaylistItemsCache cache = load_playlist_items_cache();
     try {
         update_playlist_items_cache(cache, curl, get_access_tokens(curl));
@@ -369,13 +363,38 @@ int run_tracked(int argc, char* argv[]) {
     } catch (const API::RequestError& e) {
         return save_cache_quit(cache);
     }
+    // could've used RAII but not worth the effort for such simple case
+    save_playlist_items_cache(cache);
 
-    size_t id_pad = longest_sid * 2 - 1;
+    size_t longest_title = 0;
+    auto it = cache.cbegin();
+    for (const PlaylistItems& pl_items : cache) {
+        for (const auto& pair : pl_items.tracked) {
+            const Playlist& pl = pair.second;
+            longest_title = std::max(longest_title, pl.title.size());
+        }
+    }
+
+    std::vector<std::size_t> plat_to_sid_len(Platform::INVALID, 0);
+    int longest_sid = 0;
+    for (int i = 0; i != Platform::INVALID; i++) {
+        Platform plat = static_cast<Platform>(i);
+        int sid_len = playlist_tree_height(plat);
+        plat_to_sid_len[plat] = sid_len;
+        longest_sid = std::max(longest_sid, sid_len);
+    }
+
+    int id_wd = longest_sid * 2 + 1;
+    int plat_wd = strlen("Platform") + 1;
+
     std::ostringstream heading_ss;
-    heading_ss << "Platform Id" << std::string(id_pad, ' ') << "Title";
+    heading_ss << std::setw(plat_wd) << "Platform" << std::setw(id_wd) << "Id"
+               << std::setw(longest_title + 1) << "Title";
     std::string heading = heading_ss.str();
-    std::cout << heading << '\n' << std::string(heading.size(), '-') << '\n';
+    std::cout << std::left << heading << '\n'
+              << std::string(heading.size(), '-') << '\n';
 
+    std::cout << std::left;
     bool skip_newline = true;
     for (const auto& pl_items : cache) {
         if (skip_newline) {
@@ -383,12 +402,13 @@ int run_tracked(int argc, char* argv[]) {
         } else {
             std::cout << '\n';
         }
-        for (const auto& [plat, pl] : pl_items.tracked) {
-            size_t plat_pad = 9 - platform_title(plat).size();
-            id_pad = (longest_sid - pl.short_id.size()) * 2 + 1;
-            std::cout << platform_title(plat) << std::string(plat_pad, ' ')
-                      << bin_to_hex(pl.short_id) << std::string(id_pad, ' ')
-                      << pl.title << '\n';
+        for (const auto& pair : pl_items.tracked) {
+            const Platform& plat = pair.first;
+            const Playlist& pl = pair.second;
+            std::string sid = pl.id_hash.substr(0, plat_to_sid_len[plat]);
+            std::cout << std::setw(plat_wd) << platform_title(plat)
+                      << std::setw(id_wd) << bin_to_hex(sid) << pl.title
+                      << '\n';
         }
         size_t num_songs = 0;
         for (const auto& [_, cnt] : pl_items.song_counts) {
@@ -396,14 +416,13 @@ int run_tracked(int argc, char* argv[]) {
         }
         std::cout << num_songs << " song(s)\n";
     }
-    save_playlist_items_cache(cache);
     return 0;
 }
 
 /* untrack-start */
 const std::string untrack_description = "Stop tracking a tracked playlist";
 
-static void print_untrack_usage() {
+void print_untrack_usage() {
     std::cout << "usage: plsync untrack <platform> <playlist-id>\n\n"
               << untrack_description << "\n\n"
               << "Options:\n"
@@ -413,8 +432,8 @@ static void print_untrack_usage() {
                  "<tracked> for the playlist to untrack\n";
 }
 
-static void parse_untrack_args(int argc, char* argv[], Platform& plat,
-                               PlaylistCache::Node& node) {
+void parse_untrack_args(int argc, char* argv[], Platform& plat,
+                        PlaylistCache::Node& node) {
     if (argc != 2) {
         throw std::invalid_argument("");
     }
@@ -424,12 +443,9 @@ static void parse_untrack_args(int argc, char* argv[], Platform& plat,
     if (strlen(argv[1]) == 0 || strlen(argv[1]) % 2 != 0) {
         throw std::invalid_argument("");
     }
+
     plat = parse_platform(argv[0]);
-    std::string playlist_id = sid_to_id_lookup(hex_to_bin(argv[1]), plat);
-    if (playlist_id.empty()) {
-        throw std::invalid_argument("");
-    }
-    node = PlaylistCache::load_node(playlist_id, plat);
+    node = PlaylistCache::load_node_sid(hex_to_bin(argv[1]), plat);
     if (node.items_id.empty()) {
         throw std::invalid_argument("");
     }
@@ -476,7 +492,7 @@ void print_sync_usage() {
     std::cout << "usage: plsync sync\n\n" << sync_description << '\n';
 }
 
-static bool parse_sync_args(int argc, char* argv[]) {
+bool parse_sync_args(int argc, char* argv[]) {
     if (argc > 0) {
         print_sync_usage();
         return false;
@@ -552,7 +568,7 @@ int run_sync(int argc, char* argv[]) {
 }
 
 /* plsync-start */
-static void print_plsync_init_only_usage() {
+void print_plsync_init_only_usage() {
     std::cout << "usage: plsync [-h] <command>\n\n"
               << "Avaliable commands:\n"
               << "  init  Allow OAuth permissions for Youtube and Spotify. "
@@ -560,7 +576,7 @@ static void print_plsync_init_only_usage() {
               << std::endl;
 }
 
-static void print_plsync_usage() {
+void print_plsync_usage() {
     std::cout << "usage: plsync [-h] <command>\n\n"
               << "Avaliable commands:\n"
               << "  init       " << init_description << "\n\n"

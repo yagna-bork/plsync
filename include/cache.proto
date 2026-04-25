@@ -3,9 +3,8 @@ edition = "2024";
 package proto;
 
 message CacheHead {
-	string next = 1;
+	bytes next = 1;
 	string etag = 2;
-	uint32 sid_len = 3;
 }
 
 message Playlist {
@@ -16,14 +15,13 @@ message Playlist {
 	string title = 5;
 	bool is_private = 6;
 	int32 items = 7;
-	bytes short_id = 8;
 	string items_id = 9;
 	string items_etag = 10;
 }
 
 message CacheNode {
-	string next = 1;
-	string prev = 2;
+	bytes next = 1;
+	bytes prev = 2;
 	Playlist playlist = 3;
 	string items_id = 4;
 }
