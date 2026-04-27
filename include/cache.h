@@ -314,22 +314,7 @@ void update_playlist_items_cache(
     const std::vector<std::string>& plat_to_access_token);
 void save_playlist_items_cache(const PlaylistItemsCache& cache);
 
-/* SidToIdMap start */
-class SidOutOfRangeError : public std::out_of_range {
-public:
-    SidOutOfRangeError()
-        : std::out_of_range("lookup attempted before map was initialised") {}
-};
-
-using SidToIdMap = std::unordered_map<std::string, std::string>;
-SidToIdMap load_sid_to_id_map(Platform plat);
-SidToIdMap update_sid_to_id_map(PlaylistCache::Head* head, Platform plat);
-void save_sid_to_id_map(const SidToIdMap& map, Platform plat);
-
-/* These functions may throw SidOutOrRangeError */
-std::string sid_to_id_lookup(const std::string& sid, Platform plat);
-void remove_sid_to_id_entry(const std::string& sid, Platform plat);
-
+/* song-cache-start */
 using SongCache = std::unordered_map<std::string, Song>;
 SongCache load_song_cache(Platform plat);
 void save_song_cache(const SongCache& cache, Platform plat);

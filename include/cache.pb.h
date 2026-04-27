@@ -92,18 +92,6 @@ class PlaylistItems_SongCountPair;
 struct PlaylistItems_SongCountPairDefaultTypeInternal;
 extern PlaylistItems_SongCountPairDefaultTypeInternal _PlaylistItems_SongCountPair_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_SongCountPair_class_data_;
-class SidToIdMap;
-struct SidToIdMapDefaultTypeInternal;
-extern SidToIdMapDefaultTypeInternal _SidToIdMap_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_class_data_;
-class SidToIdMap_Bucket;
-struct SidToIdMap_BucketDefaultTypeInternal;
-extern SidToIdMap_BucketDefaultTypeInternal _SidToIdMap_Bucket_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_Bucket_class_data_;
-class SidToIdMap_Pair;
-struct SidToIdMap_PairDefaultTypeInternal;
-extern SidToIdMap_PairDefaultTypeInternal _SidToIdMap_Pair_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_Pair_class_data_;
 class Song;
 struct SongDefaultTypeInternal;
 extern SongDefaultTypeInternal _Song_default_instance_;
@@ -375,212 +363,6 @@ class Song final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull Song_class_data_;
 // -------------------------------------------------------------------
 
-class SidToIdMap_Pair final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.SidToIdMap.Pair) */ {
- public:
-  inline SidToIdMap_Pair() : SidToIdMap_Pair(nullptr) {}
-  ~SidToIdMap_Pair() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(SidToIdMap_Pair* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(SidToIdMap_Pair));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR SidToIdMap_Pair(::google::protobuf::internal::ConstantInitialized);
-
-  inline SidToIdMap_Pair(const SidToIdMap_Pair& from) : SidToIdMap_Pair(nullptr, from) {}
-  inline SidToIdMap_Pair(SidToIdMap_Pair&& from) noexcept
-      : SidToIdMap_Pair(nullptr, ::std::move(from)) {}
-  inline SidToIdMap_Pair& operator=(const SidToIdMap_Pair& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline SidToIdMap_Pair& operator=(SidToIdMap_Pair&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const SidToIdMap_Pair& default_instance() {
-    return *reinterpret_cast<const SidToIdMap_Pair*>(
-        &_SidToIdMap_Pair_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 7;
-  friend void swap(SidToIdMap_Pair& a, SidToIdMap_Pair& b) { a.Swap(&b); }
-  inline void Swap(SidToIdMap_Pair* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(SidToIdMap_Pair* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  SidToIdMap_Pair* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<SidToIdMap_Pair>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const SidToIdMap_Pair& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const SidToIdMap_Pair& from) { SidToIdMap_Pair::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
-                        const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(SidToIdMap_Pair* PROTOBUF_NONNULL other);
- private:
-  template <typename T>
-  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.SidToIdMap.Pair"; }
-
-  explicit SidToIdMap_Pair(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  SidToIdMap_Pair(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const SidToIdMap_Pair& from);
-  SidToIdMap_Pair(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, SidToIdMap_Pair&& from) noexcept
-      : SidToIdMap_Pair(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
-  static void* PROTOBUF_NONNULL PlacementNew_(
-      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static constexpr auto InternalNewImpl_();
-
- public:
-  static constexpr auto InternalGenerateClassData_();
-
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kShortIdFieldNumber = 1,
-    kIdFieldNumber = 2,
-  };
-  // bytes short_id = 1;
-  bool has_short_id() const;
-  void clear_short_id() ;
-  ::absl::string_view short_id() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_short_id(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_short_id() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_short_id(::absl::string_view value);
-
-  public:
-  // string id = 2;
-  bool has_id() const;
-  void clear_id() ;
-  ::absl::string_view id() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_id(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_id() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_id(::absl::string_view value);
-
-  public:
-  // @@protoc_insertion_point(class_scope:proto.SidToIdMap.Pair)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   0, 32,
-                                   2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const SidToIdMap_Pair& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::internal::ArenaStringPtr short_id_;
-    ::google::protobuf::internal::ArenaStringPtr id_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_cache_2eproto;
-};
-
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_Pair_class_data_;
-// -------------------------------------------------------------------
-
 class Playlist final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:proto.Playlist) */ {
  public:
@@ -728,7 +510,6 @@ class Playlist final : public ::google::protobuf::Message
     kEtagFieldNumber = 3,
     kVersionFieldNumber = 4,
     kTitleFieldNumber = 5,
-    kShortIdFieldNumber = 8,
     kItemsIdFieldNumber = 9,
     kItemsEtagFieldNumber = 10,
     kIsPrivateFieldNumber = 6,
@@ -794,18 +575,6 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_title(::absl::string_view value);
 
   public:
-  // bytes short_id = 8;
-  bool has_short_id() const;
-  void clear_short_id() ;
-  ::absl::string_view short_id() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_short_id(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_short_id() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_short_id(::absl::string_view value);
-
-  public:
   // string items_id = 9;
   bool has_items_id() const;
   void clear_items_id() ;
@@ -856,7 +625,7 @@ class Playlist final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 10,
+  static const ::google::protobuf::internal::TcParseTable<4, 9,
                                    0, 67,
                                    2>
       _table_;
@@ -883,7 +652,6 @@ class Playlist final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr etag_;
     ::google::protobuf::internal::ArenaStringPtr version_;
     ::google::protobuf::internal::ArenaStringPtr title_;
-    ::google::protobuf::internal::ArenaStringPtr short_id_;
     ::google::protobuf::internal::ArenaStringPtr items_id_;
     ::google::protobuf::internal::ArenaStringPtr items_etag_;
     bool is_private_;
@@ -1101,203 +869,6 @@ class CacheHead final : public ::google::protobuf::Message
 };
 
 extern const ::google::protobuf::internal::ClassDataFull CacheHead_class_data_;
-// -------------------------------------------------------------------
-
-class SidToIdMap_Bucket final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.SidToIdMap.Bucket) */ {
- public:
-  inline SidToIdMap_Bucket() : SidToIdMap_Bucket(nullptr) {}
-  ~SidToIdMap_Bucket() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(SidToIdMap_Bucket* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(SidToIdMap_Bucket));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR SidToIdMap_Bucket(::google::protobuf::internal::ConstantInitialized);
-
-  inline SidToIdMap_Bucket(const SidToIdMap_Bucket& from) : SidToIdMap_Bucket(nullptr, from) {}
-  inline SidToIdMap_Bucket(SidToIdMap_Bucket&& from) noexcept
-      : SidToIdMap_Bucket(nullptr, ::std::move(from)) {}
-  inline SidToIdMap_Bucket& operator=(const SidToIdMap_Bucket& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline SidToIdMap_Bucket& operator=(SidToIdMap_Bucket&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const SidToIdMap_Bucket& default_instance() {
-    return *reinterpret_cast<const SidToIdMap_Bucket*>(
-        &_SidToIdMap_Bucket_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 8;
-  friend void swap(SidToIdMap_Bucket& a, SidToIdMap_Bucket& b) { a.Swap(&b); }
-  inline void Swap(SidToIdMap_Bucket* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(SidToIdMap_Bucket* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  SidToIdMap_Bucket* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<SidToIdMap_Bucket>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const SidToIdMap_Bucket& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const SidToIdMap_Bucket& from) { SidToIdMap_Bucket::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
-                        const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(SidToIdMap_Bucket* PROTOBUF_NONNULL other);
- private:
-  template <typename T>
-  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.SidToIdMap.Bucket"; }
-
-  explicit SidToIdMap_Bucket(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  SidToIdMap_Bucket(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const SidToIdMap_Bucket& from);
-  SidToIdMap_Bucket(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, SidToIdMap_Bucket&& from) noexcept
-      : SidToIdMap_Bucket(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
-  static void* PROTOBUF_NONNULL PlacementNew_(
-      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static constexpr auto InternalNewImpl_();
-
- public:
-  static constexpr auto InternalGenerateClassData_();
-
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kPairsFieldNumber = 1,
-  };
-  // repeated .proto.SidToIdMap.Pair pairs = 1;
-  int pairs_size() const;
-  private:
-  int _internal_pairs_size() const;
-
-  public:
-  void clear_pairs() ;
-  ::proto::SidToIdMap_Pair* PROTOBUF_NONNULL mutable_pairs(int index);
-  ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>* PROTOBUF_NONNULL mutable_pairs();
-
-  private:
-  const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>& _internal_pairs() const;
-  ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>* PROTOBUF_NONNULL _internal_mutable_pairs();
-  public:
-  const ::proto::SidToIdMap_Pair& pairs(int index) const;
-  ::proto::SidToIdMap_Pair* PROTOBUF_NONNULL add_pairs();
-  const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>& pairs() const;
-  // @@protoc_insertion_point(class_scope:proto.SidToIdMap.Bucket)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<0, 1,
-                                   1, 0,
-                                   2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const SidToIdMap_Bucket& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::RepeatedPtrField< ::proto::SidToIdMap_Pair > pairs_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_cache_2eproto;
-};
-
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_Bucket_class_data_;
 // -------------------------------------------------------------------
 
 class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
@@ -1563,7 +1134,7 @@ class PlaylistItemIdToSongMap_Entry final : public ::google::protobuf::Message
     return *reinterpret_cast<const PlaylistItemIdToSongMap_Entry*>(
         &_PlaylistItemIdToSongMap_Entry_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 10;
+  static constexpr int kIndexInFileMessages = 7;
   friend void swap(PlaylistItemIdToSongMap_Entry& a, PlaylistItemIdToSongMap_Entry& b) { a.Swap(&b); }
   inline void Swap(PlaylistItemIdToSongMap_Entry* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2162,205 +1733,6 @@ class CacheNode final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull CacheNode_class_data_;
 // -------------------------------------------------------------------
 
-class SidToIdMap final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.SidToIdMap) */ {
- public:
-  inline SidToIdMap() : SidToIdMap(nullptr) {}
-  ~SidToIdMap() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(SidToIdMap* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(SidToIdMap));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR SidToIdMap(::google::protobuf::internal::ConstantInitialized);
-
-  inline SidToIdMap(const SidToIdMap& from) : SidToIdMap(nullptr, from) {}
-  inline SidToIdMap(SidToIdMap&& from) noexcept
-      : SidToIdMap(nullptr, ::std::move(from)) {}
-  inline SidToIdMap& operator=(const SidToIdMap& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline SidToIdMap& operator=(SidToIdMap&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const SidToIdMap& default_instance() {
-    return *reinterpret_cast<const SidToIdMap*>(
-        &_SidToIdMap_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 9;
-  friend void swap(SidToIdMap& a, SidToIdMap& b) { a.Swap(&b); }
-  inline void Swap(SidToIdMap* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(SidToIdMap* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  SidToIdMap* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<SidToIdMap>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const SidToIdMap& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const SidToIdMap& from) { SidToIdMap::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
-                        const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(SidToIdMap* PROTOBUF_NONNULL other);
- private:
-  template <typename T>
-  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.SidToIdMap"; }
-
-  explicit SidToIdMap(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  SidToIdMap(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const SidToIdMap& from);
-  SidToIdMap(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, SidToIdMap&& from) noexcept
-      : SidToIdMap(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
-  static void* PROTOBUF_NONNULL PlacementNew_(
-      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static constexpr auto InternalNewImpl_();
-
- public:
-  static constexpr auto InternalGenerateClassData_();
-
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-  using Pair = SidToIdMap_Pair;
-  using Bucket = SidToIdMap_Bucket;
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kBucketsFieldNumber = 1,
-  };
-  // repeated .proto.SidToIdMap.Bucket buckets = 1;
-  int buckets_size() const;
-  private:
-  int _internal_buckets_size() const;
-
-  public:
-  void clear_buckets() ;
-  ::proto::SidToIdMap_Bucket* PROTOBUF_NONNULL mutable_buckets(int index);
-  ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>* PROTOBUF_NONNULL mutable_buckets();
-
-  private:
-  const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>& _internal_buckets() const;
-  ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>* PROTOBUF_NONNULL _internal_mutable_buckets();
-  public:
-  const ::proto::SidToIdMap_Bucket& buckets(int index) const;
-  ::proto::SidToIdMap_Bucket* PROTOBUF_NONNULL add_buckets();
-  const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>& buckets() const;
-  // @@protoc_insertion_point(class_scope:proto.SidToIdMap)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<0, 1,
-                                   1, 0,
-                                   2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const SidToIdMap& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::RepeatedPtrField< ::proto::SidToIdMap_Bucket > buckets_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_cache_2eproto;
-};
-
-extern const ::google::protobuf::internal::ClassDataFull SidToIdMap_class_data_;
-// -------------------------------------------------------------------
-
 class PlaylistItems final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:proto.PlaylistItems) */ {
  public:
@@ -2633,7 +2005,7 @@ class PlaylistItemIdToSongMap_Bucket final : public ::google::protobuf::Message
     return *reinterpret_cast<const PlaylistItemIdToSongMap_Bucket*>(
         &_PlaylistItemIdToSongMap_Bucket_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 11;
+  static constexpr int kIndexInFileMessages = 8;
   friend void swap(PlaylistItemIdToSongMap_Bucket& a, PlaylistItemIdToSongMap_Bucket& b) { a.Swap(&b); }
   inline void Swap(PlaylistItemIdToSongMap_Bucket* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2830,7 +2202,7 @@ class PlaylistItemIdToSongMap final : public ::google::protobuf::Message
     return *reinterpret_cast<const PlaylistItemIdToSongMap*>(
         &_PlaylistItemIdToSongMap_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 9;
   friend void swap(PlaylistItemIdToSongMap& a, PlaylistItemIdToSongMap& b) { a.Swap(&b); }
   inline void Swap(PlaylistItemIdToSongMap* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3226,14 +2598,14 @@ inline void Playlist::_internal_set_title(::absl::string_view value) {
 
 // bool is_private = 6;
 inline bool Playlist::has_is_private() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
   return value;
 }
 inline void Playlist::clear_is_private() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.is_private_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000100U);
+                  0x00000080U);
 }
 inline bool Playlist::is_private() const {
   // @@protoc_insertion_point(field_get:proto.Playlist.is_private)
@@ -3241,7 +2613,7 @@ inline bool Playlist::is_private() const {
 }
 inline void Playlist::set_is_private(bool value) {
   _internal_set_is_private(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:proto.Playlist.is_private)
 }
 inline bool Playlist::_internal_is_private() const {
@@ -3255,14 +2627,14 @@ inline void Playlist::_internal_set_is_private(bool value) {
 
 // int32 items = 7;
 inline bool Playlist::has_items() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000200U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
   return value;
 }
 inline void Playlist::clear_items() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.items_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000200U);
+                  0x00000100U);
 }
 inline ::int32_t Playlist::items() const {
   // @@protoc_insertion_point(field_get:proto.Playlist.items)
@@ -3270,7 +2642,7 @@ inline ::int32_t Playlist::items() const {
 }
 inline void Playlist::set_items(::int32_t value) {
   _internal_set_items(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   // @@protoc_insertion_point(field_set:proto.Playlist.items)
 }
 inline ::int32_t Playlist::_internal_items() const {
@@ -3282,49 +2654,16 @@ inline void Playlist::_internal_set_items(::int32_t value) {
   _impl_.items_ = value;
 }
 
-// bytes short_id = 8;
-inline bool Playlist::has_short_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
-  return value;
-}
-inline void Playlist::clear_short_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.short_id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
-}
-inline ::absl::string_view Playlist::short_id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.short_id)
-  return _internal_short_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_short_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
-  _impl_.short_id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.short_id)
-}
-inline ::absl::string_view Playlist::_internal_short_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.short_id_.Get();
-}
-inline void Playlist::_internal_set_short_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
-  _impl_.short_id_.Set(value, GetArena());
-}
-
 // string items_id = 9;
 inline bool Playlist::has_items_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
   return value;
 }
 inline void Playlist::clear_items_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.items_id_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
+                  0x00000020U);
 }
 inline ::absl::string_view Playlist::items_id() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -3334,7 +2673,7 @@ inline ::absl::string_view Playlist::items_id() const
 template <typename Arg_>
 PROTOBUF_ALWAYS_INLINE void Playlist::set_items_id(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   _impl_.items_id_.Set(static_cast<Arg_&&>(arg), GetArena());
   // @@protoc_insertion_point(field_set:proto.Playlist.items_id)
 }
@@ -3344,20 +2683,20 @@ inline ::absl::string_view Playlist::_internal_items_id() const {
 }
 inline void Playlist::_internal_set_items_id(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   _impl_.items_id_.Set(value, GetArena());
 }
 
 // string items_etag = 10;
 inline bool Playlist::has_items_etag() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
   return value;
 }
 inline void Playlist::clear_items_etag() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.items_etag_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
+                  0x00000040U);
 }
 inline ::absl::string_view Playlist::items_etag() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -3367,7 +2706,7 @@ inline ::absl::string_view Playlist::items_etag() const
 template <typename Arg_>
 PROTOBUF_ALWAYS_INLINE void Playlist::set_items_etag(Arg_&& arg) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   _impl_.items_etag_.Set(static_cast<Arg_&&>(arg), GetArena());
   // @@protoc_insertion_point(field_set:proto.Playlist.items_etag)
 }
@@ -3377,7 +2716,7 @@ inline ::absl::string_view Playlist::_internal_items_etag() const {
 }
 inline void Playlist::_internal_set_items_etag(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   _impl_.items_etag_.Set(value, GetArena());
 }
 
@@ -4054,196 +3393,6 @@ inline ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_SongCountPair
 PlaylistItems::_internal_mutable_song_cnt_pairs() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.song_cnt_pairs_;
-}
-
-// -------------------------------------------------------------------
-
-// SidToIdMap_Pair
-
-// bytes short_id = 1;
-inline bool SidToIdMap_Pair::has_short_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  return value;
-}
-inline void SidToIdMap_Pair::clear_short_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.short_id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::absl::string_view SidToIdMap_Pair::short_id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.SidToIdMap.Pair.short_id)
-  return _internal_short_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void SidToIdMap_Pair::set_short_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.short_id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.SidToIdMap.Pair.short_id)
-}
-inline ::absl::string_view SidToIdMap_Pair::_internal_short_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.short_id_.Get();
-}
-inline void SidToIdMap_Pair::_internal_set_short_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.short_id_.Set(value, GetArena());
-}
-
-// string id = 2;
-inline bool SidToIdMap_Pair::has_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  return value;
-}
-inline void SidToIdMap_Pair::clear_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::absl::string_view SidToIdMap_Pair::id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.SidToIdMap.Pair.id)
-  return _internal_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void SidToIdMap_Pair::set_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.SidToIdMap.Pair.id)
-}
-inline ::absl::string_view SidToIdMap_Pair::_internal_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.id_.Get();
-}
-inline void SidToIdMap_Pair::_internal_set_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.id_.Set(value, GetArena());
-}
-
-// -------------------------------------------------------------------
-
-// SidToIdMap_Bucket
-
-// repeated .proto.SidToIdMap.Pair pairs = 1;
-inline int SidToIdMap_Bucket::_internal_pairs_size() const {
-  return _internal_pairs().size();
-}
-inline int SidToIdMap_Bucket::pairs_size() const {
-  return _internal_pairs_size();
-}
-inline void SidToIdMap_Bucket::clear_pairs() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.pairs_.Clear();
-  ClearHasBitForRepeated(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::proto::SidToIdMap_Pair* PROTOBUF_NONNULL SidToIdMap_Bucket::mutable_pairs(int index)
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_mutable:proto.SidToIdMap.Bucket.pairs)
-  return _internal_mutable_pairs()->Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>* PROTOBUF_NONNULL SidToIdMap_Bucket::mutable_pairs()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_mutable_list:proto.SidToIdMap.Bucket.pairs)
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _internal_mutable_pairs();
-}
-inline const ::proto::SidToIdMap_Pair& SidToIdMap_Bucket::pairs(int index) const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.SidToIdMap.Bucket.pairs)
-  return _internal_pairs().Get(index);
-}
-inline ::proto::SidToIdMap_Pair* PROTOBUF_NONNULL SidToIdMap_Bucket::add_pairs()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::proto::SidToIdMap_Pair* _add =
-      _internal_mutable_pairs()->InternalAddWithArena(
-          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_add:proto.SidToIdMap.Bucket.pairs)
-  return _add;
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>& SidToIdMap_Bucket::pairs() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_list:proto.SidToIdMap.Bucket.pairs)
-  return _internal_pairs();
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>&
-SidToIdMap_Bucket::_internal_pairs() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.pairs_;
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Pair>* PROTOBUF_NONNULL
-SidToIdMap_Bucket::_internal_mutable_pairs() {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return &_impl_.pairs_;
-}
-
-// -------------------------------------------------------------------
-
-// SidToIdMap
-
-// repeated .proto.SidToIdMap.Bucket buckets = 1;
-inline int SidToIdMap::_internal_buckets_size() const {
-  return _internal_buckets().size();
-}
-inline int SidToIdMap::buckets_size() const {
-  return _internal_buckets_size();
-}
-inline void SidToIdMap::clear_buckets() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.buckets_.Clear();
-  ClearHasBitForRepeated(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::proto::SidToIdMap_Bucket* PROTOBUF_NONNULL SidToIdMap::mutable_buckets(int index)
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_mutable:proto.SidToIdMap.buckets)
-  return _internal_mutable_buckets()->Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>* PROTOBUF_NONNULL SidToIdMap::mutable_buckets()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_mutable_list:proto.SidToIdMap.buckets)
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _internal_mutable_buckets();
-}
-inline const ::proto::SidToIdMap_Bucket& SidToIdMap::buckets(int index) const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.SidToIdMap.buckets)
-  return _internal_buckets().Get(index);
-}
-inline ::proto::SidToIdMap_Bucket* PROTOBUF_NONNULL SidToIdMap::add_buckets()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::proto::SidToIdMap_Bucket* _add =
-      _internal_mutable_buckets()->InternalAddWithArena(
-          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_add:proto.SidToIdMap.buckets)
-  return _add;
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>& SidToIdMap::buckets() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_list:proto.SidToIdMap.buckets)
-  return _internal_buckets();
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>&
-SidToIdMap::_internal_buckets() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.buckets_;
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::SidToIdMap_Bucket>* PROTOBUF_NONNULL
-SidToIdMap::_internal_mutable_buckets() {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return &_impl_.buckets_;
 }
 
 // -------------------------------------------------------------------

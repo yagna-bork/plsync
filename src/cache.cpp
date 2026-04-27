@@ -813,101 +813,6 @@ void remove_playlist_items(const std::string& id) {
     fs::remove(playlist_items_cache_dir() / id);
 }
 
-std::size_t NUM_BUCKETS = 500;
-
-using Map = SidToIdMap;
-using ProtoMap = proto::SidToIdMap;
-namespace Cache = PlaylistCache;
-
-fs::path sid_to_id_map_dir(Platform plat) {
-    return fs::path(get_setting("cache_dir")) / "sid_to_id_map" /
-           platform_title_lower(plat);
-}
-
-Map load_sid_to_id_map(Platform plat) {
-    ProtoMap proto_map;
-    {
-        auto file = ensure_bin_file<std::ifstream>(sid_to_id_map_dir(plat));
-        proto_map.ParseFromIstream(&file);
-    }
-
-    Map map;
-    for (const auto& bucket : proto_map.buckets()) {
-        for (const auto& pair : bucket.pairs()) {
-            std::string short_id(pair.short_id());
-            std::string id(pair.id());
-            map[short_id] = id;
-        }
-    }
-    return map;
-}
-
-std::string sid_to_id_lookup(const std::string& sid, Platform plat) {
-    ProtoMap proto_map;
-    {
-        auto file = ensure_bin_file<std::ifstream>(sid_to_id_map_dir(plat));
-        proto_map.ParseFromIstream(&file);
-    }
-
-    if (proto_map.buckets_size() == 0) {
-        throw SidOutOfRangeError();
-    }
-
-    auto bucket = std::hash<std::string>{}(sid) % NUM_BUCKETS;
-    for (const auto& pair : proto_map.buckets(bucket).pairs()) {
-        if (pair.short_id() != sid) {
-            continue;
-        }
-        return std::string(pair.id());
-    }
-    throw SidOutOfRangeError();
-}
-
-void remove_sid_to_id_entry(const std::string& sid, Platform plat) {
-    ProtoMap proto_map;
-    auto file = ensure_bin_file<std::fstream>(sid_to_id_map_dir(plat),
-                                              std::ios::in | std::ios::out);
-    proto_map.ParseFromIstream(&file);
-    auto bucket_idx = std::hash<std::string>{}(sid) % NUM_BUCKETS;
-    auto* proto_bucket = proto_map.mutable_buckets(bucket_idx);
-    for (int i = 0; i != proto_bucket->pairs_size(); i++) {
-        if (proto_bucket->pairs(i).short_id() != sid) {
-            continue;
-        }
-        proto_bucket->mutable_pairs()->DeleteSubrange(i, 1);
-        proto_map.SerializeToOstream(&file);
-        return;
-    }
-    throw SidOutOfRangeError();
-}
-
-Map update_sid_to_id_map(Cache::Head* head, Platform plat) {
-    Map map;
-    for (auto it = Cache::cbegin(head); it != Cache::cend(); ++it) {
-        // map[it->short_id] = it->id;
-    }
-    save_sid_to_id_map(map, plat);
-    return map;
-}
-
-void save_sid_to_id_map(const Map& map, Platform plat) {
-    ProtoMap proto_map;
-    for (std::size_t i = 0; i != NUM_BUCKETS; i++) {
-        proto_map.add_buckets();
-    }
-
-    for (const auto& pair : map) {
-        auto short_id_hash = std::hash<std::string>{}(pair.first);
-        std::size_t bucket = short_id_hash % NUM_BUCKETS;
-        auto* proto_pair = proto_map.mutable_buckets(bucket)->add_pairs();
-        proto_pair->set_short_id(pair.first);
-        proto_pair->set_id(pair.second);
-    }
-
-    auto file = ensure_bin_file<std::ofstream>(sid_to_id_map_dir(plat));
-    proto_map.SerializeToOstream(&file);
-}
-
 static inline fs::path song_cache_dir(Platform plat) {
     return fs::path(get_setting("cache_dir")) / "song_cache" /
            platform_title_lower(plat);
@@ -928,6 +833,8 @@ SongCache load_song_cache(Platform plat) {
     }
     return cache;
 }
+
+static const int NUM_BUCKETS = 500;
 
 void save_song_cache(const SongCache& cache, Platform plat) {
     proto::PlaylistItemIdToSongMap proto_map;

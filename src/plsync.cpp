@@ -319,8 +319,6 @@ int run_track(int argc, char* argv[]) {
         return 0;
     } catch (const std::invalid_argument& e) {
         print_track_usage();
-    } catch (const SidOutOfRangeError& e) {
-        print_track_usage();
     } catch (const std::exception& e) {
         std::cerr << "Something went wrong please try again\n";
     }
@@ -477,9 +475,6 @@ int run_untrack(int argc, char* argv[]) {
     try {
         return untrack(argc, argv);
     } catch (const std::invalid_argument& e) {
-        print_untrack_usage();
-        return 1;
-    } catch (const SidOutOfRangeError& e) {
         print_untrack_usage();
         return 1;
     }
