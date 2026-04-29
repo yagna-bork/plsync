@@ -230,7 +230,6 @@ char getb64char(int value) {
     }
 }
 
-// https://en.wikipedia.org/wiki/Base64
 std::string urlencode64(const std::string& s, bool pad) {
     std::string encoded;
     unsigned short buffer = 0; // 2 char buffer
@@ -274,7 +273,6 @@ static bool is_unreserved(char c) {
            (c == '.') || (c == '_') || (c == '~');
 }
 
-// https://en.wikipedia.org/wiki/Percent-encoding
 std::string urlencode(const std::string& s) {
     int n = s.size();
     std::ostringstream res;

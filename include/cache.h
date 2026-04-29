@@ -7,9 +7,51 @@
 #include <cstddef>
 #include <filesystem>
 #include <map>
+#include <ostream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+
+// TODO convert everything to a class for legibility
+
+struct Song {
+    std::vector<std::string> artists;
+    std::string track;
+
+    bool operator==(const Song& rhs) const {
+        return artists == rhs.artists && track == rhs.track;
+    }
+};
+
+#ifndef NDEBUG
+inline std::ostream& operator<<(std::ostream& os, const Song& song) {
+    os << song.track << " - ";
+    for (int i = 0; i != song.artists.size(); i++) {
+        if (i != 0) {
+            os << ",";
+        }
+        os << song.artists[i];
+    }
+    return os;
+}
+#endif // !NDEBUG
+
+// TODO change to PlaylistItems everywhere
+using SongToItemIds = std::unordered_map<Song, std::vector<std::string>>;
+
+// https://stackoverflow.com/a/27216842
+// https://stackoverflow.com/a/20602159
+template <> struct std::hash<Song> {
+    size_t operator()(const Song& song) const {
+        size_t seed = song.artists.size();
+        std::hash<std::string> hasher;
+        for (const std::string& artist : song.artists) {
+            seed ^= hasher(artist) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed ^ hasher(song.track);
+    }
+};
 
 struct Playlist {
     std::string id;
@@ -28,17 +70,19 @@ struct Playlist {
 
     std::string title;
     bool is_private = false;
-    std::size_t items = 0;
+    std::size_t num_items = 0;
     std::string items_id;
     std::string items_etag;
+    // TODO add to merge operators
+    SongToItemIds items;
 
     Playlist() {}
 
     Playlist(std::string&& id, std::string&& etag, std::string&& version,
-             std::string&& title, bool is_private, std::size_t items)
+             std::string&& title, bool is_private, std::size_t num_items)
         : id(std::move(id)), id_hash(sha1(this->id)), etag(std::move(etag)),
           version(std::move(version)), title(std::move(title)),
-          is_private(is_private), items(items) {}
+          is_private(is_private), num_items(num_items) {}
 
     Playlist(const std::string& id, const std::string& id_hash,
              const std::string& items_etag)
@@ -58,7 +102,7 @@ struct Playlist {
         items_id = (!rhs.items_id.empty()) ? rhs.items_id : items_id;
         items_etag = (!rhs.items_etag.empty()) ? rhs.items_etag : items_etag;
         is_private = (is_private == rhs.is_private) ? is_private : true;
-        items = std::max(is_private, rhs.is_private);
+        num_items = std::max(is_private, rhs.is_private);
         return *this;
     }
 
@@ -107,7 +151,7 @@ struct Playlist {
         }
 
         is_private = (is_private == rhs.is_private) ? is_private : true;
-        items = std::max(is_private, rhs.is_private);
+        num_items = std::max(num_items, rhs.num_items);
         return *this;
     }
 };
@@ -258,30 +302,6 @@ struct Handle {
 } // namespace PlaylistCache
 
 /* playlist-diff-start */
-struct Song {
-    std::vector<std::string> artists;
-    std::string track;
-
-    bool operator==(const Song& rhs) const {
-        return artists == rhs.artists && track == rhs.track;
-    }
-};
-
-// https://stackoverflow.com/a/27216842
-// https://stackoverflow.com/a/20602159
-template <> struct std::hash<Song> {
-    size_t operator()(const Song& song) const {
-        size_t seed = song.artists.size();
-        std::hash<std::string> hasher;
-        for (const std::string& artist : song.artists) {
-            seed ^= hasher(artist) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed ^ hasher(song.track);
-    }
-};
-
-using SongCounts = std::unordered_map<Song, int>;
-
 struct PlaylistDiff;
 using SongHashCounts = std::unordered_map<size_t, int>;
 PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs);
@@ -298,9 +318,14 @@ struct PlaylistDiff {
 /* playlist-items-cache-start */
 struct PlaylistItems {
     std::string id;
-    std::vector<std::pair<Platform, Playlist>> tracked;
-    SongCounts song_counts;
     bool was_changed;
+
+    // item_ids grouped by Song for convenient processing
+    SongToItemIds song_to_item_ids;
+
+    // one-to-many mapping from these items to the
+    // Playlists they belong to
+    std::vector<std::pair<Platform, Playlist>> tracked;
 };
 PlaylistItems load_playlist_items(const std::string& id);
 void save_playlist_items(const PlaylistItems& pl_items);

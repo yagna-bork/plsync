@@ -53,8 +53,10 @@ std::string get_setting(std::string name, Platform platform);
 std::string sha256(const std::string& s);
 std::string sha1(const std::string& s);
 
+// https://en.wikipedia.org/wiki/Base64
 std::string urlencode64(const std::string& s, bool pad = false);
 
+// https://en.wikipedia.org/wiki/Percent-encoding
 std::string urlencode(const std::string& s);
 
 template <class RndIt>

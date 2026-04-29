@@ -15,6 +15,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -167,7 +168,7 @@ int run_untracked(int argc, char* argv[]) {
         int privacy_pad = it->is_private ? 1 : 2;
         std::cout << std::setw(id_wd) << sid << std::setw(0) << it->title
                   << std::string(title_pad, ' ') << std::setw(privacy_wd)
-                  << privacy_type << it->items << '\n';
+                  << privacy_type << it->num_items << '\n';
     }
     return 0;
 }
@@ -409,8 +410,8 @@ int run_tracked(int argc, char* argv[]) {
                       << '\n';
         }
         size_t num_songs = 0;
-        for (const auto& [_, cnt] : pl_items.song_counts) {
-            num_songs += cnt;
+        for (const auto& [_, items_ids] : pl_items.song_to_item_ids) {
+            num_songs += items_ids.size();
         }
         std::cout << num_songs << " song(s)\n";
     }
@@ -502,48 +503,83 @@ int sync(PlaylistItemsCache& cache) {
     update_playlist_items_cache(cache, curl, plat_to_access_tkn);
 
     for (PlaylistItems& pl_items : cache) {
-        // precompute the hashes for performance because a lot of
-        // comparisons will be made by the diffing algorithm
-        SongHashCounts songh_counts;
         std::hash<Song> hasher;
-        for (const auto& [song, count] : pl_items.song_counts) {
-            songh_counts[hasher(song)] = count;
-        }
 
-        std::vector<PlaylistDiff> changes;
+        std::vector<PlaylistDiff> diffs;
         std::unordered_map<size_t, Song> songh_to_song;
-        PlaylistDiff net_change;
-        for (std::pair<Platform, Playlist>& pair : pl_items.tracked) {
-            SongCounts mod_song_counts;
-            bool modified = API::get_song_counts(
-                pair.first, curl.get(), plat_to_access_tkn[pair.first],
-                plat_to_access_tkn[Platform::SPOTIFY], pair.second.id,
-                mod_song_counts, pair.second.items_etag);
+        PlaylistDiff net_diff;
+        for (auto& [plat, pl] : pl_items.tracked) {
+            // TODO remove
+            // pl.items[{{"Freak Slug"}, "Out of the Blue"}] = {
+            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
+            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO"
+            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
+            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
+            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO"};
+            // pl.items[{{"Warriyo", "Laura Brehm"}, "Mortals"}] = {
+            //     "spotify:track:03T4jRQyNJcvZU0Md1SRDY"};
+            // pl.items[{{"Key Nyata"}, "Thanks And Praises"}] = {
+            //     "spotify:track:79SLhKnv5Q5iu0MwCJ"};
+            // pl.items[{{"Alice Phoebe Lou"}, "Open My Door"}] = {
+            //     "spotify:track:cZJKhUmJwdqzoAahvR"};
+
+            // TODO defo not worth the complexity, just use SongCounts instead
+            // precompute the hashes for performance because a lot of
+            // comparisons will be made by the diffing algorithm
+            SongHashCounts songh_counts;
+            for (const auto& [song, item_ids] : pl.items) {
+                songh_counts[hasher(song)] = item_ids.size();
+            }
+
+            // TODO make this func take playlist directly instead of just items
+            // and clear items within them
+            // TODO call it get_playlist_items()
+            pl.items.clear();
+            bool modified = API::get_song_to_item_ids(
+                plat, curl.get(), plat_to_access_tkn[plat],
+                plat_to_access_tkn[Platform::SPOTIFY], pl.id, pl.items,
+                pl.items_etag);
 
             if (modified) {
+                // TODO remove
+                // std::ostream_iterator<std::string> out(std::cout, ",");
+                // for (auto [s, is] : pl.items) {
+                //     std::cout << s.track << ':';
+                //     std::copy(s.artists.begin(), s.artists.end(), out);
+                //     std::cout << " - ";
+                //     std::copy(is.begin(), is.end(), out);
+                //     std::cout << '\n';
+                // }
+
                 SongHashCounts mod_songh_counts;
-                for (const auto& [song, count] : mod_song_counts) {
+                for (const auto& [song, item_ids] : pl.items) {
                     size_t hash = hasher(song);
-                    mod_songh_counts[hash] = count;
+                    mod_songh_counts[hash] = item_ids.size();
                     if (!songh_to_song.count(hash)) {
                         songh_to_song[hash] = song;
                     }
                 }
 
-                PlaylistDiff change = mod_songh_counts - songh_counts;
-                net_change += change;
-                changes.push_back(std::move(change));
+                PlaylistDiff diff = mod_songh_counts - songh_counts;
+                net_diff += diff;
+                diffs.push_back(std::move(diff));
             } else {
-                changes.emplace_back();
+                diffs.emplace_back();
             }
         }
 
         for (int i = 0; i != pl_items.tracked.size(); i++) {
-            PlaylistDiff to_change = net_change - changes[i];
-            // API::update_playlist(pl_items.tracked[i].plat,
-            // pl_items.tracked[i].id, to_change);
+            auto& [plat, pl] = pl_items.tracked[i];
+            PlaylistDiff diff = net_diff - diffs[i];
+            API::add_songs_to_playlist(plat, curl.get(),
+                                       plat_to_access_tkn[plat], pl, diff.added,
+                                       songh_to_song);
+            API::remove_songs_from_playlist(plat, curl.get(),
+                                            plat_to_access_tkn[plat], pl,
+                                            diff.removed, songh_to_song);
         }
     }
+    // TODO update PlaylistItemsCache
     std::cout << "Done!\n";
     return 0;
 }

@@ -42,6 +42,10 @@ message PairPlatformPlaylist {
 	Playlist playlist = 2;
 }
 
+message PairSongItemIds {
+    Song song = 1;
+    repeated string item_ids = 2;
+}
 
 message PlaylistItems {
 	message SongCountPair {
@@ -50,7 +54,7 @@ message PlaylistItems {
 	}
 
 	repeated PairPlatformPlaylist tracked = 1;
-	repeated SongCountPair song_cnt_pairs = 2;
+	repeated PairSongItemIds song_to_item_ids_entries = 2;
 }
 
 message PlaylistItemIdToSongMap {

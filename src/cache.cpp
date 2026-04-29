@@ -7,11 +7,15 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <google/protobuf/repeated_field.h>
 #include <ios>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+// TODO use binding all for each loop for legibility and consistency
 
 namespace fs = std::filesystem;
 
@@ -209,7 +213,7 @@ static void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
     pl.version = std::string(proto_pl.version());
     pl.title = std::string(proto_pl.title());
     pl.is_private = proto_pl.is_private();
-    pl.items = proto_pl.items();
+    pl.num_items = proto_pl.items();
 }
 
 static proto::CacheNode create_proto_node(const Node* node) {
@@ -223,7 +227,7 @@ static proto::CacheNode create_proto_node(const Node* node) {
     proto_pl->set_version(node->playlist.version);
     proto_pl->set_title(node->playlist.title);
     proto_pl->set_is_private(node->playlist.is_private);
-    proto_pl->set_items(node->playlist.items);
+    proto_pl->set_items(node->playlist.num_items);
     return proto_node;
 }
 
@@ -611,9 +615,10 @@ static PlaylistItems load_from_path(const fs::path& path) {
                      std::string(p.playlist().id_hash()),
                      std::string(p.playlist().items_etag())));
     }
-    for (const auto& song_cnt_pair : proto_pl_items.song_cnt_pairs()) {
-        pl_items.song_counts[get_song(song_cnt_pair.song())] =
-            song_cnt_pair.cnt();
+    for (const auto& e : proto_pl_items.song_to_item_ids_entries()) {
+        Song s = get_song(e.song());
+        std::copy(e.item_ids().begin(), e.item_ids().end(),
+                  std::back_inserter(pl_items.song_to_item_ids[s]));
     }
     pl_items.id = path.filename();
     return pl_items;
@@ -788,10 +793,13 @@ void save_playlist_items(const PlaylistItems& pl_items) {
         pair->mutable_playlist()->set_id_hash(pl.id_hash);
         pair->mutable_playlist()->set_items_etag(pl.items_etag);
     }
-    for (const auto& [song, count] : pl_items.song_counts) {
-        auto* pair = proto_items.add_song_cnt_pairs();
-        *pair->mutable_song() = get_proto_song(song);
-        pair->set_cnt(count);
+
+    for (const auto& [song, item_ids] : pl_items.song_to_item_ids) {
+        auto* e = proto_items.add_song_to_item_ids_entries();
+        *e->mutable_song() = get_proto_song(song);
+        std::copy(
+            item_ids.begin(), item_ids.end(),
+            google::protobuf::RepeatedFieldBackInserter(e->mutable_item_ids()));
     }
     auto file = ensure_bin_file<std::ofstream>(playlist_items_cache_dir() /
                                                pl_items.id);
