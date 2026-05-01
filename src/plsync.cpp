@@ -382,17 +382,17 @@ int run_tracked(int argc, char* argv[]) {
         longest_sid = std::max(longest_sid, sid_len);
     }
 
-    int id_wd = longest_sid * 2 + 1;
+    int id_wd = std::max(2, longest_sid * 2) + 1;
     int plat_wd = strlen("Platform") + 1;
 
     std::ostringstream heading_ss;
-    heading_ss << std::setw(plat_wd) << "Platform" << std::setw(id_wd) << "Id"
-               << std::setw(longest_title + 1) << "Title";
+    heading_ss << std::left << std::setw(plat_wd) << "Platform"
+               << std::setw(id_wd) << "Id" << std::setw(longest_title)
+               << "Title";
     std::string heading = heading_ss.str();
     std::cout << std::left << heading << '\n'
               << std::string(heading.size(), '-') << '\n';
 
-    std::cout << std::left;
     bool skip_newline = true;
     for (const auto& pl_items : cache) {
         if (skip_newline) {
