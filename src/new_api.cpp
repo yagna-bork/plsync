@@ -510,9 +510,11 @@ bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
 
     for (json* item : new_items) {
         std::string vid_id = item->at("snippet")["resourceId"]["videoId"];
-        if (vid_id_to_category_id[vid_id] != "10") {
+        std::string& cat_id = vid_id_to_category_id[vid_id];
+        // TODO make seperate commit to explain change
+        if (cat_id != "10" && cat_id != "24") {
             std::cerr << "Ignoring videoId: " << vid_id
-                      << ". Not categorised as a song" << '\n';
+                      << ", not categorised as a song\n";
             continue;
         }
 
