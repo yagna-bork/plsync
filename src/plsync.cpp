@@ -1,6 +1,5 @@
 #include "../include/api.h"
 #include "../include/cache.h"
-#include "../include/cache.pb.h"
 #include "../include/new_api.h"
 #include "../include/platform.h"
 #include "../include/util.h"
@@ -10,7 +9,6 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -18,8 +16,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-namespace fs = std::filesystem;
 
 const std::vector<const char*> COMMANDS = {"init",    "untracked", "track",
                                            "tracked", "untrack",   "sync"};
@@ -276,7 +272,6 @@ void track(int argc, char* argv[]) {
         plat_to_node[plat] = std::move(node);
     }
 
-    // TODO check no duplication of platforms
     PlaylistItems pl_items;
     if (items_id.empty()) {
         pl_items.id = bin_to_hex(rndstr(16));
@@ -401,6 +396,7 @@ int run_tracked(int argc, char* argv[]) {
         } else {
             std::cout << '\n';
         }
+
         for (const auto& pair : pl_items.tracked) {
             const Platform& plat = pair.first;
             const Playlist& pl = pair.second;
@@ -409,11 +405,13 @@ int run_tracked(int argc, char* argv[]) {
                       << std::setw(id_wd) << bin_to_hex(sid) << pl.title
                       << '\n';
         }
-        size_t num_songs = 0;
-        for (const auto& [_, items_ids] : pl_items.song_to_item_ids) {
-            num_songs += items_ids.size();
-        }
-        std::cout << num_songs << " song(s)\n";
+
+        // TODO add num_items field to Playlist to not have to load from
+        // PlaylistItemsCache cache size_t num_songs = 0; for (const auto& [_,
+        // items_ids] : pl_items.song_to_items) {
+        //     num_songs += items_ids.size();
+        // }
+        // std::cout << num_songs << " song(s)\n";
     }
     return 0;
 }
@@ -503,64 +501,24 @@ int sync(PlaylistItemsCache& cache) {
     update_playlist_items_cache(cache, curl, plat_to_access_tkn);
 
     for (PlaylistItems& pl_items : cache) {
-        std::hash<Song> hasher;
-
         std::vector<PlaylistDiff> diffs;
-        std::unordered_map<size_t, Song> songh_to_song;
         PlaylistDiff net_diff;
         for (auto& [plat, pl] : pl_items.tracked) {
-            // TODO remove
-            // pl.items[{{"Freak Slug"}, "Out of the Blue"}] = {
-            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
-            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO"
-            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
-            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO",
-            //     "spotify:track:1ppMgIE0lozyuexs3RBgxO"};
-            // pl.items[{{"Warriyo", "Laura Brehm"}, "Mortals"}] = {
-            //     "spotify:track:03T4jRQyNJcvZU0Md1SRDY"};
-            // pl.items[{{"Key Nyata"}, "Thanks And Praises"}] = {
-            //     "spotify:track:79SLhKnv5Q5iu0MwCJ"};
-            // pl.items[{{"Alice Phoebe Lou"}, "Open My Door"}] = {
-            //     "spotify:track:cZJKhUmJwdqzoAahvR"};
-
-            // TODO defo not worth the complexity, just use SongCounts instead
-            // precompute the hashes for performance because a lot of
-            // comparisons will be made by the diffing algorithm
-            SongHashCounts songh_counts;
-            for (const auto& [song, item_ids] : pl.items) {
-                songh_counts[hasher(song)] = item_ids.size();
+            SongCounts song_cnts;
+            for (const auto& [song, items] : pl.items) {
+                song_cnts[song] = items.size();
             }
 
-            // TODO make this func take playlist directly instead of just items
-            // and clear items within them
-            // TODO call it get_playlist_items()
-            pl.items.clear();
-            bool modified = API::get_song_to_item_ids(
+            bool modified = API::get_playlist_items(
                 plat, curl.get(), plat_to_access_tkn[plat],
-                plat_to_access_tkn[Platform::SPOTIFY], pl.id, pl.items,
-                pl.items_etag);
-
+                plat_to_access_tkn[Platform::SPOTIFY], pl);
             if (modified) {
-                // TODO remove
-                // std::ostream_iterator<std::string> out(std::cout, ",");
-                // for (auto [s, is] : pl.items) {
-                //     std::cout << s.track << ':';
-                //     std::copy(s.artists.begin(), s.artists.end(), out);
-                //     std::cout << " - ";
-                //     std::copy(is.begin(), is.end(), out);
-                //     std::cout << '\n';
-                // }
-
-                SongHashCounts mod_songh_counts;
-                for (const auto& [song, item_ids] : pl.items) {
-                    size_t hash = hasher(song);
-                    mod_songh_counts[hash] = item_ids.size();
-                    if (!songh_to_song.count(hash)) {
-                        songh_to_song[hash] = song;
-                    }
+                SongCounts mod_song_cnts;
+                for (const auto& [song, items] : pl.items) {
+                    mod_song_cnts[song] = items.size();
                 }
 
-                PlaylistDiff diff = mod_songh_counts - songh_counts;
+                PlaylistDiff diff = mod_song_cnts - song_cnts;
                 net_diff += diff;
                 diffs.push_back(std::move(diff));
             } else {
@@ -571,12 +529,10 @@ int sync(PlaylistItemsCache& cache) {
         for (int i = 0; i != pl_items.tracked.size(); i++) {
             auto& [plat, pl] = pl_items.tracked[i];
             PlaylistDiff diff = net_diff - diffs[i];
-            API::add_songs_to_playlist(plat, curl.get(),
-                                       plat_to_access_tkn[plat], pl, diff.added,
-                                       songh_to_song);
-            API::remove_songs_from_playlist(plat, curl.get(),
-                                            plat_to_access_tkn[plat], pl,
-                                            diff.removed, songh_to_song);
+            API::playlist_items_add(plat, curl.get(), plat_to_access_tkn[plat],
+                                    pl, diff.added);
+            API::playlist_items_remove(
+                plat, curl.get(), plat_to_access_tkn[plat], pl, diff.removed);
         }
     }
     // TODO update PlaylistItemsCache
@@ -654,8 +610,6 @@ int main(int argc, char* argv[]) {
         return run_init(!is_yt_init, !is_sp_init);
     }
 
-    // TODO reduce the number of files by putting all
-    // seperate command files into this single file
     const char* command = parse_plsync_args(argc, argv);
     if (strcmp(command, "init") == 0) {
         return run_init(true, true);

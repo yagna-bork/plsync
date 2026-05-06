@@ -7,6 +7,59 @@
 #include <string>
 #include <unordered_map>
 
+namespace NewYoutubeAPI {
+
+const std::string base_url = "https://www.googleapis.com/youtube/v3";
+
+bool get_playlist(CURL* curl, const std::string& access_tkn,
+                  const std::string& id, const std::string& etag,
+                  Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn,
+                         const std::string& title);
+
+bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
+                        const std::string& sp_access_tkn, Playlist& out_pl);
+
+std::string search_song(CURL* curl, const std::string& access_tkn,
+                        const Song& song);
+
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts);
+
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts);
+
+} // namespace NewYoutubeAPI
+
+namespace NewSpotifyAPI {
+
+const std::string base_url = "https://api.spotify.com/v1";
+
+bool get_playlist(CURL* curl, const std::string& access_tkn,
+                  const std::string& id, const std::string& etag,
+                  Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn,
+                         const std::string& title);
+
+bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
+                        Playlist& out_pl);
+
+// spotify is the single source of truth for a song across every platforms
+Song get_ssot_song(CURL* curl, const std::string& access_tkn, const Song& song);
+
+std::string search_song(CURL* curl, const std::string& access_tkn,
+                        const Song& song);
+
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts);
+
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts);
+
+} // namespace NewSpotifyAPI
+
 namespace API {
 
 class RequestError : public std::runtime_error {
@@ -59,100 +112,86 @@ long DELETE(CURL* curl, const std::string& url, nlohmann::json& resp,
  * res will be an empty playlist i.e. id attribute is empty
  * if the playlist doesn't exist/was deleted.
  */
-bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn,
-                  const std::string& id, const std::string& etag,
-                  Playlist& res);
+inline bool get_playlist(Platform plat, CURL* curl,
+                         const std::string& access_tkn, const std::string& id,
+                         const std::string& etag, Playlist& res) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return NewYoutubeAPI::get_playlist(curl, access_tkn, id, etag, res);
+        break;
+    case Platform::SPOTIFY:
+        return NewSpotifyAPI::get_playlist(curl, access_tkn, id, etag, res);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-Playlist create_playlist(Platform plat, CURL* curl,
-                         const std::string& access_tkn,
-                         const std::string& title);
+inline Playlist create_playlist(Platform plat, CURL* curl,
+                                const std::string& access_tkn,
+                                const std::string& title) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return NewYoutubeAPI::create_playlist(curl, access_tkn, title);
+        break;
+    case Platform::SPOTIFY:
+        return NewSpotifyAPI::create_playlist(curl, access_tkn, title);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-bool get_song_to_item_ids(Platform plat, CURL* curl,
-                          const std::string& plat_access_tkn,
-                          const std::string& sp_access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag);
+inline bool get_playlist_items(Platform plat, CURL* curl,
+                               const std::string& plat_access_tkn,
+                               const std::string& sp_access_tkn,
+                               Playlist& out_pl) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return NewYoutubeAPI::get_playlist_items(curl, plat_access_tkn,
+                                                 sp_access_tkn, out_pl);
+        break;
+    case Platform::SPOTIFY:
+        return NewSpotifyAPI::get_playlist_items(curl, plat_access_tkn, out_pl);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-// TODO rename to add_playlist_items
-void add_songs_to_playlist(
-    Platform plat, CURL* curl, const std::string& access_tkn, Playlist& pl,
-    // TODO rename song_hashes -> items
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
+inline void playlist_items_add(Platform plat, CURL* curl,
+                               const std::string& access_tkn, Playlist& pl,
+                               const SongCounts& song_cnts) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        NewYoutubeAPI::playlist_items_add(curl, access_tkn, pl, song_cnts);
+        break;
+    case Platform::SPOTIFY:
+        NewSpotifyAPI::playlist_items_add(curl, access_tkn, pl, song_cnts);
+        break;
+    default:
+        throw std::runtime_error("Not yet implemented");
+    }
+}
 
-// TODO rename to remove_playlist_items
-void remove_songs_from_playlist(
-    Platform plat, CURL* curl, const std::string& access_tkn, Playlist& pl,
-    // TODO rename song_hashes -> items
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
+inline void playlist_items_remove(Platform plat, CURL* curl,
+                                  const std::string& access_tkn, Playlist& pl,
+                                  const SongCounts& song_cnts) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        NewYoutubeAPI::playlist_items_remove(curl, access_tkn, pl, song_cnts);
+        break;
+    case Platform::SPOTIFY:
+        NewSpotifyAPI::playlist_items_remove(curl, access_tkn, pl, song_cnts);
+        break;
+    default:
+        throw std::runtime_error("Not yet implemented");
+    }
+}
 
 } // namespace API
 
-namespace NewYoutubeAPI {
-
-const std::string base_url = "https://www.googleapis.com/youtube/v3";
-
-bool get_playlist(CURL* curl, const std::string& access_tkn,
-                  const std::string& id, const std::string& etag,
-                  Playlist& res);
-
-Playlist create_playlist(CURL* curl, const std::string& access_tkn,
-                         const std::string& title);
-
-bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
-                          const std::string& sp_access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag);
-
-std::string search_song(CURL* curl, const std::string& access_tkn,
-                        const Song& song);
-
-void add_songs_to_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
-
-void remove_songs_from_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
-
-} // namespace NewYoutubeAPI
-
-namespace NewSpotifyAPI {
-
-const std::string base_url = "https://api.spotify.com/v1";
-
-bool get_playlist(CURL* curl, const std::string& access_tkn,
-                  const std::string& id, const std::string& etag,
-                  Playlist& res);
-
-Playlist create_playlist(CURL* curl, const std::string& access_tkn,
-                         const std::string& title);
-
-bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag);
-
-Song get_single_truth_song(CURL* curl, const std::string& access_tkn,
-                           const Song& song);
-
-std::string search_song(CURL* curl, const std::string& access_tkn,
-                        const Song& song);
-
-void add_songs_to_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
-
-void remove_songs_from_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song);
-
-} // namespace NewSpotifyAPI
 #endif

@@ -14,7 +14,6 @@
 #include <nlohmann/json_fwd.hpp>
 #include <regex>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -185,101 +184,6 @@ long DELETE(CURL* curl, const std::string& url, nlohmann::json& jresp,
     return status_code(curl);
 }
 
-bool get_playlist(Platform plat, CURL* curl, const std::string& access_tkn,
-                  const std::string& id, const std::string& etag,
-                  Playlist& res) {
-    switch (plat) {
-    case Platform::YOUTUBE:
-        return NewYoutubeAPI::get_playlist(curl, access_tkn, id, etag, res);
-        break;
-    case Platform::SPOTIFY:
-        return NewSpotifyAPI::get_playlist(curl, access_tkn, id, etag, res);
-        break;
-    default:
-        throw std::domain_error("function not yet implemented for " +
-                                platform_title_lower(plat));
-    }
-}
-
-Playlist create_playlist(Platform plat, CURL* curl,
-                         const std::string& access_tkn,
-                         const std::string& title) {
-    switch (plat) {
-    case Platform::YOUTUBE:
-        return NewYoutubeAPI::create_playlist(curl, access_tkn, title);
-        break;
-    case Platform::SPOTIFY:
-        return NewSpotifyAPI::create_playlist(curl, access_tkn, title);
-        break;
-    default:
-        throw std::domain_error("function not yet implemented for " +
-                                platform_title_lower(plat));
-    }
-}
-
-// TODO move these switches into header file for inlining
-bool get_song_to_item_ids(Platform plat, CURL* curl,
-                          const std::string& plat_access_tkn,
-                          const std::string& sp_access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag) {
-
-    switch (plat) {
-    case Platform::YOUTUBE:
-        return NewYoutubeAPI::get_song_to_item_ids(
-            curl, plat_access_tkn, sp_access_tkn, playlist_id,
-            out_song_to_item_ids, in_out_etag);
-        break;
-    case Platform::SPOTIFY:
-        return NewSpotifyAPI::get_song_to_item_ids(
-            curl, plat_access_tkn, playlist_id, out_song_to_item_ids,
-            in_out_etag);
-        break;
-    default:
-        throw std::domain_error("function not yet implemented for " +
-                                platform_title_lower(plat));
-    }
-}
-
-void add_songs_to_playlist(
-    Platform plat, CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
-    switch (plat) {
-    case Platform::YOUTUBE:
-        NewYoutubeAPI::add_songs_to_playlist(curl, access_tkn, pl, song_hashes,
-                                             songh_to_song);
-        break;
-    case Platform::SPOTIFY:
-        NewSpotifyAPI::add_songs_to_playlist(curl, access_tkn, pl, song_hashes,
-                                             songh_to_song);
-        break;
-    default:
-        throw std::runtime_error("Not yet implemented");
-    }
-}
-
-void remove_songs_from_playlist(
-    Platform plat, CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
-    switch (plat) {
-    case Platform::YOUTUBE:
-        NewYoutubeAPI::remove_songs_from_playlist(curl, access_tkn, pl,
-                                                  song_hashes, songh_to_song);
-        break;
-    case Platform::SPOTIFY:
-        NewSpotifyAPI::remove_songs_from_playlist(curl, access_tkn, pl,
-                                                  song_hashes, songh_to_song);
-        break;
-    default:
-        throw std::runtime_error("Not yet implemented");
-    }
-}
-
 } // namespace API
 
 using namespace API;
@@ -437,50 +341,46 @@ static bool parse_song_from_title(const std::string& title, Song& out_song) {
     return true;
 }
 
-static inline std::string get_item_id(const std::string& item_id,
-                                      const std::string& vid_id) {
+static inline std::string get_item(const std::string& item_id,
+                                   const std::string& vid_id) {
     std::ostringstream res;
     res << item_id << ':' << vid_id;
     return res.str();
 }
 
-// TODO change to get_playlist_items after type changed
-bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
-                          const std::string& sp_access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag) {
-
+bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
+                        const std::string& sp_access_tkn, Playlist& out_pl) {
     std::string url = base_url + "/playlistItems";
     Params params = {{"part", "id,snippet,contentDetails"},
-                     {"playlistId", playlist_id},
+                     {"playlistId", out_pl.id},
                      {"maxResults", "50"}};
     json resp;
-    long status_code =
-        GET_paginated(curl, url, resp, params, yt_access_tkn, in_out_etag);
+    long status_code = GET_paginated(curl, url, resp, params, yt_access_tkn,
+                                     out_pl.items_etag);
 
     if (status_code == 304L) {
         return false;
     } else if (status_code != 200L) {
         throw RequestError("Invalid response from google");
     }
-    in_out_etag = resp["etag"];
+    out_pl.items.clear();
+    out_pl.items_etag = resp["etag"];
     json& items = resp["items"];
     SongCache song_cache = load_song_cache(Platform::YOUTUBE);
 
     std::vector<json*> new_items;
     std::unordered_set<std::string> new_vid_ids;
     for (json& item : items) {
-        const std::string& vid_id =
+        const std::string& iid = item["id"].get_ref<std::string&>();
+        const std::string& vid =
             item["contentDetails"]["videoId"].get_ref<std::string&>();
-        const std::string& item_id = item["id"].get_ref<std::string&>();
 
-        if (song_cache.count(vid_id)) {
-            Song& song = song_cache[vid_id];
-            out_song_to_item_ids[song].push_back(get_item_id(item_id, vid_id));
+        if (song_cache.count(vid)) {
+            Song& song = song_cache[vid];
+            out_pl.items[song].push_back(get_item(iid, vid));
         } else {
             new_items.push_back(&item);
-            new_vid_ids.insert(vid_id);
+            new_vid_ids.insert(vid);
         }
     }
 
@@ -491,14 +391,14 @@ bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
 
     auto it = new_vid_ids.cbegin();
     for (int i = 0; i < n; i += 50) {
-        std::ostringstream vid_ids;
+        std::ostringstream vids;
         for (int j = 0; (i + j != n) && (j != 50); j++) {
             if (j > 0) {
-                vid_ids << ',';
+                vids << ',';
             }
-            vid_ids << *it++;
+            vids << *it++;
         }
-        params.back().second = vid_ids.str();
+        params.back().second = vids.str();
         json videos_resp;
         status_code = GET(curl, url, videos_resp, params, yt_access_tkn);
         const json& videos = videos_resp["items"];
@@ -511,7 +411,6 @@ bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
     for (json* item : new_items) {
         std::string vid_id = item->at("snippet")["resourceId"]["videoId"];
         std::string& cat_id = vid_id_to_category_id[vid_id];
-        // TODO make seperate commit to explain change
         if (cat_id != "10" && cat_id != "24") {
             std::cerr << "Ignoring videoId: " << vid_id
                       << ", not categorised as a song\n";
@@ -529,16 +428,15 @@ bool get_song_to_item_ids(CURL* curl, const std::string& yt_access_tkn,
             song.track = std::move(title);
         }
 
-        Song sp_song =
-            NewSpotifyAPI::get_single_truth_song(curl, sp_access_tkn, song);
+        Song sp_song = NewSpotifyAPI::get_ssot_song(curl, sp_access_tkn, song);
         if (sp_song.artists.empty()) {
             std::cerr
                 << "Ignoring videoId: " << vid_id
                 << ". Failed to determine artist and title information.\n";
             continue;
         }
-        out_song_to_item_ids[sp_song].push_back(
-            get_item_id(item->at("id").get_ref<std::string&>(), vid_id));
+        out_pl.items[sp_song].push_back(
+            get_item(item->at("id").get_ref<std::string&>(), vid_id));
         song_cache[vid_id] = std::move(sp_song);
     }
     save_song_cache(song_cache, Platform::YOUTUBE);
@@ -571,10 +469,9 @@ std::string search_song(CURL* curl, const std::string& access_tkn,
 }
 
 // TODO make async
-static std::string add_song_to_playlist(CURL* curl,
-                                        const std::string& access_tkn,
-                                        const std::string& pl_id,
-                                        const std::string& vid_id) {
+static std::string add_playlist_item(CURL* curl, const std::string& access_tkn,
+                                     const std::string& pl_id,
+                                     const std::string& vid_id) {
     std::string url = base_url + "/playlistItems";
     json resource_id = {{"kind", "youtube#video"}, {"videoId", vid_id}};
     json snippet = {{"resourceId", resource_id}, {"playlistId", pl_id}};
@@ -589,37 +486,32 @@ static std::string add_song_to_playlist(CURL* curl,
     return resp["id"];
 }
 
-void add_songs_to_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& songh_counts,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
-    for (const auto& [h, cnt] : songh_counts) {
-        const Song& s = songh_to_song.at(h);
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts) {
+    for (const auto& [song, cnt] : song_cnts) {
         std::string vid_id;
-        if (pl.items.count(s)) {
-            // TODO rename item_id to just item everywhere
-            const std::string& item = pl.items[s].back();
+        if (pl.items.count(song)) {
+            const std::string& item = pl.items[song].back();
             auto beg = std::find(item.begin(), item.end(), ':') + 1;
             vid_id = std::string(beg, item.end());
         } else {
-            vid_id = NewYoutubeAPI::search_song(curl, access_tkn, s);
+            vid_id = NewYoutubeAPI::search_song(curl, access_tkn, song);
         }
 
         // TODO test
         for (int i = 0; i != cnt; i++) {
             std::string item_id =
-                add_song_to_playlist(curl, access_tkn, pl.id, vid_id);
-            pl.items[s].push_back(get_item_id(item_id, vid_id));
+                add_playlist_item(curl, access_tkn, pl.id, vid_id);
+            pl.items[song].push_back(get_item(item_id, vid_id));
         }
     }
 }
 
 // TODO make async
-static void remove_song_from_playlist(CURL* curl, const std::string& access_tkn,
-                                      const std::string& item_id) {
+static void remove_playlist_item(CURL* curl, const std::string& access_tkn,
+                                 const std::string& id) {
     std::string url = base_url + "/playlistItems";
-    Params params = {{"id", item_id}};
+    Params params = {{"id", id}};
     json resp;
     long status_code = DELETE(curl, url, resp, access_tkn, params);
     if (status_code != 204L) {
@@ -627,19 +519,15 @@ static void remove_song_from_playlist(CURL* curl, const std::string& access_tkn,
     }
 }
 
-void remove_songs_from_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& songh_counts,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
-    for (const auto& [h, cnt] : songh_counts) {
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts) {
+    for (const auto& [song, cnt] : song_cnts) {
         for (int i = 0; i != cnt; i++) {
-            const Song& s = songh_to_song.at(h);
-            const std::string& item = pl.items[s].back();
+            const std::string& item = pl.items[song].back();
             auto end = std::find(item.begin(), item.end(), ':');
             std::string item_id(item.begin(), end);
-            NewYoutubeAPI::remove_song_from_playlist(curl, access_tkn, item_id);
-            pl.items[s].pop_back();
+            NewYoutubeAPI::remove_playlist_item(curl, access_tkn, item_id);
+            pl.items[song].pop_back();
         }
     }
 }
@@ -747,21 +635,20 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn,
                     !resp["public"], 0);
 }
 
-bool get_song_to_item_ids(CURL* curl, const std::string& access_tkn,
-                          const std::string& playlist_id,
-                          SongToItemIds& out_song_to_item_ids,
-                          std::string& in_out_etag) {
-    std::string url = base_url + "/playlists/" + playlist_id + "/items";
+bool get_playlist_items(CURL* curl, const std::string& access_tkn,
+                        Playlist& out_pl) {
+    std::string url = base_url + "/playlists/" + out_pl.id + "/items";
     Params params = {{"fields", "total,items.item(artists.name,name,uri)"}};
     json resp;
     long status_code =
-        GET_paginated(curl, url, resp, params, access_tkn, in_out_etag);
+        GET_paginated(curl, url, resp, params, access_tkn, out_pl.items_etag);
     if (status_code == 304L) {
         return false;
     } else if (status_code != 200L) {
         throw RequestError("invalid response from spotify");
     }
 
+    out_pl.items.clear();
     for (json& item : resp["items"]) {
         Song song;
         for (json& artist : item["item"]["artists"]) {
@@ -769,7 +656,7 @@ bool get_song_to_item_ids(CURL* curl, const std::string& access_tkn,
                 std::move(artist["name"].get_ref<std::string&>()));
         }
         song.track = std::move(item["item"]["name"].get_ref<std::string&>());
-        out_song_to_item_ids[song].push_back(
+        out_pl.items[song].push_back(
             std::move(item["item"]["uri"].get_ref<std::string&>()));
     }
     return true;
@@ -798,9 +685,8 @@ static json search(CURL* curl, const std::string& access_tkn,
     return resp["tracks"]["items"][0];
 }
 
-// TODO use ssot acronym
-Song get_single_truth_song(CURL* curl, const std::string& access_tkn,
-                           const Song& song) {
+Song get_ssot_song(CURL* curl, const std::string& access_tkn,
+                   const Song& song) {
     json resp = search(curl, access_tkn, song);
     if (resp.empty()) {
         return {};
@@ -842,23 +728,19 @@ static void add_uris_to_playlist(CURL* curl, const std::string& access_tkn,
     }
 }
 
-void add_songs_to_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& song_hashes,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts) {
     std::vector<std::string> uris;
-    SongToItemIds items_patch;
-    for (const auto& [hash, cnt] : song_hashes) {
-        const Song& s = songh_to_song.at(hash);
+    SongToItems items_patch;
+    for (const auto& [song, cnt] : song_cnts) {
         std::string uri;
-        if (pl.items.count(s)) {
-            uri = pl.items[s].back();
+        if (pl.items.count(song)) {
+            uri = pl.items[song].back();
         } else {
-            uri = search_song(curl, access_tkn, s);
+            uri = search_song(curl, access_tkn, song);
         }
         std::fill_n(std::back_inserter(uris), cnt, uri);
-        std::fill_n(std::back_inserter(items_patch[s]), cnt, uri);
+        std::fill_n(std::back_inserter(items_patch[song]), cnt, uri);
     }
 
     add_uris_to_playlist(curl, access_tkn, pl.id, uris);
@@ -895,18 +777,13 @@ remove_uris_from_playlist(CURL* curl, const std::string& access_tkn,
     }
 }
 
-void remove_songs_from_playlist(
-    CURL* curl, const std::string& access_tkn, Playlist& pl,
-    const SongHashCounts& songh_counts,
-    const std::unordered_map<size_t, Song>& songh_to_song) {
-
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts) {
     std::unordered_set<std::string> remove_uris;
     std::vector<std::string> add_uris;
-    for (const auto& [hash, cnt] : songh_counts) {
-        const Song& s = songh_to_song.at(hash);
+    for (const auto& [s, cnt] : song_cnts) {
         std::vector<std::string>& items = pl.items[s];
         std::sort(items.begin(), items.end());
-
         auto it = items.end();
         for (int i = 0; i != cnt; i++) {
             --it;
@@ -919,8 +796,7 @@ void remove_songs_from_playlist(
     remove_uris_from_playlist(curl, access_tkn, pl.id, remove_uris);
     add_uris_to_playlist(curl, access_tkn, pl.id, add_uris);
 
-    for (const auto& [hash, cnt] : songh_counts) {
-        const Song& s = songh_to_song.at(hash);
+    for (const auto& [s, cnt] : song_cnts) {
         for (int i = 0; i != cnt; i++) {
             pl.items[s].pop_back();
         }

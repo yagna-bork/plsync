@@ -42,9 +42,9 @@ message PairPlatformPlaylist {
 	Playlist playlist = 2;
 }
 
-message PairSongItemIds {
+message PairSongItems {
     Song song = 1;
-    repeated string item_ids = 2;
+    repeated string items = 2;
 }
 
 message PlaylistItems {
@@ -54,7 +54,7 @@ message PlaylistItems {
 	}
 
 	repeated PairPlatformPlaylist tracked = 1;
-	repeated PairSongItemIds song_to_item_ids_entries = 2;
+	repeated PairSongItems song_to_items_entries = 2;
 }
 
 message PlaylistItemIdToSongMap {

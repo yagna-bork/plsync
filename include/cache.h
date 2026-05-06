@@ -38,7 +38,9 @@ inline std::ostream& operator<<(std::ostream& os, const Song& song) {
 #endif // !NDEBUG
 
 // TODO change to PlaylistItems everywhere
-using SongToItemIds = std::unordered_map<Song, std::vector<std::string>>;
+// TODO make item a vector so it can even handle position in the future
+// items grouped by Song for efficient processing
+using SongToItems = std::unordered_map<Song, std::vector<std::string>>;
 
 // https://stackoverflow.com/a/27216842
 // https://stackoverflow.com/a/20602159
@@ -73,8 +75,7 @@ struct Playlist {
     std::size_t num_items = 0;
     std::string items_id;
     std::string items_etag;
-    // TODO add to merge operators
-    SongToItemIds items;
+    SongToItems items;
 
     Playlist() {}
 
@@ -92,6 +93,7 @@ struct Playlist {
     Playlist(Playlist&& other) = default;
     ~Playlist() = default;
 
+    // TODO rename these operations to merge in seperate commit
     Playlist& operator=(const Playlist& rhs) {
         std::string tmp;
         id = (!rhs.id.empty()) ? rhs.id : id;
@@ -102,7 +104,8 @@ struct Playlist {
         items_id = (!rhs.items_id.empty()) ? rhs.items_id : items_id;
         items_etag = (!rhs.items_etag.empty()) ? rhs.items_etag : items_etag;
         is_private = (is_private == rhs.is_private) ? is_private : true;
-        num_items = std::max(is_private, rhs.is_private);
+        num_items = rhs.num_items != 0 ? rhs.num_items : num_items;
+        items = (!rhs.items.empty()) ? rhs.items : items;
         return *this;
     }
 
@@ -150,8 +153,14 @@ struct Playlist {
             tmp = std::move(rhs.items_etag);
         }
 
+        if (!rhs.items.empty()) {
+            items = std::move(rhs.items);
+        } else {
+            SongToItems tmp_items = std::move(rhs.items);
+        }
+
         is_private = (is_private == rhs.is_private) ? is_private : true;
-        num_items = std::max(num_items, rhs.num_items);
+        num_items = rhs.num_items != 0 ? rhs.num_items : num_items;
         return *this;
     }
 };
@@ -303,12 +312,12 @@ struct Handle {
 
 /* playlist-diff-start */
 struct PlaylistDiff;
-using SongHashCounts = std::unordered_map<size_t, int>;
-PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs);
+using SongCounts = std::unordered_map<Song, unsigned int>;
+PlaylistDiff operator-(const SongCounts& lhs, const SongCounts& rhs);
 
 struct PlaylistDiff {
-    SongHashCounts added;
-    SongHashCounts removed;
+    SongCounts added;
+    SongCounts removed;
 
     bool operator==(const PlaylistDiff&) const = default;
     PlaylistDiff& operator+=(const PlaylistDiff& rhs);
@@ -320,8 +329,8 @@ struct PlaylistItems {
     std::string id;
     bool was_changed;
 
-    // item_ids grouped by Song for convenient processing
-    SongToItemIds song_to_item_ids;
+    // TODO remove
+    SongToItems song_to_items;
 
     // one-to-many mapping from these items to the
     // Playlists they belong to

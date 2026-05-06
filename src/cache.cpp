@@ -15,8 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-// TODO use binding all for each loop for legibility and consistency
-
 namespace fs = std::filesystem;
 
 inline fs::path get_ensure_root(Platform plat) {
@@ -497,9 +495,6 @@ void remove_node(Node& node, Platform plat) {
     node = Node();
 }
 
-// TODO new sid need to registered, need to recalculate sid_len too
-// might as well load in whole cache, add node, and recalulate sid_len
-// then save entire cache again
 void create_node(const Node& node, Platform plat) {
     proto::CacheHead head;
     std::string next;
@@ -615,98 +610,94 @@ static PlaylistItems load_from_path(const fs::path& path) {
                      std::string(p.playlist().id_hash()),
                      std::string(p.playlist().items_etag())));
     }
-    for (const auto& e : proto_pl_items.song_to_item_ids_entries()) {
+    for (const auto& e : proto_pl_items.song_to_items_entries()) {
         Song s = get_song(e.song());
-        std::copy(e.item_ids().begin(), e.item_ids().end(),
-                  std::back_inserter(pl_items.song_to_item_ids[s]));
+        std::copy(e.items().begin(), e.items().end(),
+                  std::back_inserter(pl_items.song_to_items[s]));
     }
     pl_items.id = path.filename();
     return pl_items;
 }
 
-PlaylistDiff operator-(SongHashCounts lhs, SongHashCounts rhs) {
-    auto it = lhs.begin();
-    while (it != lhs.end()) {
-        const size_t& hash = it->first;
-        int& count = it->second;
-        if (!rhs.count(hash) || rhs[hash] == 0) {
-            ++it;
+PlaylistDiff operator-(const SongCounts& lhs, const SongCounts& rhs) {
+    PlaylistDiff res;
+    for (const auto& [song, cnt] : lhs) {
+        if (!rhs.count(song)) {
+            res.added[song] = cnt;
             continue;
         }
-
-        int min_count = std::min(count, rhs[hash]);
-        count -= min_count;
-        rhs[hash] -= min_count;
-
-        if (rhs[hash] == 0) {
-            rhs.erase(hash);
-        }
-        if (count == 0) {
-            it = lhs.erase(it);
-        } else {
-            ++it;
+        int cnt_diff = cnt - rhs.at(song);
+        if (cnt_diff > 0) {
+            res.added[song] = cnt_diff;
+        } else if (cnt_diff < 0) {
+            res.removed[song] = -cnt_diff;
         }
     }
-    return {std::move(lhs), std::move(rhs)};
+
+    for (const auto& [song, cnt] : rhs) {
+        if (!lhs.count(song)) {
+            res.removed[song] = cnt;
+        }
+    }
+    return res;
 }
 
 PlaylistDiff& PlaylistDiff::operator+=(const PlaylistDiff& rhs) {
-    for (const auto& [hash, count] : rhs.added) {
-        if (added.count(hash)) {
-            added[hash] = std::max(added[hash], count);
-        } else if (removed.count(hash)) {
-            if (removed[hash] < count) {
-                removed.erase(hash);
-                added[hash] = count;
-            }
-        } else {
-            added[hash] = count;
+    for (const auto& [song, cnt] : rhs.added) {
+        if (!added.count(song) && !removed.count(song)) {
+            added[song] = cnt;
+        } else if (added.count(song)) {
+            added[song] = std::max(added[song], cnt);
+        } else if (removed.count(song) && cnt >= removed[song]) {
+            // bias toward adding song when remove and added equally
+            removed.erase(song);
+            added[song] = cnt;
         }
     }
 
-    for (const auto& [hash, count] : rhs.removed) {
-        if (removed.count(hash)) {
-            removed[hash] = std::max(removed[hash], count);
-        } else if (added.count(hash)) {
-            if (added[hash] < count) {
-                added.erase(hash);
-                removed[hash] = count;
-            }
-        } else {
-            removed[hash] = count;
+    for (const auto& [song, cnt] : rhs.removed) {
+        if (!removed.count(song) && !added.count(song)) {
+            removed[song] = cnt;
+        } else if (removed.count(song)) {
+            removed[song] = std::max(removed[song], cnt);
+        } else if (added.count(song) && cnt > added[song]) {
+            added.erase(song);
+            removed[song] = cnt;
         }
     }
     return *this;
 }
 
 PlaylistDiff PlaylistDiff::operator-(const PlaylistDiff& rhs) const {
-    std::unordered_map<size_t, int> flat_diff;
-    for (const auto& [hash, count] : added) {
-        flat_diff[hash] = count;
-    }
-    for (const auto& [hash, count] : removed) {
-        flat_diff[hash] = -count;
+    std::unordered_map<Song, int> flat_diff;
+    for (const auto& [s, cnt] : added) {
+        flat_diff[s] = cnt;
     }
 
-    for (const auto& [hash, count] : rhs.added) {
-        if (!flat_diff.count(hash)) {
-            flat_diff[hash] = 0;
-        }
-        flat_diff[hash] -= count;
+    for (const auto& [s, cnt] : removed) {
+        flat_diff[s] = -cnt;
     }
-    for (const auto& [hash, count] : rhs.removed) {
-        if (!flat_diff.count(hash)) {
-            flat_diff[hash] = 0;
+
+    for (const auto& [s, cnt] : rhs.added) {
+        if (!flat_diff.count(s)) {
+            flat_diff[s] = 0;
         }
-        flat_diff[hash] += count;
+        flat_diff[s] -= cnt;
+    }
+
+    for (const auto& [s, cnt] : rhs.removed) {
+        if (!flat_diff.count(s)) {
+            flat_diff[s] = 0;
+        }
+        flat_diff[s] += cnt;
     }
 
     PlaylistDiff res;
-    for (const auto& [hash, count] : flat_diff) {
-        if (count > 0) {
-            res.added[hash] = count;
-        } else if (count < 0) {
-            res.removed[hash] = -count;
+    for (const auto& [song, cnt] : flat_diff) {
+        if (cnt > 0) {
+            res.added[song] = cnt;
+        } else if (cnt < 0) {
+            res.removed[song] = -cnt;
         }
     }
     return res;
@@ -718,9 +709,8 @@ PlaylistItems load_playlist_items(const std::string& id) {
 
 PlaylistItemsCache load_playlist_items_cache() {
     PlaylistItemsCache cache;
-    for (const auto& path :
-         fs::directory_iterator(playlist_items_cache_dir())) {
-        cache.push_front(load_from_path(path.path()));
+    for (const auto& p : fs::directory_iterator(playlist_items_cache_dir())) {
+        cache.push_front(load_from_path(p.path()));
     }
     return cache;
 }
@@ -794,12 +784,12 @@ void save_playlist_items(const PlaylistItems& pl_items) {
         pair->mutable_playlist()->set_items_etag(pl.items_etag);
     }
 
-    for (const auto& [song, item_ids] : pl_items.song_to_item_ids) {
-        auto* e = proto_items.add_song_to_item_ids_entries();
-        *e->mutable_song() = get_proto_song(song);
+    for (const auto& [song, item_ids] : pl_items.song_to_items) {
+        auto* e = proto_items.add_song_to_items_entries();
+        *(e->mutable_song()) = get_proto_song(song);
         std::copy(
             item_ids.begin(), item_ids.end(),
-            google::protobuf::RepeatedFieldBackInserter(e->mutable_item_ids()));
+            google::protobuf::RepeatedFieldBackInserter(e->mutable_items()));
     }
     auto file = ensure_bin_file<std::ofstream>(playlist_items_cache_dir() /
                                                pl_items.id);
@@ -834,8 +824,8 @@ SongCache load_song_cache(Platform plat) {
     }
 
     SongCache cache;
-    for (const auto& bucket : proto_map.buckets()) {
-        for (const auto& e : bucket.entries()) {
+    for (const auto& b : proto_map.buckets()) {
+        for (const auto& e : b.entries()) {
             cache[std::string(e.playlist_item_id())] = get_song(e.song());
         }
     }
