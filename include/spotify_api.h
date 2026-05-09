@@ -44,8 +44,9 @@ private:
     static inline const std::string spotify_auth_url =
         "https://accounts.spotify.com/api";
     static inline const std::vector<std::string> spotify_scopes = {
-        "playlist-read-private", "playlist-read-collaborative",
-        "playlist-modify-private", "playlist-modify-public"};
+        "playlist-read-private",   "playlist-read-collaborative",
+        "playlist-modify-private", "playlist-modify-public",
+        "user-library-read",       "user-follow-read"};
     static inline const std::string auth_svr_url =
         "https://accounts.spotify.com/authorize";
     static const int redirect_port = 8001;

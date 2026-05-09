@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <filesystem>
+#include <forward_list>
 #include <map>
 #include <ostream>
 #include <string>
@@ -37,11 +38,6 @@ inline std::ostream& operator<<(std::ostream& os, const Song& song) {
 }
 #endif // !NDEBUG
 
-// TODO change to PlaylistItems everywhere
-// TODO make item a vector so it can even handle position in the future
-// items grouped by Song for efficient processing
-using SongToItems = std::unordered_map<Song, std::vector<std::string>>;
-
 // https://stackoverflow.com/a/27216842
 // https://stackoverflow.com/a/20602159
 template <> struct std::hash<Song> {
@@ -55,13 +51,36 @@ template <> struct std::hash<Song> {
     }
 };
 
+/* This data is stored in PlaylistItemsCache, not PlaylistCache */
+struct PlaylistItems {
+    bool was_changed;
+    std::string etag;
+    std::unordered_map<Song, std::vector<std::string>> data;
+
+    void merge(PlaylistItems&& other) {
+        if (other.etag.empty()) {
+            auto etag = std::move(other.etag);
+            auto data = std::move(other.data);
+        } else {
+            was_changed = other.was_changed;
+            etag = std::move(other.etag);
+            data = std::move(other.data);
+        }
+    }
+};
+
 struct Playlist {
     std::string id;
     std::string id_hash;
+    std::string title;
+    // TODO remove Platform func arg when Playlist provided everywhere
+    Platform plat;
+    bool is_private;
 
     /* Stores the etag for an api response containing only this playlist. Used
      * in GET requests for caching. */
     std::string etag;
+
     /*
      * Stores the version specific id that's stored on a playlist resource
      * itself by a platform. This is Playlist.etag on Youtube and
@@ -69,99 +88,62 @@ struct Playlist {
      * changed during update to PlaylistCache.
      */
     std::string version;
-
-    std::string title;
-    bool is_private = false;
-    std::size_t num_items = 0;
-    std::string items_id;
-    std::string items_etag;
-    SongToItems items;
+    std::size_t num_items;
+    std::string tracker;
+    bool was_changed;
+    PlaylistItems items;
 
     Playlist() {}
 
     Playlist(std::string&& id, std::string&& etag, std::string&& version,
-             std::string&& title, bool is_private, std::size_t num_items)
-        : id(std::move(id)), id_hash(sha1(this->id)), etag(std::move(etag)),
-          version(std::move(version)), title(std::move(title)),
-          is_private(is_private), num_items(num_items) {}
-
-    Playlist(const std::string& id, const std::string& id_hash,
-             const std::string& items_etag)
-        : id(id), id_hash(id_hash), items_etag(items_etag) {}
-
-    Playlist(const Playlist& other) = default;
-    Playlist(Playlist&& other) = default;
-    ~Playlist() = default;
-
-    // TODO rename these operations to merge in seperate commit
-    Playlist& operator=(const Playlist& rhs) {
-        std::string tmp;
-        id = (!rhs.id.empty()) ? rhs.id : id;
-        id_hash = (!rhs.id_hash.empty()) ? rhs.id_hash : id_hash;
-        etag = (!rhs.etag.empty()) ? rhs.etag : etag;
-        version = (!rhs.version.empty()) ? rhs.version : version;
-        title = (!rhs.title.empty()) ? rhs.title : title;
-        items_id = (!rhs.items_id.empty()) ? rhs.items_id : items_id;
-        items_etag = (!rhs.items_etag.empty()) ? rhs.items_etag : items_etag;
-        is_private = (is_private == rhs.is_private) ? is_private : true;
-        num_items = rhs.num_items != 0 ? rhs.num_items : num_items;
-        items = (!rhs.items.empty()) ? rhs.items : items;
-        return *this;
+             std::string&& title, Platform plat, bool is_private,
+             size_t num_items)
+        : id(std::move(id)), etag(std::move(etag)), version(std::move(version)),
+          title(std::move(title)), plat(plat), is_private(is_private),
+          num_items(num_items) {
+        id_hash = sha1(this->id);
     }
 
-    Playlist& operator=(Playlist&& rhs) {
+    void merge(Playlist&& other) {
         std::string tmp;
-        if (!rhs.id.empty()) {
-            id = std::move(rhs.id);
+        if (!other.id.empty()) {
+            id = std::move(other.id);
         } else {
-            tmp = std::move(rhs.id);
+            tmp = std::move(other.id);
         }
 
-        if (!rhs.id_hash.empty()) {
-            id_hash = std::move(rhs.id_hash);
+        if (!other.id_hash.empty()) {
+            id_hash = std::move(other.id_hash);
         } else {
-            tmp = std::move(rhs.id_hash);
+            tmp = std::move(other.id_hash);
         }
 
-        if (!rhs.etag.empty()) {
-            etag = std::move(rhs.etag);
+        if (!other.etag.empty()) {
+            etag = std::move(other.etag);
         } else {
-            tmp = std::move(rhs.etag);
+            tmp = std::move(other.etag);
         }
 
-        if (!rhs.version.empty()) {
-            version = std::move(rhs.version);
+        if (!other.version.empty()) {
+            version = std::move(other.version);
         } else {
-            tmp = std::move(rhs.version);
+            tmp = std::move(other.version);
         }
 
-        if (!rhs.title.empty()) {
-            title = std::move(rhs.title);
+        if (!other.title.empty()) {
+            title = std::move(other.title);
         } else {
-            tmp = std::move(rhs.title);
+            tmp = std::move(other.title);
         }
 
-        if (!rhs.items_id.empty()) {
-            items_id = std::move(rhs.items_id);
+        if (!other.tracker.empty()) {
+            tracker = std::move(other.tracker);
         } else {
-            tmp = std::move(rhs.items_id);
+            tmp = std::move(other.tracker);
         }
-
-        if (!rhs.items_etag.empty()) {
-            items_etag = std::move(rhs.items_etag);
-        } else {
-            tmp = std::move(rhs.items_etag);
-        }
-
-        if (!rhs.items.empty()) {
-            items = std::move(rhs.items);
-        } else {
-            SongToItems tmp_items = std::move(rhs.items);
-        }
-
-        is_private = (is_private == rhs.is_private) ? is_private : true;
-        num_items = rhs.num_items != 0 ? rhs.num_items : num_items;
-        return *this;
+        items.merge(std::move(other.items));
+        is_private = (is_private == other.is_private) ? is_private : true;
+        num_items = other.num_items != 0 ? other.num_items : num_items;
     }
 };
 
@@ -195,7 +177,6 @@ struct PtrUnion {
 
 struct Node {
     Playlist playlist;
-    std::string items_id;
     Node* next;
     PtrUnion prev;
     bool was_changed;
@@ -216,19 +197,17 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists,
             const std::string& etag);
 void save(Head* head, Platform plat);
 void cleanup(Head* head, Platform plat);
+inline int short_id_len(Platform plat) { return playlist_tree_height(plat); }
 
 /* Providing an invalid id is undefined behaviour */
 Node load_node_id_hash(const std::string& id_hash, Platform plat);
 Node load_node_sid(const std::string& sid, Platform plat);
+// TODO no need for plat in following funcs
 void save_node(const Node& node, Platform plat);
 void remove_node(Node& node, Platform plat);
 void create_node(const Node& node, Platform plat);
 
 bool load_head(Platform plat, Head& res);
-
-/* Determine min characters of id_hash that make them all unique */
-std::size_t calculate_short_id_len(Head* head);
-void update_short_ids(Head* head, std::size_t short_id_len);
 
 template <bool is_const> struct Iterator {
     PtrUnion ptr;
@@ -324,29 +303,25 @@ struct PlaylistDiff {
     PlaylistDiff operator-(const PlaylistDiff& rhs) const;
 };
 
-/* playlist-items-cache-start */
-struct PlaylistItems {
+struct PlaylistTracker {
     std::string id;
+    // a necessary evil for now
+    std::vector<PlaylistCache::Node> nodes;
     bool was_changed;
 
-    // TODO remove
-    SongToItems song_to_items;
-
-    // one-to-many mapping from these items to the
-    // Playlists they belong to
-    std::vector<std::pair<Platform, Playlist>> tracked;
+    PlaylistTracker() : id(bin_to_hex(rndstr(16))) {}
+    PlaylistTracker(const std::string& id);
+    void untrack(Platform plat);
+    void remove();
+    void save();
 };
-PlaylistItems load_playlist_items(const std::string& id);
-void save_playlist_items(const PlaylistItems& pl_items);
-void remove_playlist_items(const std::string& id);
 
-using PlaylistItemsCache = std::forward_list<PlaylistItems>;
-PlaylistItemsCache load_playlist_items_cache();
-/* Can throw API::RequestError on failure */
-void update_playlist_items_cache(
-    PlaylistItemsCache& cache, std::shared_ptr<CURL> curl,
-    const std::vector<std::string>& plat_to_access_token);
-void save_playlist_items_cache(const PlaylistItemsCache& cache);
+struct PlaylistItemsCache {
+    std::forward_list<PlaylistTracker> trackers;
+
+    PlaylistItemsCache();
+    void save();
+};
 
 /* song-cache-start */
 using SongCache = std::unordered_map<std::string, Song>;

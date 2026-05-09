@@ -2,30 +2,6 @@ edition = "2024";
 
 package proto;
 
-message CacheHead {
-	bytes next = 1;
-	string etag = 2;
-}
-
-message Playlist {
-	string id = 1;
-	bytes id_hash = 2;
-	string etag = 3;
-	string version = 4;
-	string title = 5;
-	bool is_private = 6;
-	int32 items = 7;
-	string items_id = 9;
-	string items_etag = 10;
-}
-
-message CacheNode {
-	bytes next = 1;
-	bytes prev = 2;
-	Playlist playlist = 3;
-	string items_id = 4;
-}
-
 enum Platform {
 	YOUTUBE = 0;
 	SPOTIFY = 1;
@@ -37,24 +13,48 @@ message Song {
 	string track = 2;
 }
 
-message PairPlatformPlaylist {
-	Platform plat = 1;
-	Playlist playlist = 2;
-}
-
-message PairSongItems {
-    Song song = 1;
-    repeated string items = 2;
-}
-
 message PlaylistItems {
-	message SongCountPair {
-		Song song = 1;
-		uint32 cnt = 2;
-	}
+    message PairSongItems {
+        Song song = 1;
+        repeated string items = 2;
+    }
 
-	repeated PairPlatformPlaylist tracked = 1;
-	repeated PairSongItems song_to_items_entries = 2;
+    string id = 1;
+    string etag = 2;
+    repeated PairSongItems song_items_pairs = 3;
+}
+
+// TODO change to reflect new Playlist layout
+message Playlist {
+	string id = 1;
+	bytes id_hash = 2;
+	string title = 3;
+    Platform plat = 4;
+	bool is_private = 5;
+	string etag = 6;
+	string version = 7;
+	int32 num_items = 8;
+	string tracker = 9;
+}
+
+message CacheHead {
+	bytes next = 1;
+	string etag = 2;
+}
+
+message CacheNode {
+	bytes next = 1;
+	bytes prev = 2;
+	Playlist playlist = 3;
+}
+
+message PlaylistTracker {
+    message PairPlatformId {
+        Platform plat = 1;
+        bytes id_hash = 2;
+    }
+
+	repeated PairPlatformId plat_id_hash_pairs = 1;
 }
 
 message PlaylistItemIdToSongMap {

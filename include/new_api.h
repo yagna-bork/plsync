@@ -36,6 +36,9 @@ namespace NewSpotifyAPI {
 
 const std::string base_url = "https://api.spotify.com/v1";
 
+bool was_playlist_deleted(CURL* curl, const std::string& access_tkn,
+                          const std::string& id);
+
 bool get_playlist(CURL* curl, const std::string& access_tkn,
                   const std::string& id, const std::string& etag,
                   Playlist& res);

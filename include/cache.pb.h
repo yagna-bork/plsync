@@ -64,14 +64,6 @@ class CacheNode;
 struct CacheNodeDefaultTypeInternal;
 extern CacheNodeDefaultTypeInternal _CacheNode_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull CacheNode_class_data_;
-class PairPlatformPlaylist;
-struct PairPlatformPlaylistDefaultTypeInternal;
-extern PairPlatformPlaylistDefaultTypeInternal _PairPlatformPlaylist_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull PairPlatformPlaylist_class_data_;
-class PairSongItems;
-struct PairSongItemsDefaultTypeInternal;
-extern PairSongItemsDefaultTypeInternal _PairSongItems_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull PairSongItems_class_data_;
 class Playlist;
 struct PlaylistDefaultTypeInternal;
 extern PlaylistDefaultTypeInternal _Playlist_default_instance_;
@@ -92,10 +84,18 @@ class PlaylistItems;
 struct PlaylistItemsDefaultTypeInternal;
 extern PlaylistItemsDefaultTypeInternal _PlaylistItems_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_class_data_;
-class PlaylistItems_SongCountPair;
-struct PlaylistItems_SongCountPairDefaultTypeInternal;
-extern PlaylistItems_SongCountPairDefaultTypeInternal _PlaylistItems_SongCountPair_default_instance_;
-extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_SongCountPair_class_data_;
+class PlaylistItems_PairSongItems;
+struct PlaylistItems_PairSongItemsDefaultTypeInternal;
+extern PlaylistItems_PairSongItemsDefaultTypeInternal _PlaylistItems_PairSongItems_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_PairSongItems_class_data_;
+class PlaylistTracker;
+struct PlaylistTrackerDefaultTypeInternal;
+extern PlaylistTrackerDefaultTypeInternal _PlaylistTracker_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull PlaylistTracker_class_data_;
+class PlaylistTracker_PairPlatformId;
+struct PlaylistTracker_PairPlatformIdDefaultTypeInternal;
+extern PlaylistTracker_PairPlatformIdDefaultTypeInternal _PlaylistTracker_PairPlatformId_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull PlaylistTracker_PairPlatformId_class_data_;
 class Song;
 struct SongDefaultTypeInternal;
 extern SongDefaultTypeInternal _Song_default_instance_;
@@ -208,7 +208,7 @@ class Song final : public ::google::protobuf::Message
     return *reinterpret_cast<const Song*>(
         &_Song_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 3;
+  static constexpr int kIndexInFileMessages = 0;
   friend void swap(Song& a, Song& b) { a.Swap(&b); }
   inline void Swap(Song* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -367,6 +367,211 @@ class Song final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull Song_class_data_;
 // -------------------------------------------------------------------
 
+class PlaylistTracker_PairPlatformId final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:proto.PlaylistTracker.PairPlatformId) */ {
+ public:
+  inline PlaylistTracker_PairPlatformId() : PlaylistTracker_PairPlatformId(nullptr) {}
+  ~PlaylistTracker_PairPlatformId() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(PlaylistTracker_PairPlatformId));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR PlaylistTracker_PairPlatformId(::google::protobuf::internal::ConstantInitialized);
+
+  inline PlaylistTracker_PairPlatformId(const PlaylistTracker_PairPlatformId& from) : PlaylistTracker_PairPlatformId(nullptr, from) {}
+  inline PlaylistTracker_PairPlatformId(PlaylistTracker_PairPlatformId&& from) noexcept
+      : PlaylistTracker_PairPlatformId(nullptr, ::std::move(from)) {}
+  inline PlaylistTracker_PairPlatformId& operator=(const PlaylistTracker_PairPlatformId& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlaylistTracker_PairPlatformId& operator=(PlaylistTracker_PairPlatformId&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlaylistTracker_PairPlatformId& default_instance() {
+    return *reinterpret_cast<const PlaylistTracker_PairPlatformId*>(
+        &_PlaylistTracker_PairPlatformId_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 6;
+  friend void swap(PlaylistTracker_PairPlatformId& a, PlaylistTracker_PairPlatformId& b) { a.Swap(&b); }
+  inline void Swap(PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<PlaylistTracker_PairPlatformId>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const PlaylistTracker_PairPlatformId& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const PlaylistTracker_PairPlatformId& from) { PlaylistTracker_PairPlatformId::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "proto.PlaylistTracker.PairPlatformId"; }
+
+  explicit PlaylistTracker_PairPlatformId(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  PlaylistTracker_PairPlatformId(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PlaylistTracker_PairPlatformId& from);
+  PlaylistTracker_PairPlatformId(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PlaylistTracker_PairPlatformId&& from) noexcept
+      : PlaylistTracker_PairPlatformId(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kIdHashFieldNumber = 2,
+    kPlatFieldNumber = 1,
+  };
+  // bytes id_hash = 2;
+  bool has_id_hash() const;
+  void clear_id_hash() ;
+  ::absl::string_view id_hash() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_id_hash(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_id_hash() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_id_hash(::absl::string_view value);
+
+  public:
+  // .proto.Platform plat = 1;
+  bool has_plat() const;
+  void clear_plat() ;
+  ::proto::Platform plat() const;
+  void set_plat(::proto::Platform value);
+
+  private:
+  ::proto::Platform _internal_plat() const;
+  void _internal_set_plat(::proto::Platform value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:proto.PlaylistTracker.PairPlatformId)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   0, 0,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const PlaylistTracker_PairPlatformId& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr id_hash_;
+    int plat_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_cache_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull PlaylistTracker_PairPlatformId_class_data_;
+// -------------------------------------------------------------------
+
 class Playlist final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:proto.Playlist) */ {
  public:
@@ -422,7 +627,7 @@ class Playlist final : public ::google::protobuf::Message
     return *reinterpret_cast<const Playlist*>(
         &_Playlist_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 1;
+  static constexpr int kIndexInFileMessages = 3;
   friend void swap(Playlist& a, Playlist& b) { a.Swap(&b); }
   inline void Swap(Playlist* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -511,13 +716,13 @@ class Playlist final : public ::google::protobuf::Message
   enum : int {
     kIdFieldNumber = 1,
     kIdHashFieldNumber = 2,
-    kEtagFieldNumber = 3,
-    kVersionFieldNumber = 4,
-    kTitleFieldNumber = 5,
-    kItemsIdFieldNumber = 9,
-    kItemsEtagFieldNumber = 10,
-    kIsPrivateFieldNumber = 6,
-    kItemsFieldNumber = 7,
+    kTitleFieldNumber = 3,
+    kEtagFieldNumber = 6,
+    kVersionFieldNumber = 7,
+    kTrackerFieldNumber = 9,
+    kPlatFieldNumber = 4,
+    kIsPrivateFieldNumber = 5,
+    kNumItemsFieldNumber = 8,
   };
   // string id = 1;
   bool has_id() const;
@@ -543,31 +748,7 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_id_hash(::absl::string_view value);
 
   public:
-  // string etag = 3;
-  bool has_etag() const;
-  void clear_etag() ;
-  ::absl::string_view etag() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_etag(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_etag() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
-
-  public:
-  // string version = 4;
-  bool has_version() const;
-  void clear_version() ;
-  ::absl::string_view version() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_version(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_version() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_version(::absl::string_view value);
-
-  public:
-  // string title = 5;
+  // string title = 3;
   bool has_title() const;
   void clear_title() ;
   ::absl::string_view title() const;
@@ -579,31 +760,54 @@ class Playlist final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_title(::absl::string_view value);
 
   public:
-  // string items_id = 9;
-  bool has_items_id() const;
-  void clear_items_id() ;
-  ::absl::string_view items_id() const;
+  // string etag = 6;
+  bool has_etag() const;
+  void clear_etag() ;
+  ::absl::string_view etag() const;
   template <typename Arg_ = ::std::string&&>
-  void set_items_id(Arg_&& arg);
+  void set_etag(Arg_&& arg);
 
   private:
-  ::absl::string_view _internal_items_id() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_items_id(::absl::string_view value);
+  ::absl::string_view _internal_etag() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
 
   public:
-  // string items_etag = 10;
-  bool has_items_etag() const;
-  void clear_items_etag() ;
-  ::absl::string_view items_etag() const;
+  // string version = 7;
+  bool has_version() const;
+  void clear_version() ;
+  ::absl::string_view version() const;
   template <typename Arg_ = ::std::string&&>
-  void set_items_etag(Arg_&& arg);
+  void set_version(Arg_&& arg);
 
   private:
-  ::absl::string_view _internal_items_etag() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_items_etag(::absl::string_view value);
+  ::absl::string_view _internal_version() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_version(::absl::string_view value);
 
   public:
-  // bool is_private = 6;
+  // string tracker = 9;
+  bool has_tracker() const;
+  void clear_tracker() ;
+  ::absl::string_view tracker() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_tracker(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_tracker() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_tracker(::absl::string_view value);
+
+  public:
+  // .proto.Platform plat = 4;
+  bool has_plat() const;
+  void clear_plat() ;
+  ::proto::Platform plat() const;
+  void set_plat(::proto::Platform value);
+
+  private:
+  ::proto::Platform _internal_plat() const;
+  void _internal_set_plat(::proto::Platform value);
+
+  public:
+  // bool is_private = 5;
   bool has_is_private() const;
   void clear_is_private() ;
   bool is_private() const;
@@ -614,15 +818,15 @@ class Playlist final : public ::google::protobuf::Message
   void _internal_set_is_private(bool value);
 
   public:
-  // int32 items = 7;
-  bool has_items() const;
-  void clear_items() ;
-  ::int32_t items() const;
-  void set_items(::int32_t value);
+  // int32 num_items = 8;
+  bool has_num_items() const;
+  void clear_num_items() ;
+  ::int32_t num_items() const;
+  void set_num_items(::int32_t value);
 
   private:
-  ::int32_t _internal_items() const;
-  void _internal_set_items(::int32_t value);
+  ::int32_t _internal_num_items() const;
+  void _internal_set_num_items(::int32_t value);
 
   public:
   // @@protoc_insertion_point(class_scope:proto.Playlist)
@@ -630,7 +834,7 @@ class Playlist final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<4, 9,
-                                   0, 67,
+                                   0, 56,
                                    2>
       _table_;
 
@@ -653,13 +857,13 @@ class Playlist final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr id_;
     ::google::protobuf::internal::ArenaStringPtr id_hash_;
+    ::google::protobuf::internal::ArenaStringPtr title_;
     ::google::protobuf::internal::ArenaStringPtr etag_;
     ::google::protobuf::internal::ArenaStringPtr version_;
-    ::google::protobuf::internal::ArenaStringPtr title_;
-    ::google::protobuf::internal::ArenaStringPtr items_id_;
-    ::google::protobuf::internal::ArenaStringPtr items_etag_;
+    ::google::protobuf::internal::ArenaStringPtr tracker_;
+    int plat_;
     bool is_private_;
-    ::int32_t items_;
+    ::int32_t num_items_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -724,7 +928,7 @@ class CacheHead final : public ::google::protobuf::Message
     return *reinterpret_cast<const CacheHead*>(
         &_CacheHead_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 0;
+  static constexpr int kIndexInFileMessages = 4;
   friend void swap(CacheHead& a, CacheHead& b) { a.Swap(&b); }
   inline void Swap(CacheHead* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -875,30 +1079,30 @@ class CacheHead final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull CacheHead_class_data_;
 // -------------------------------------------------------------------
 
-class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.PlaylistItems.SongCountPair) */ {
+class PlaylistTracker final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:proto.PlaylistTracker) */ {
  public:
-  inline PlaylistItems_SongCountPair() : PlaylistItems_SongCountPair(nullptr) {}
-  ~PlaylistItems_SongCountPair() PROTOBUF_FINAL;
+  inline PlaylistTracker() : PlaylistTracker(nullptr) {}
+  ~PlaylistTracker() PROTOBUF_FINAL;
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(PlaylistItems_SongCountPair* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+  void operator delete(PlaylistTracker* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
     SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(PlaylistItems_SongCountPair));
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(PlaylistTracker));
   }
 #endif
 
   template <typename = void>
-  explicit PROTOBUF_CONSTEXPR PlaylistItems_SongCountPair(::google::protobuf::internal::ConstantInitialized);
+  explicit PROTOBUF_CONSTEXPR PlaylistTracker(::google::protobuf::internal::ConstantInitialized);
 
-  inline PlaylistItems_SongCountPair(const PlaylistItems_SongCountPair& from) : PlaylistItems_SongCountPair(nullptr, from) {}
-  inline PlaylistItems_SongCountPair(PlaylistItems_SongCountPair&& from) noexcept
-      : PlaylistItems_SongCountPair(nullptr, ::std::move(from)) {}
-  inline PlaylistItems_SongCountPair& operator=(const PlaylistItems_SongCountPair& from) {
+  inline PlaylistTracker(const PlaylistTracker& from) : PlaylistTracker(nullptr, from) {}
+  inline PlaylistTracker(PlaylistTracker&& from) noexcept
+      : PlaylistTracker(nullptr, ::std::move(from)) {}
+  inline PlaylistTracker& operator=(const PlaylistTracker& from) {
     CopyFrom(from);
     return *this;
   }
-  inline PlaylistItems_SongCountPair& operator=(PlaylistItems_SongCountPair&& from) noexcept {
+  inline PlaylistTracker& operator=(PlaylistTracker&& from) noexcept {
     if (this == &from) return *this;
     if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
       InternalSwap(&from);
@@ -926,13 +1130,13 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
   static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const PlaylistItems_SongCountPair& default_instance() {
-    return *reinterpret_cast<const PlaylistItems_SongCountPair*>(
-        &_PlaylistItems_SongCountPair_default_instance_);
+  static const PlaylistTracker& default_instance() {
+    return *reinterpret_cast<const PlaylistTracker*>(
+        &_PlaylistTracker_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
-  friend void swap(PlaylistItems_SongCountPair& a, PlaylistItems_SongCountPair& b) { a.Swap(&b); }
-  inline void Swap(PlaylistItems_SongCountPair* PROTOBUF_NONNULL other) {
+  static constexpr int kIndexInFileMessages = 7;
+  friend void swap(PlaylistTracker& a, PlaylistTracker& b) { a.Swap(&b); }
+  inline void Swap(PlaylistTracker* PROTOBUF_NONNULL other) {
     if (other == this) return;
     if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
       InternalSwap(other);
@@ -940,7 +1144,7 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
       ::google::protobuf::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(PlaylistItems_SongCountPair* PROTOBUF_NONNULL other) {
+  void UnsafeArenaSwap(PlaylistTracker* PROTOBUF_NONNULL other) {
     if (other == this) return;
     ABSL_DCHECK(GetArena() == other->GetArena());
     InternalSwap(other);
@@ -948,13 +1152,13 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
 
   // implements Message ----------------------------------------------
 
-  PlaylistItems_SongCountPair* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<PlaylistItems_SongCountPair>(arena);
+  PlaylistTracker* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<PlaylistTracker>(arena);
   }
   using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const PlaylistItems_SongCountPair& from);
+  void CopyFrom(const PlaylistTracker& from);
   using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const PlaylistItems_SongCountPair& from) { PlaylistItems_SongCountPair::MergeImpl(*this, from); }
+  void MergeFrom(const PlaylistTracker& from) { PlaylistTracker::MergeImpl(*this, from); }
 
   private:
   static void MergeImpl(::google::protobuf::MessageLite& to_msg,
@@ -990,17 +1194,17 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
   private:
   void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
   static void SharedDtor(MessageLite& self);
-  void InternalSwap(PlaylistItems_SongCountPair* PROTOBUF_NONNULL other);
+  void InternalSwap(PlaylistTracker* PROTOBUF_NONNULL other);
  private:
   template <typename T>
   friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.PlaylistItems.SongCountPair"; }
+  static ::absl::string_view FullMessageName() { return "proto.PlaylistTracker"; }
 
-  explicit PlaylistItems_SongCountPair(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  PlaylistItems_SongCountPair(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PlaylistItems_SongCountPair& from);
-  PlaylistItems_SongCountPair(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PlaylistItems_SongCountPair&& from) noexcept
-      : PlaylistItems_SongCountPair(arena) {
+  explicit PlaylistTracker(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  PlaylistTracker(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PlaylistTracker& from);
+  PlaylistTracker(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PlaylistTracker&& from) noexcept
+      : PlaylistTracker(arena) {
     *this = ::std::move(from);
   }
   const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
@@ -1014,43 +1218,34 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
 
   ::google::protobuf::Metadata GetMetadata() const;
   // nested types ----------------------------------------------------
+  using PairPlatformId = PlaylistTracker_PairPlatformId;
 
   // accessors -------------------------------------------------------
   enum : int {
-    kSongFieldNumber = 1,
-    kCntFieldNumber = 2,
+    kPlatIdHashPairsFieldNumber = 1,
   };
-  // .proto.Song song = 1;
-  bool has_song() const;
-  void clear_song() ;
-  const ::proto::Song& song() const;
-  [[nodiscard]] ::proto::Song* PROTOBUF_NULLABLE release_song();
-  ::proto::Song* PROTOBUF_NONNULL mutable_song();
-  void set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
-  void unsafe_arena_set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
-  ::proto::Song* PROTOBUF_NULLABLE unsafe_arena_release_song();
-
+  // repeated .proto.PlaylistTracker.PairPlatformId plat_id_hash_pairs = 1;
+  int plat_id_hash_pairs_size() const;
   private:
-  const ::proto::Song& _internal_song() const;
-  ::proto::Song* PROTOBUF_NONNULL _internal_mutable_song();
+  int _internal_plat_id_hash_pairs_size() const;
 
   public:
-  // uint32 cnt = 2;
-  bool has_cnt() const;
-  void clear_cnt() ;
-  ::uint32_t cnt() const;
-  void set_cnt(::uint32_t value);
+  void clear_plat_id_hash_pairs() ;
+  ::proto::PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL mutable_plat_id_hash_pairs(int index);
+  ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>* PROTOBUF_NONNULL mutable_plat_id_hash_pairs();
 
   private:
-  ::uint32_t _internal_cnt() const;
-  void _internal_set_cnt(::uint32_t value);
-
+  const ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>& _internal_plat_id_hash_pairs() const;
+  ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>* PROTOBUF_NONNULL _internal_mutable_plat_id_hash_pairs();
   public:
-  // @@protoc_insertion_point(class_scope:proto.PlaylistItems.SongCountPair)
+  const ::proto::PlaylistTracker_PairPlatformId& plat_id_hash_pairs(int index) const;
+  ::proto::PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL add_plat_id_hash_pairs();
+  const ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>& plat_id_hash_pairs() const;
+  // @@protoc_insertion_point(class_scope:proto.PlaylistTracker)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
+  static const ::google::protobuf::internal::TcParseTable<0, 1,
                                    1, 0,
                                    2>
       _table_;
@@ -1069,18 +1264,234 @@ class PlaylistItems_SongCountPair final : public ::google::protobuf::Message
     inline explicit Impl_(
         ::google::protobuf::internal::InternalVisibility visibility,
         ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const PlaylistItems_SongCountPair& from_msg);
+        const PlaylistTracker& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
-    ::proto::Song* PROTOBUF_NULLABLE song_;
-    ::uint32_t cnt_;
+    ::google::protobuf::RepeatedPtrField< ::proto::PlaylistTracker_PairPlatformId > plat_id_hash_pairs_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_cache_2eproto;
 };
 
-extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_SongCountPair_class_data_;
+extern const ::google::protobuf::internal::ClassDataFull PlaylistTracker_class_data_;
+// -------------------------------------------------------------------
+
+class PlaylistItems_PairSongItems final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:proto.PlaylistItems.PairSongItems) */ {
+ public:
+  inline PlaylistItems_PairSongItems() : PlaylistItems_PairSongItems(nullptr) {}
+  ~PlaylistItems_PairSongItems() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(PlaylistItems_PairSongItems* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(PlaylistItems_PairSongItems));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR PlaylistItems_PairSongItems(::google::protobuf::internal::ConstantInitialized);
+
+  inline PlaylistItems_PairSongItems(const PlaylistItems_PairSongItems& from) : PlaylistItems_PairSongItems(nullptr, from) {}
+  inline PlaylistItems_PairSongItems(PlaylistItems_PairSongItems&& from) noexcept
+      : PlaylistItems_PairSongItems(nullptr, ::std::move(from)) {}
+  inline PlaylistItems_PairSongItems& operator=(const PlaylistItems_PairSongItems& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlaylistItems_PairSongItems& operator=(PlaylistItems_PairSongItems&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlaylistItems_PairSongItems& default_instance() {
+    return *reinterpret_cast<const PlaylistItems_PairSongItems*>(
+        &_PlaylistItems_PairSongItems_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 1;
+  friend void swap(PlaylistItems_PairSongItems& a, PlaylistItems_PairSongItems& b) { a.Swap(&b); }
+  inline void Swap(PlaylistItems_PairSongItems* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlaylistItems_PairSongItems* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlaylistItems_PairSongItems* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<PlaylistItems_PairSongItems>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const PlaylistItems_PairSongItems& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const PlaylistItems_PairSongItems& from) { PlaylistItems_PairSongItems::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(PlaylistItems_PairSongItems* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "proto.PlaylistItems.PairSongItems"; }
+
+  explicit PlaylistItems_PairSongItems(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  PlaylistItems_PairSongItems(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PlaylistItems_PairSongItems& from);
+  PlaylistItems_PairSongItems(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PlaylistItems_PairSongItems&& from) noexcept
+      : PlaylistItems_PairSongItems(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kItemsFieldNumber = 2,
+    kSongFieldNumber = 1,
+  };
+  // repeated string items = 2;
+  int items_size() const;
+  private:
+  int _internal_items_size() const;
+
+  public:
+  void clear_items() ;
+  ::absl::string_view items(int index) const;
+  template <typename Arg_ = ::std::string&&>
+  void set_items(int index, Arg_&& value);
+  template <typename Arg_ = ::std::string&&>
+  void add_items(Arg_&& value);
+  const ::google::protobuf::RepeatedPtrField<::std::string>& items() const;
+  ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL mutable_items();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::std::string>& _internal_items() const;
+  ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL _internal_mutable_items();
+
+  public:
+  // .proto.Song song = 1;
+  bool has_song() const;
+  void clear_song() ;
+  const ::proto::Song& song() const;
+  [[nodiscard]] ::proto::Song* PROTOBUF_NULLABLE release_song();
+  ::proto::Song* PROTOBUF_NONNULL mutable_song();
+  void set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
+  ::proto::Song* PROTOBUF_NULLABLE unsafe_arena_release_song();
+
+  private:
+  const ::proto::Song& _internal_song() const;
+  ::proto::Song* PROTOBUF_NONNULL _internal_mutable_song();
+
+  public:
+  // @@protoc_insertion_point(class_scope:proto.PlaylistItems.PairSongItems)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   1, 47,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const PlaylistItems_PairSongItems& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField<::std::string> items_;
+    ::proto::Song* PROTOBUF_NULLABLE song_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_cache_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull PlaylistItems_PairSongItems_class_data_;
 // -------------------------------------------------------------------
 
 class PlaylistItemIdToSongMap_Entry final : public ::google::protobuf::Message
@@ -1292,431 +1703,6 @@ class PlaylistItemIdToSongMap_Entry final : public ::google::protobuf::Message
 extern const ::google::protobuf::internal::ClassDataFull PlaylistItemIdToSongMap_Entry_class_data_;
 // -------------------------------------------------------------------
 
-class PairSongItems final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.PairSongItems) */ {
- public:
-  inline PairSongItems() : PairSongItems(nullptr) {}
-  ~PairSongItems() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(PairSongItems* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(PairSongItems));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR PairSongItems(::google::protobuf::internal::ConstantInitialized);
-
-  inline PairSongItems(const PairSongItems& from) : PairSongItems(nullptr, from) {}
-  inline PairSongItems(PairSongItems&& from) noexcept
-      : PairSongItems(nullptr, ::std::move(from)) {}
-  inline PairSongItems& operator=(const PairSongItems& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline PairSongItems& operator=(PairSongItems&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const PairSongItems& default_instance() {
-    return *reinterpret_cast<const PairSongItems*>(
-        &_PairSongItems_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 5;
-  friend void swap(PairSongItems& a, PairSongItems& b) { a.Swap(&b); }
-  inline void Swap(PairSongItems* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(PairSongItems* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  PairSongItems* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<PairSongItems>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const PairSongItems& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const PairSongItems& from) { PairSongItems::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
-                        const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(PairSongItems* PROTOBUF_NONNULL other);
- private:
-  template <typename T>
-  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.PairSongItems"; }
-
-  explicit PairSongItems(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  PairSongItems(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PairSongItems& from);
-  PairSongItems(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PairSongItems&& from) noexcept
-      : PairSongItems(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
-  static void* PROTOBUF_NONNULL PlacementNew_(
-      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static constexpr auto InternalNewImpl_();
-
- public:
-  static constexpr auto InternalGenerateClassData_();
-
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kItemsFieldNumber = 2,
-    kSongFieldNumber = 1,
-  };
-  // repeated string items = 2;
-  int items_size() const;
-  private:
-  int _internal_items_size() const;
-
-  public:
-  void clear_items() ;
-  ::absl::string_view items(int index) const;
-  template <typename Arg_ = ::std::string&&>
-  void set_items(int index, Arg_&& value);
-  template <typename Arg_ = ::std::string&&>
-  void add_items(Arg_&& value);
-  const ::google::protobuf::RepeatedPtrField<::std::string>& items() const;
-  ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL mutable_items();
-
-  private:
-  const ::google::protobuf::RepeatedPtrField<::std::string>& _internal_items() const;
-  ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL _internal_mutable_items();
-
-  public:
-  // .proto.Song song = 1;
-  bool has_song() const;
-  void clear_song() ;
-  const ::proto::Song& song() const;
-  [[nodiscard]] ::proto::Song* PROTOBUF_NULLABLE release_song();
-  ::proto::Song* PROTOBUF_NONNULL mutable_song();
-  void set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
-  void unsafe_arena_set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value);
-  ::proto::Song* PROTOBUF_NULLABLE unsafe_arena_release_song();
-
-  private:
-  const ::proto::Song& _internal_song() const;
-  ::proto::Song* PROTOBUF_NONNULL _internal_mutable_song();
-
-  public:
-  // @@protoc_insertion_point(class_scope:proto.PairSongItems)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   1, 33,
-                                   2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const PairSongItems& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::RepeatedPtrField<::std::string> items_;
-    ::proto::Song* PROTOBUF_NULLABLE song_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_cache_2eproto;
-};
-
-extern const ::google::protobuf::internal::ClassDataFull PairSongItems_class_data_;
-// -------------------------------------------------------------------
-
-class PairPlatformPlaylist final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:proto.PairPlatformPlaylist) */ {
- public:
-  inline PairPlatformPlaylist() : PairPlatformPlaylist(nullptr) {}
-  ~PairPlatformPlaylist() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(PairPlatformPlaylist* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(PairPlatformPlaylist));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR PairPlatformPlaylist(::google::protobuf::internal::ConstantInitialized);
-
-  inline PairPlatformPlaylist(const PairPlatformPlaylist& from) : PairPlatformPlaylist(nullptr, from) {}
-  inline PairPlatformPlaylist(PairPlatformPlaylist&& from) noexcept
-      : PairPlatformPlaylist(nullptr, ::std::move(from)) {}
-  inline PairPlatformPlaylist& operator=(const PairPlatformPlaylist& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline PairPlatformPlaylist& operator=(PairPlatformPlaylist&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const PairPlatformPlaylist& default_instance() {
-    return *reinterpret_cast<const PairPlatformPlaylist*>(
-        &_PairPlatformPlaylist_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 4;
-  friend void swap(PairPlatformPlaylist& a, PairPlatformPlaylist& b) { a.Swap(&b); }
-  inline void Swap(PairPlatformPlaylist* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(PairPlatformPlaylist* PROTOBUF_NONNULL other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  PairPlatformPlaylist* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<PairPlatformPlaylist>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const PairPlatformPlaylist& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const PairPlatformPlaylist& from) { PairPlatformPlaylist::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
-                        const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
-      ::uint8_t* PROTOBUF_NONNULL target,
-      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(PairPlatformPlaylist* PROTOBUF_NONNULL other);
- private:
-  template <typename T>
-  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "proto.PairPlatformPlaylist"; }
-
-  explicit PairPlatformPlaylist(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  PairPlatformPlaylist(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const PairPlatformPlaylist& from);
-  PairPlatformPlaylist(
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, PairPlatformPlaylist&& from) noexcept
-      : PairPlatformPlaylist(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
-  static void* PROTOBUF_NONNULL PlacementNew_(
-      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
-      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-  static constexpr auto InternalNewImpl_();
-
- public:
-  static constexpr auto InternalGenerateClassData_();
-
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kPlaylistFieldNumber = 2,
-    kPlatFieldNumber = 1,
-  };
-  // .proto.Playlist playlist = 2;
-  bool has_playlist() const;
-  void clear_playlist() ;
-  const ::proto::Playlist& playlist() const;
-  [[nodiscard]] ::proto::Playlist* PROTOBUF_NULLABLE release_playlist();
-  ::proto::Playlist* PROTOBUF_NONNULL mutable_playlist();
-  void set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLABLE value);
-  void unsafe_arena_set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLABLE value);
-  ::proto::Playlist* PROTOBUF_NULLABLE unsafe_arena_release_playlist();
-
-  private:
-  const ::proto::Playlist& _internal_playlist() const;
-  ::proto::Playlist* PROTOBUF_NONNULL _internal_mutable_playlist();
-
-  public:
-  // .proto.Platform plat = 1;
-  bool has_plat() const;
-  void clear_plat() ;
-  ::proto::Platform plat() const;
-  void set_plat(::proto::Platform value);
-
-  private:
-  ::proto::Platform _internal_plat() const;
-  void _internal_set_plat(::proto::Platform value);
-
-  public:
-  // @@protoc_insertion_point(class_scope:proto.PairPlatformPlaylist)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   1, 0,
-                                   2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
-    inline explicit Impl_(
-        ::google::protobuf::internal::InternalVisibility visibility,
-        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
-        const PairPlatformPlaylist& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::proto::Playlist* PROTOBUF_NULLABLE playlist_;
-    int plat_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_cache_2eproto;
-};
-
-extern const ::google::protobuf::internal::ClassDataFull PairPlatformPlaylist_class_data_;
-// -------------------------------------------------------------------
-
 class CacheNode final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:proto.CacheNode) */ {
  public:
@@ -1772,7 +1758,7 @@ class CacheNode final : public ::google::protobuf::Message
     return *reinterpret_cast<const CacheNode*>(
         &_CacheNode_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 2;
+  static constexpr int kIndexInFileMessages = 5;
   friend void swap(CacheNode& a, CacheNode& b) { a.Swap(&b); }
   inline void Swap(CacheNode* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1861,7 +1847,6 @@ class CacheNode final : public ::google::protobuf::Message
   enum : int {
     kNextFieldNumber = 1,
     kPrevFieldNumber = 2,
-    kItemsIdFieldNumber = 4,
     kPlaylistFieldNumber = 3,
   };
   // bytes next = 1;
@@ -1888,18 +1873,6 @@ class CacheNode final : public ::google::protobuf::Message
   PROTOBUF_ALWAYS_INLINE void _internal_set_prev(::absl::string_view value);
 
   public:
-  // string items_id = 4;
-  bool has_items_id() const;
-  void clear_items_id() ;
-  ::absl::string_view items_id() const;
-  template <typename Arg_ = ::std::string&&>
-  void set_items_id(Arg_&& arg);
-
-  private:
-  ::absl::string_view _internal_items_id() const;
-  PROTOBUF_ALWAYS_INLINE void _internal_set_items_id(::absl::string_view value);
-
-  public:
   // .proto.Playlist playlist = 3;
   bool has_playlist() const;
   void clear_playlist() ;
@@ -1919,8 +1892,8 @@ class CacheNode final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   1, 32,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   1, 0,
                                    2>
       _table_;
 
@@ -1943,7 +1916,6 @@ class CacheNode final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr next_;
     ::google::protobuf::internal::ArenaStringPtr prev_;
-    ::google::protobuf::internal::ArenaStringPtr items_id_;
     ::proto::Playlist* PROTOBUF_NULLABLE playlist_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -2009,7 +1981,7 @@ class PlaylistItems final : public ::google::protobuf::Message
     return *reinterpret_cast<const PlaylistItems*>(
         &_PlaylistItems_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 7;
+  static constexpr int kIndexInFileMessages = 2;
   friend void swap(PlaylistItems& a, PlaylistItems& b) { a.Swap(&b); }
   inline void Swap(PlaylistItems* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2093,53 +2065,61 @@ class PlaylistItems final : public ::google::protobuf::Message
 
   ::google::protobuf::Metadata GetMetadata() const;
   // nested types ----------------------------------------------------
-  using SongCountPair = PlaylistItems_SongCountPair;
+  using PairSongItems = PlaylistItems_PairSongItems;
 
   // accessors -------------------------------------------------------
   enum : int {
-    kTrackedFieldNumber = 1,
-    kSongToItemsEntriesFieldNumber = 2,
+    kSongItemsPairsFieldNumber = 3,
+    kIdFieldNumber = 1,
+    kEtagFieldNumber = 2,
   };
-  // repeated .proto.PairPlatformPlaylist tracked = 1;
-  int tracked_size() const;
+  // repeated .proto.PlaylistItems.PairSongItems song_items_pairs = 3;
+  int song_items_pairs_size() const;
   private:
-  int _internal_tracked_size() const;
+  int _internal_song_items_pairs_size() const;
 
   public:
-  void clear_tracked() ;
-  ::proto::PairPlatformPlaylist* PROTOBUF_NONNULL mutable_tracked(int index);
-  ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>* PROTOBUF_NONNULL mutable_tracked();
+  void clear_song_items_pairs() ;
+  ::proto::PlaylistItems_PairSongItems* PROTOBUF_NONNULL mutable_song_items_pairs(int index);
+  ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>* PROTOBUF_NONNULL mutable_song_items_pairs();
 
   private:
-  const ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>& _internal_tracked() const;
-  ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>* PROTOBUF_NONNULL _internal_mutable_tracked();
+  const ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>& _internal_song_items_pairs() const;
+  ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>* PROTOBUF_NONNULL _internal_mutable_song_items_pairs();
   public:
-  const ::proto::PairPlatformPlaylist& tracked(int index) const;
-  ::proto::PairPlatformPlaylist* PROTOBUF_NONNULL add_tracked();
-  const ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>& tracked() const;
-  // repeated .proto.PairSongItems song_to_items_entries = 2;
-  int song_to_items_entries_size() const;
-  private:
-  int _internal_song_to_items_entries_size() const;
-
-  public:
-  void clear_song_to_items_entries() ;
-  ::proto::PairSongItems* PROTOBUF_NONNULL mutable_song_to_items_entries(int index);
-  ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>* PROTOBUF_NONNULL mutable_song_to_items_entries();
+  const ::proto::PlaylistItems_PairSongItems& song_items_pairs(int index) const;
+  ::proto::PlaylistItems_PairSongItems* PROTOBUF_NONNULL add_song_items_pairs();
+  const ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>& song_items_pairs() const;
+  // string id = 1;
+  bool has_id() const;
+  void clear_id() ;
+  ::absl::string_view id() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_id(Arg_&& arg);
 
   private:
-  const ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>& _internal_song_to_items_entries() const;
-  ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>* PROTOBUF_NONNULL _internal_mutable_song_to_items_entries();
+  ::absl::string_view _internal_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_id(::absl::string_view value);
+
   public:
-  const ::proto::PairSongItems& song_to_items_entries(int index) const;
-  ::proto::PairSongItems* PROTOBUF_NONNULL add_song_to_items_entries();
-  const ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>& song_to_items_entries() const;
+  // string etag = 2;
+  bool has_etag() const;
+  void clear_etag() ;
+  ::absl::string_view etag() const;
+  template <typename Arg_ = ::std::string&&>
+  void set_etag(Arg_&& arg);
+
+  private:
+  ::absl::string_view _internal_etag() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_etag(::absl::string_view value);
+
+  public:
   // @@protoc_insertion_point(class_scope:proto.PlaylistItems)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
-                                   2, 0,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   1, 34,
                                    2>
       _table_;
 
@@ -2160,8 +2140,9 @@ class PlaylistItems final : public ::google::protobuf::Message
         const PlaylistItems& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::RepeatedPtrField< ::proto::PairPlatformPlaylist > tracked_;
-    ::google::protobuf::RepeatedPtrField< ::proto::PairSongItems > song_to_items_entries_;
+    ::google::protobuf::RepeatedPtrField< ::proto::PlaylistItems_PairSongItems > song_items_pairs_;
+    ::google::protobuf::internal::ArenaStringPtr id_;
+    ::google::protobuf::internal::ArenaStringPtr etag_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -2580,571 +2561,6 @@ extern const ::google::protobuf::internal::ClassDataFull PlaylistItemIdToSongMap
 #endif  // __GNUC__
 // -------------------------------------------------------------------
 
-// CacheHead
-
-// bytes next = 1;
-inline bool CacheHead::has_next() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  return value;
-}
-inline void CacheHead::clear_next() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.next_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::absl::string_view CacheHead::next() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheHead.next)
-  return _internal_next();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void CacheHead::set_next(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.next_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.CacheHead.next)
-}
-inline ::absl::string_view CacheHead::_internal_next() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.next_.Get();
-}
-inline void CacheHead::_internal_set_next(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.next_.Set(value, GetArena());
-}
-
-// string etag = 2;
-inline bool CacheHead::has_etag() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  return value;
-}
-inline void CacheHead::clear_etag() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.etag_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::absl::string_view CacheHead::etag() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheHead.etag)
-  return _internal_etag();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void CacheHead::set_etag(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.CacheHead.etag)
-}
-inline ::absl::string_view CacheHead::_internal_etag() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.etag_.Get();
-}
-inline void CacheHead::_internal_set_etag(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.etag_.Set(value, GetArena());
-}
-
-// -------------------------------------------------------------------
-
-// Playlist
-
-// string id = 1;
-inline bool Playlist::has_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  return value;
-}
-inline void Playlist::clear_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::absl::string_view Playlist::id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.id)
-  return _internal_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.id)
-}
-inline ::absl::string_view Playlist::_internal_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.id_.Get();
-}
-inline void Playlist::_internal_set_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.id_.Set(value, GetArena());
-}
-
-// bytes id_hash = 2;
-inline bool Playlist::has_id_hash() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  return value;
-}
-inline void Playlist::clear_id_hash() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.id_hash_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::absl::string_view Playlist::id_hash() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.id_hash)
-  return _internal_id_hash();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_id_hash(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.id_hash_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.id_hash)
-}
-inline ::absl::string_view Playlist::_internal_id_hash() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.id_hash_.Get();
-}
-inline void Playlist::_internal_set_id_hash(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.id_hash_.Set(value, GetArena());
-}
-
-// string etag = 3;
-inline bool Playlist::has_etag() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
-  return value;
-}
-inline void Playlist::clear_etag() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.etag_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
-}
-inline ::absl::string_view Playlist::etag() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.etag)
-  return _internal_etag();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_etag(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.etag)
-}
-inline ::absl::string_view Playlist::_internal_etag() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.etag_.Get();
-}
-inline void Playlist::_internal_set_etag(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.etag_.Set(value, GetArena());
-}
-
-// string version = 4;
-inline bool Playlist::has_version() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
-  return value;
-}
-inline void Playlist::clear_version() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.version_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
-}
-inline ::absl::string_view Playlist::version() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.version)
-  return _internal_version();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_version(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  _impl_.version_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.version)
-}
-inline ::absl::string_view Playlist::_internal_version() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.version_.Get();
-}
-inline void Playlist::_internal_set_version(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  _impl_.version_.Set(value, GetArena());
-}
-
-// string title = 5;
-inline bool Playlist::has_title() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
-  return value;
-}
-inline void Playlist::clear_title() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.title_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
-}
-inline ::absl::string_view Playlist::title() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.title)
-  return _internal_title();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_title(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
-  _impl_.title_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.title)
-}
-inline ::absl::string_view Playlist::_internal_title() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.title_.Get();
-}
-inline void Playlist::_internal_set_title(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
-  _impl_.title_.Set(value, GetArena());
-}
-
-// bool is_private = 6;
-inline bool Playlist::has_is_private() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
-  return value;
-}
-inline void Playlist::clear_is_private() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.is_private_ = false;
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
-}
-inline bool Playlist::is_private() const {
-  // @@protoc_insertion_point(field_get:proto.Playlist.is_private)
-  return _internal_is_private();
-}
-inline void Playlist::set_is_private(bool value) {
-  _internal_set_is_private(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
-  // @@protoc_insertion_point(field_set:proto.Playlist.is_private)
-}
-inline bool Playlist::_internal_is_private() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.is_private_;
-}
-inline void Playlist::_internal_set_is_private(bool value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.is_private_ = value;
-}
-
-// int32 items = 7;
-inline bool Playlist::has_items() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
-  return value;
-}
-inline void Playlist::clear_items() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_ = 0;
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000100U);
-}
-inline ::int32_t Playlist::items() const {
-  // @@protoc_insertion_point(field_get:proto.Playlist.items)
-  return _internal_items();
-}
-inline void Playlist::set_items(::int32_t value) {
-  _internal_set_items(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
-  // @@protoc_insertion_point(field_set:proto.Playlist.items)
-}
-inline ::int32_t Playlist::_internal_items() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.items_;
-}
-inline void Playlist::_internal_set_items(::int32_t value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_ = value;
-}
-
-// string items_id = 9;
-inline bool Playlist::has_items_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
-  return value;
-}
-inline void Playlist::clear_items_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
-}
-inline ::absl::string_view Playlist::items_id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.items_id)
-  return _internal_items_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_items_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
-  _impl_.items_id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.items_id)
-}
-inline ::absl::string_view Playlist::_internal_items_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.items_id_.Get();
-}
-inline void Playlist::_internal_set_items_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
-  _impl_.items_id_.Set(value, GetArena());
-}
-
-// string items_etag = 10;
-inline bool Playlist::has_items_etag() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
-  return value;
-}
-inline void Playlist::clear_items_etag() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_etag_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
-}
-inline ::absl::string_view Playlist::items_etag() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.Playlist.items_etag)
-  return _internal_items_etag();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void Playlist::set_items_etag(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
-  _impl_.items_etag_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.Playlist.items_etag)
-}
-inline ::absl::string_view Playlist::_internal_items_etag() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.items_etag_.Get();
-}
-inline void Playlist::_internal_set_items_etag(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
-  _impl_.items_etag_.Set(value, GetArena());
-}
-
-// -------------------------------------------------------------------
-
-// CacheNode
-
-// bytes next = 1;
-inline bool CacheNode::has_next() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  return value;
-}
-inline void CacheNode::clear_next() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.next_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::absl::string_view CacheNode::next() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheNode.next)
-  return _internal_next();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void CacheNode::set_next(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.next_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.CacheNode.next)
-}
-inline ::absl::string_view CacheNode::_internal_next() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.next_.Get();
-}
-inline void CacheNode::_internal_set_next(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  _impl_.next_.Set(value, GetArena());
-}
-
-// bytes prev = 2;
-inline bool CacheNode::has_prev() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  return value;
-}
-inline void CacheNode::clear_prev() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.prev_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::absl::string_view CacheNode::prev() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheNode.prev)
-  return _internal_prev();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void CacheNode::set_prev(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.prev_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.CacheNode.prev)
-}
-inline ::absl::string_view CacheNode::_internal_prev() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.prev_.Get();
-}
-inline void CacheNode::_internal_set_prev(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  _impl_.prev_.Set(value, GetArena());
-}
-
-// .proto.Playlist playlist = 3;
-inline bool CacheNode::has_playlist() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
-  PROTOBUF_ASSUME(!value || _impl_.playlist_ != nullptr);
-  return value;
-}
-inline void CacheNode::clear_playlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.playlist_ != nullptr) _impl_.playlist_->Clear();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
-}
-inline const ::proto::Playlist& CacheNode::_internal_playlist() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  const ::proto::Playlist* p = _impl_.playlist_;
-  return p != nullptr ? *p : reinterpret_cast<const ::proto::Playlist&>(::proto::_Playlist_default_instance_);
-}
-inline const ::proto::Playlist& CacheNode::playlist() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheNode.playlist)
-  return _internal_playlist();
-}
-inline void CacheNode::unsafe_arena_set_allocated_playlist(
-    ::proto::Playlist* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (GetArena() == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.playlist_);
-  }
-  _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
-  if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.CacheNode.playlist)
-}
-inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::release_playlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
-  ::proto::Playlist* released = _impl_.playlist_;
-  _impl_.playlist_ = nullptr;
-  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
-    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
-    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    if (GetArena() == nullptr) {
-      delete old;
-    }
-  } else {
-    if (GetArena() != nullptr) {
-      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    }
-  }
-  return released;
-}
-inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::unsafe_arena_release_playlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:proto.CacheNode.playlist)
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
-  ::proto::Playlist* temp = _impl_.playlist_;
-  _impl_.playlist_ = nullptr;
-  return temp;
-}
-inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::_internal_mutable_playlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.playlist_ == nullptr) {
-    auto* p = ::google::protobuf::Message::DefaultConstruct<::proto::Playlist>(GetArena());
-    _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(p);
-  }
-  return _impl_.playlist_;
-}
-inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::mutable_playlist()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  ::proto::Playlist* _msg = _internal_mutable_playlist();
-  // @@protoc_insertion_point(field_mutable:proto.CacheNode.playlist)
-  return _msg;
-}
-inline void CacheNode::set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (message_arena == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.playlist_);
-  }
-
-  if (value != nullptr) {
-    ::google::protobuf::Arena* submessage_arena = value->GetArena();
-    if (message_arena != submessage_arena) {
-      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
-    }
-    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
-  }
-
-  _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
-  // @@protoc_insertion_point(field_set_allocated:proto.CacheNode.playlist)
-}
-
-// string items_id = 4;
-inline bool CacheNode::has_items_id() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
-  return value;
-}
-inline void CacheNode::clear_items_id() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_id_.ClearToEmpty();
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
-}
-inline ::absl::string_view CacheNode::items_id() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.CacheNode.items_id)
-  return _internal_items_id();
-}
-template <typename Arg_>
-PROTOBUF_ALWAYS_INLINE void CacheNode::set_items_id(Arg_&& arg) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.items_id_.Set(static_cast<Arg_&&>(arg), GetArena());
-  // @@protoc_insertion_point(field_set:proto.CacheNode.items_id)
-}
-inline ::absl::string_view CacheNode::_internal_items_id() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.items_id_.Get();
-}
-inline void CacheNode::_internal_set_items_id(::absl::string_view value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
-  _impl_.items_id_.Set(value, GetArena());
-}
-
-// -------------------------------------------------------------------
-
 // Song
 
 // repeated string artists = 1;
@@ -3238,59 +2654,740 @@ inline void Song::_internal_set_track(::absl::string_view value) {
 
 // -------------------------------------------------------------------
 
-// PairPlatformPlaylist
+// PlaylistItems_PairSongItems
 
-// .proto.Platform plat = 1;
-inline bool PairPlatformPlaylist::has_plat() const {
+// .proto.Song song = 1;
+inline bool PlaylistItems_PairSongItems::has_song() const {
   bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  PROTOBUF_ASSUME(!value || _impl_.song_ != nullptr);
   return value;
 }
-inline void PairPlatformPlaylist::clear_plat() {
+inline void PlaylistItems_PairSongItems::clear_song() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.plat_ = 0;
+  if (_impl_.song_ != nullptr) _impl_.song_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
                   0x00000002U);
 }
-inline ::proto::Platform PairPlatformPlaylist::plat() const {
-  // @@protoc_insertion_point(field_get:proto.PairPlatformPlaylist.plat)
+inline const ::proto::Song& PlaylistItems_PairSongItems::_internal_song() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::proto::Song* p = _impl_.song_;
+  return p != nullptr ? *p : reinterpret_cast<const ::proto::Song&>(::proto::_Song_default_instance_);
+}
+inline const ::proto::Song& PlaylistItems_PairSongItems::song() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistItems.PairSongItems.song)
+  return _internal_song();
+}
+inline void PlaylistItems_PairSongItems::unsafe_arena_set_allocated_song(
+    ::proto::Song* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
+  }
+  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.PlaylistItems.PairSongItems.song)
+}
+inline ::proto::Song* PROTOBUF_NULLABLE PlaylistItems_PairSongItems::release_song() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::proto::Song* released = _impl_.song_;
+  _impl_.song_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::proto::Song* PROTOBUF_NULLABLE PlaylistItems_PairSongItems::unsafe_arena_release_song() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:proto.PlaylistItems.PairSongItems.song)
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::proto::Song* temp = _impl_.song_;
+  _impl_.song_ = nullptr;
+  return temp;
+}
+inline ::proto::Song* PROTOBUF_NONNULL PlaylistItems_PairSongItems::_internal_mutable_song() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.song_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::proto::Song>(GetArena());
+    _impl_.song_ = reinterpret_cast<::proto::Song*>(p);
+  }
+  return _impl_.song_;
+}
+inline ::proto::Song* PROTOBUF_NONNULL PlaylistItems_PairSongItems::mutable_song()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::proto::Song* _msg = _internal_mutable_song();
+  // @@protoc_insertion_point(field_mutable:proto.PlaylistItems.PairSongItems.song)
+  return _msg;
+}
+inline void PlaylistItems_PairSongItems::set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = value->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+
+  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
+  // @@protoc_insertion_point(field_set_allocated:proto.PlaylistItems.PairSongItems.song)
+}
+
+// repeated string items = 2;
+inline int PlaylistItems_PairSongItems::_internal_items_size() const {
+  return _internal_items().size();
+}
+inline int PlaylistItems_PairSongItems::items_size() const {
+  return _internal_items_size();
+}
+inline void PlaylistItems_PairSongItems::clear_items() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.items_.Clear();
+  ClearHasBitForRepeated(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::absl::string_view PlaylistItems_PairSongItems::items(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistItems.PairSongItems.items)
+  return _internal_items().Get(index);
+}
+template <typename Arg_>
+inline void PlaylistItems_PairSongItems::set_items(int index, Arg_&& value) {
+  ::google::protobuf::internal::AssignToString(*_internal_mutable_items()->Mutable(index), ::std::forward<Arg_>(value) );
+  // @@protoc_insertion_point(field_set:proto.PlaylistItems.PairSongItems.items)
+}
+template <typename Arg_>
+inline void PlaylistItems_PairSongItems::add_items(Arg_&& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::google::protobuf::internal::AddToRepeatedPtrField(::google::protobuf::MessageLite::internal_visibility(),
+                               GetArena(),
+                               *_internal_mutable_items(),
+                               ::std::forward<Arg_>(value) );
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_add:proto.PlaylistItems.PairSongItems.items)
+}
+inline const ::google::protobuf::RepeatedPtrField<::std::string>& PlaylistItems_PairSongItems::items()
+    const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:proto.PlaylistItems.PairSongItems.items)
+  return _internal_items();
+}
+inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
+PlaylistItems_PairSongItems::mutable_items() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_mutable_list:proto.PlaylistItems.PairSongItems.items)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_items();
+}
+inline const ::google::protobuf::RepeatedPtrField<::std::string>&
+PlaylistItems_PairSongItems::_internal_items() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.items_;
+}
+inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
+PlaylistItems_PairSongItems::_internal_mutable_items() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.items_;
+}
+
+// -------------------------------------------------------------------
+
+// PlaylistItems
+
+// string id = 1;
+inline bool PlaylistItems::has_id() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void PlaylistItems::clear_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view PlaylistItems::id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistItems.id)
+  return _internal_id();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void PlaylistItems::set_id(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.id_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.PlaylistItems.id)
+}
+inline ::absl::string_view PlaylistItems::_internal_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_.Get();
+}
+inline void PlaylistItems::_internal_set_id(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.id_.Set(value, GetArena());
+}
+
+// string etag = 2;
+inline bool PlaylistItems::has_etag() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  return value;
+}
+inline void PlaylistItems::clear_etag() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.etag_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::absl::string_view PlaylistItems::etag() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistItems.etag)
+  return _internal_etag();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void PlaylistItems::set_etag(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.PlaylistItems.etag)
+}
+inline ::absl::string_view PlaylistItems::_internal_etag() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.etag_.Get();
+}
+inline void PlaylistItems::_internal_set_etag(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.etag_.Set(value, GetArena());
+}
+
+// repeated .proto.PlaylistItems.PairSongItems song_items_pairs = 3;
+inline int PlaylistItems::_internal_song_items_pairs_size() const {
+  return _internal_song_items_pairs().size();
+}
+inline int PlaylistItems::song_items_pairs_size() const {
+  return _internal_song_items_pairs_size();
+}
+inline void PlaylistItems::clear_song_items_pairs() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.song_items_pairs_.Clear();
+  ClearHasBitForRepeated(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::proto::PlaylistItems_PairSongItems* PROTOBUF_NONNULL PlaylistItems::mutable_song_items_pairs(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:proto.PlaylistItems.song_items_pairs)
+  return _internal_mutable_song_items_pairs()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>* PROTOBUF_NONNULL PlaylistItems::mutable_song_items_pairs()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_mutable_list:proto.PlaylistItems.song_items_pairs)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_song_items_pairs();
+}
+inline const ::proto::PlaylistItems_PairSongItems& PlaylistItems::song_items_pairs(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistItems.song_items_pairs)
+  return _internal_song_items_pairs().Get(index);
+}
+inline ::proto::PlaylistItems_PairSongItems* PROTOBUF_NONNULL PlaylistItems::add_song_items_pairs()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::proto::PlaylistItems_PairSongItems* _add =
+      _internal_mutable_song_items_pairs()->InternalAddWithArena(
+          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_add:proto.PlaylistItems.song_items_pairs)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>& PlaylistItems::song_items_pairs() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:proto.PlaylistItems.song_items_pairs)
+  return _internal_song_items_pairs();
+}
+inline const ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>&
+PlaylistItems::_internal_song_items_pairs() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.song_items_pairs_;
+}
+inline ::google::protobuf::RepeatedPtrField<::proto::PlaylistItems_PairSongItems>* PROTOBUF_NONNULL
+PlaylistItems::_internal_mutable_song_items_pairs() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.song_items_pairs_;
+}
+
+// -------------------------------------------------------------------
+
+// Playlist
+
+// string id = 1;
+inline bool Playlist::has_id() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
+  return value;
+}
+inline void Playlist::clear_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::absl::string_view Playlist::id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.id)
+  return _internal_id();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_id(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.id_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.id)
+}
+inline ::absl::string_view Playlist::_internal_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_.Get();
+}
+inline void Playlist::_internal_set_id(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.id_.Set(value, GetArena());
+}
+
+// bytes id_hash = 2;
+inline bool Playlist::has_id_hash() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void Playlist::clear_id_hash() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_hash_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view Playlist::id_hash() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.id_hash)
+  return _internal_id_hash();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_id_hash(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.id_hash_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.id_hash)
+}
+inline ::absl::string_view Playlist::_internal_id_hash() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_hash_.Get();
+}
+inline void Playlist::_internal_set_id_hash(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.id_hash_.Set(value, GetArena());
+}
+
+// string title = 3;
+inline bool Playlist::has_title() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  return value;
+}
+inline void Playlist::clear_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.title_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::absl::string_view Playlist::title() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.title)
+  return _internal_title();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_title(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.title_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.title)
+}
+inline ::absl::string_view Playlist::_internal_title() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.title_.Get();
+}
+inline void Playlist::_internal_set_title(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.title_.Set(value, GetArena());
+}
+
+// .proto.Platform plat = 4;
+inline bool Playlist::has_plat() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
+  return value;
+}
+inline void Playlist::clear_plat() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.plat_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000040U);
+}
+inline ::proto::Platform Playlist::plat() const {
+  // @@protoc_insertion_point(field_get:proto.Playlist.plat)
   return _internal_plat();
 }
-inline void PairPlatformPlaylist::set_plat(::proto::Platform value) {
+inline void Playlist::set_plat(::proto::Platform value) {
   _internal_set_plat(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  // @@protoc_insertion_point(field_set:proto.PairPlatformPlaylist.plat)
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  // @@protoc_insertion_point(field_set:proto.Playlist.plat)
 }
-inline ::proto::Platform PairPlatformPlaylist::_internal_plat() const {
+inline ::proto::Platform Playlist::_internal_plat() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return static_cast<::proto::Platform>(_impl_.plat_);
 }
-inline void PairPlatformPlaylist::_internal_set_plat(::proto::Platform value) {
+inline void Playlist::_internal_set_plat(::proto::Platform value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.plat_ = value;
 }
 
-// .proto.Playlist playlist = 2;
-inline bool PairPlatformPlaylist::has_playlist() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  PROTOBUF_ASSUME(!value || _impl_.playlist_ != nullptr);
+// bool is_private = 5;
+inline bool Playlist::has_is_private() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
   return value;
 }
-inline void PairPlatformPlaylist::clear_playlist() {
+inline void Playlist::clear_is_private() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.playlist_ != nullptr) _impl_.playlist_->Clear();
+  _impl_.is_private_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000080U);
+}
+inline bool Playlist::is_private() const {
+  // @@protoc_insertion_point(field_get:proto.Playlist.is_private)
+  return _internal_is_private();
+}
+inline void Playlist::set_is_private(bool value) {
+  _internal_set_is_private(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  // @@protoc_insertion_point(field_set:proto.Playlist.is_private)
+}
+inline bool Playlist::_internal_is_private() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.is_private_;
+}
+inline void Playlist::_internal_set_is_private(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.is_private_ = value;
+}
+
+// string etag = 6;
+inline bool Playlist::has_etag() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
+  return value;
+}
+inline void Playlist::clear_etag() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.etag_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline ::absl::string_view Playlist::etag() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.etag)
+  return _internal_etag();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_etag(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.etag)
+}
+inline ::absl::string_view Playlist::_internal_etag() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.etag_.Get();
+}
+inline void Playlist::_internal_set_etag(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  _impl_.etag_.Set(value, GetArena());
+}
+
+// string version = 7;
+inline bool Playlist::has_version() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
+  return value;
+}
+inline void Playlist::clear_version() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.version_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline ::absl::string_view Playlist::version() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.version)
+  return _internal_version();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_version(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.version_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.version)
+}
+inline ::absl::string_view Playlist::_internal_version() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.version_.Get();
+}
+inline void Playlist::_internal_set_version(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.version_.Set(value, GetArena());
+}
+
+// int32 num_items = 8;
+inline bool Playlist::has_num_items() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
+  return value;
+}
+inline void Playlist::clear_num_items() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.num_items_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000100U);
+}
+inline ::int32_t Playlist::num_items() const {
+  // @@protoc_insertion_point(field_get:proto.Playlist.num_items)
+  return _internal_num_items();
+}
+inline void Playlist::set_num_items(::int32_t value) {
+  _internal_set_num_items(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  // @@protoc_insertion_point(field_set:proto.Playlist.num_items)
+}
+inline ::int32_t Playlist::_internal_num_items() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.num_items_;
+}
+inline void Playlist::_internal_set_num_items(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.num_items_ = value;
+}
+
+// string tracker = 9;
+inline bool Playlist::has_tracker() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
+  return value;
+}
+inline void Playlist::clear_tracker() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.tracker_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000020U);
+}
+inline ::absl::string_view Playlist::tracker() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.Playlist.tracker)
+  return _internal_tracker();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void Playlist::set_tracker(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  _impl_.tracker_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.Playlist.tracker)
+}
+inline ::absl::string_view Playlist::_internal_tracker() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.tracker_.Get();
+}
+inline void Playlist::_internal_set_tracker(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  _impl_.tracker_.Set(value, GetArena());
+}
+
+// -------------------------------------------------------------------
+
+// CacheHead
+
+// bytes next = 1;
+inline bool CacheHead::has_next() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
+  return value;
+}
+inline void CacheHead::clear_next() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.next_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
                   0x00000001U);
 }
-inline const ::proto::Playlist& PairPlatformPlaylist::_internal_playlist() const {
+inline ::absl::string_view CacheHead::next() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheHead.next)
+  return _internal_next();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheHead::set_next(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.next_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheHead.next)
+}
+inline ::absl::string_view CacheHead::_internal_next() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.next_.Get();
+}
+inline void CacheHead::_internal_set_next(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.next_.Set(value, GetArena());
+}
+
+// string etag = 2;
+inline bool CacheHead::has_etag() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void CacheHead::clear_etag() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.etag_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view CacheHead::etag() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheHead.etag)
+  return _internal_etag();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheHead::set_etag(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.etag_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheHead.etag)
+}
+inline ::absl::string_view CacheHead::_internal_etag() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.etag_.Get();
+}
+inline void CacheHead::_internal_set_etag(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.etag_.Set(value, GetArena());
+}
+
+// -------------------------------------------------------------------
+
+// CacheNode
+
+// bytes next = 1;
+inline bool CacheNode::has_next() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
+  return value;
+}
+inline void CacheNode::clear_next() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.next_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::absl::string_view CacheNode::next() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheNode.next)
+  return _internal_next();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheNode::set_next(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.next_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheNode.next)
+}
+inline ::absl::string_view CacheNode::_internal_next() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.next_.Get();
+}
+inline void CacheNode::_internal_set_next(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.next_.Set(value, GetArena());
+}
+
+// bytes prev = 2;
+inline bool CacheNode::has_prev() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  return value;
+}
+inline void CacheNode::clear_prev() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.prev_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::absl::string_view CacheNode::prev() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheNode.prev)
+  return _internal_prev();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void CacheNode::set_prev(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.prev_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.CacheNode.prev)
+}
+inline ::absl::string_view CacheNode::_internal_prev() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.prev_.Get();
+}
+inline void CacheNode::_internal_set_prev(::absl::string_view value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.prev_.Set(value, GetArena());
+}
+
+// .proto.Playlist playlist = 3;
+inline bool CacheNode::has_playlist() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  PROTOBUF_ASSUME(!value || _impl_.playlist_ != nullptr);
+  return value;
+}
+inline void CacheNode::clear_playlist() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.playlist_ != nullptr) _impl_.playlist_->Clear();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline const ::proto::Playlist& CacheNode::_internal_playlist() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
   const ::proto::Playlist* p = _impl_.playlist_;
   return p != nullptr ? *p : reinterpret_cast<const ::proto::Playlist&>(::proto::_Playlist_default_instance_);
 }
-inline const ::proto::Playlist& PairPlatformPlaylist::playlist() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PairPlatformPlaylist.playlist)
+inline const ::proto::Playlist& CacheNode::playlist() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.CacheNode.playlist)
   return _internal_playlist();
 }
-inline void PairPlatformPlaylist::unsafe_arena_set_allocated_playlist(
+inline void CacheNode::unsafe_arena_set_allocated_playlist(
     ::proto::Playlist* PROTOBUF_NULLABLE value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (GetArena() == nullptr) {
@@ -3298,16 +3395,16 @@ inline void PairPlatformPlaylist::unsafe_arena_set_allocated_playlist(
   }
   _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.PairPlatformPlaylist.playlist)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.CacheNode.playlist)
 }
-inline ::proto::Playlist* PROTOBUF_NULLABLE PairPlatformPlaylist::release_playlist() {
+inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::release_playlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::proto::Playlist* released = _impl_.playlist_;
   _impl_.playlist_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -3323,16 +3420,16 @@ inline ::proto::Playlist* PROTOBUF_NULLABLE PairPlatformPlaylist::release_playli
   }
   return released;
 }
-inline ::proto::Playlist* PROTOBUF_NULLABLE PairPlatformPlaylist::unsafe_arena_release_playlist() {
+inline ::proto::Playlist* PROTOBUF_NULLABLE CacheNode::unsafe_arena_release_playlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:proto.PairPlatformPlaylist.playlist)
+  // @@protoc_insertion_point(field_release:proto.CacheNode.playlist)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::proto::Playlist* temp = _impl_.playlist_;
   _impl_.playlist_ = nullptr;
   return temp;
 }
-inline ::proto::Playlist* PROTOBUF_NONNULL PairPlatformPlaylist::_internal_mutable_playlist() {
+inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::_internal_mutable_playlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.playlist_ == nullptr) {
     auto* p = ::google::protobuf::Message::DefaultConstruct<::proto::Playlist>(GetArena());
@@ -3340,14 +3437,14 @@ inline ::proto::Playlist* PROTOBUF_NONNULL PairPlatformPlaylist::_internal_mutab
   }
   return _impl_.playlist_;
 }
-inline ::proto::Playlist* PROTOBUF_NONNULL PairPlatformPlaylist::mutable_playlist()
+inline ::proto::Playlist* PROTOBUF_NONNULL CacheNode::mutable_playlist()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::proto::Playlist* _msg = _internal_mutable_playlist();
-  // @@protoc_insertion_point(field_mutable:proto.PairPlatformPlaylist.playlist)
+  // @@protoc_insertion_point(field_mutable:proto.CacheNode.playlist)
   return _msg;
 }
-inline void PairPlatformPlaylist::set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLABLE value) {
+inline void CacheNode::set_allocated_playlist(::proto::Playlist* PROTOBUF_NULLABLE value) {
   ::google::protobuf::Arena* message_arena = GetArena();
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (message_arena == nullptr) {
@@ -3359,420 +3456,139 @@ inline void PairPlatformPlaylist::set_allocated_playlist(::proto::Playlist* PROT
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
 
   _impl_.playlist_ = reinterpret_cast<::proto::Playlist*>(value);
-  // @@protoc_insertion_point(field_set_allocated:proto.PairPlatformPlaylist.playlist)
+  // @@protoc_insertion_point(field_set_allocated:proto.CacheNode.playlist)
 }
 
 // -------------------------------------------------------------------
 
-// PairSongItems
+// PlaylistTracker_PairPlatformId
 
-// .proto.Song song = 1;
-inline bool PairSongItems::has_song() const {
+// .proto.Platform plat = 1;
+inline bool PlaylistTracker_PairPlatformId::has_plat() const {
   bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  PROTOBUF_ASSUME(!value || _impl_.song_ != nullptr);
   return value;
 }
-inline void PairSongItems::clear_song() {
+inline void PlaylistTracker_PairPlatformId::clear_plat() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.song_ != nullptr) _impl_.song_->Clear();
+  _impl_.plat_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
                   0x00000002U);
 }
-inline const ::proto::Song& PairSongItems::_internal_song() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  const ::proto::Song* p = _impl_.song_;
-  return p != nullptr ? *p : reinterpret_cast<const ::proto::Song&>(::proto::_Song_default_instance_);
+inline ::proto::Platform PlaylistTracker_PairPlatformId::plat() const {
+  // @@protoc_insertion_point(field_get:proto.PlaylistTracker.PairPlatformId.plat)
+  return _internal_plat();
 }
-inline const ::proto::Song& PairSongItems::song() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PairSongItems.song)
-  return _internal_song();
-}
-inline void PairSongItems::unsafe_arena_set_allocated_song(
-    ::proto::Song* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (GetArena() == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
-  }
-  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
-  if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.PairSongItems.song)
-}
-inline ::proto::Song* PROTOBUF_NULLABLE PairSongItems::release_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
-  ::proto::Song* released = _impl_.song_;
-  _impl_.song_ = nullptr;
-  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
-    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
-    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    if (GetArena() == nullptr) {
-      delete old;
-    }
-  } else {
-    if (GetArena() != nullptr) {
-      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    }
-  }
-  return released;
-}
-inline ::proto::Song* PROTOBUF_NULLABLE PairSongItems::unsafe_arena_release_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:proto.PairSongItems.song)
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
-  ::proto::Song* temp = _impl_.song_;
-  _impl_.song_ = nullptr;
-  return temp;
-}
-inline ::proto::Song* PROTOBUF_NONNULL PairSongItems::_internal_mutable_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.song_ == nullptr) {
-    auto* p = ::google::protobuf::Message::DefaultConstruct<::proto::Song>(GetArena());
-    _impl_.song_ = reinterpret_cast<::proto::Song*>(p);
-  }
-  return _impl_.song_;
-}
-inline ::proto::Song* PROTOBUF_NONNULL PairSongItems::mutable_song()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+inline void PlaylistTracker_PairPlatformId::set_plat(::proto::Platform value) {
+  _internal_set_plat(value);
   SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  ::proto::Song* _msg = _internal_mutable_song();
-  // @@protoc_insertion_point(field_mutable:proto.PairSongItems.song)
-  return _msg;
+  // @@protoc_insertion_point(field_set:proto.PlaylistTracker.PairPlatformId.plat)
 }
-inline void PairSongItems::set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (message_arena == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
-  }
-
-  if (value != nullptr) {
-    ::google::protobuf::Arena* submessage_arena = value->GetArena();
-    if (message_arena != submessage_arena) {
-      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
-    }
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
-  }
-
-  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
-  // @@protoc_insertion_point(field_set_allocated:proto.PairSongItems.song)
-}
-
-// repeated string items = 2;
-inline int PairSongItems::_internal_items_size() const {
-  return _internal_items().size();
-}
-inline int PairSongItems::items_size() const {
-  return _internal_items_size();
-}
-inline void PairSongItems::clear_items() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.items_.Clear();
-  ClearHasBitForRepeated(_impl_._has_bits_[0],
-                  0x00000001U);
-}
-inline ::absl::string_view PairSongItems::items(int index) const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PairSongItems.items)
-  return _internal_items().Get(index);
-}
-template <typename Arg_>
-inline void PairSongItems::set_items(int index, Arg_&& value) {
-  ::google::protobuf::internal::AssignToString(*_internal_mutable_items()->Mutable(index), ::std::forward<Arg_>(value) );
-  // @@protoc_insertion_point(field_set:proto.PairSongItems.items)
-}
-template <typename Arg_>
-inline void PairSongItems::add_items(Arg_&& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::google::protobuf::internal::AddToRepeatedPtrField(::google::protobuf::MessageLite::internal_visibility(),
-                               GetArena(),
-                               *_internal_mutable_items(),
-                               ::std::forward<Arg_>(value) );
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_add:proto.PairSongItems.items)
-}
-inline const ::google::protobuf::RepeatedPtrField<::std::string>& PairSongItems::items()
-    const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_list:proto.PairSongItems.items)
-  return _internal_items();
-}
-inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
-PairSongItems::mutable_items() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_mutable_list:proto.PairSongItems.items)
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _internal_mutable_items();
-}
-inline const ::google::protobuf::RepeatedPtrField<::std::string>&
-PairSongItems::_internal_items() const {
+inline ::proto::Platform PlaylistTracker_PairPlatformId::_internal_plat() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.items_;
+  return static_cast<::proto::Platform>(_impl_.plat_);
 }
-inline ::google::protobuf::RepeatedPtrField<::std::string>* PROTOBUF_NONNULL
-PairSongItems::_internal_mutable_items() {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return &_impl_.items_;
+inline void PlaylistTracker_PairPlatformId::_internal_set_plat(::proto::Platform value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.plat_ = value;
 }
 
-// -------------------------------------------------------------------
-
-// PlaylistItems_SongCountPair
-
-// .proto.Song song = 1;
-inline bool PlaylistItems_SongCountPair::has_song() const {
+// bytes id_hash = 2;
+inline bool PlaylistTracker_PairPlatformId::has_id_hash() const {
   bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
-  PROTOBUF_ASSUME(!value || _impl_.song_ != nullptr);
   return value;
 }
-inline void PlaylistItems_SongCountPair::clear_song() {
+inline void PlaylistTracker_PairPlatformId::clear_id_hash() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.song_ != nullptr) _impl_.song_->Clear();
+  _impl_.id_hash_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
                   0x00000001U);
 }
-inline const ::proto::Song& PlaylistItems_SongCountPair::_internal_song() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  const ::proto::Song* p = _impl_.song_;
-  return p != nullptr ? *p : reinterpret_cast<const ::proto::Song&>(::proto::_Song_default_instance_);
-}
-inline const ::proto::Song& PlaylistItems_SongCountPair::song() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PlaylistItems.SongCountPair.song)
-  return _internal_song();
-}
-inline void PlaylistItems_SongCountPair::unsafe_arena_set_allocated_song(
-    ::proto::Song* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (GetArena() == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
-  }
-  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
-  if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.PlaylistItems.SongCountPair.song)
-}
-inline ::proto::Song* PROTOBUF_NULLABLE PlaylistItems_SongCountPair::release_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
-  ::proto::Song* released = _impl_.song_;
-  _impl_.song_ = nullptr;
-  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
-    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
-    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    if (GetArena() == nullptr) {
-      delete old;
-    }
-  } else {
-    if (GetArena() != nullptr) {
-      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    }
-  }
-  return released;
-}
-inline ::proto::Song* PROTOBUF_NULLABLE PlaylistItems_SongCountPair::unsafe_arena_release_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:proto.PlaylistItems.SongCountPair.song)
-
-  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
-  ::proto::Song* temp = _impl_.song_;
-  _impl_.song_ = nullptr;
-  return temp;
-}
-inline ::proto::Song* PROTOBUF_NONNULL PlaylistItems_SongCountPair::_internal_mutable_song() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.song_ == nullptr) {
-    auto* p = ::google::protobuf::Message::DefaultConstruct<::proto::Song>(GetArena());
-    _impl_.song_ = reinterpret_cast<::proto::Song*>(p);
-  }
-  return _impl_.song_;
-}
-inline ::proto::Song* PROTOBUF_NONNULL PlaylistItems_SongCountPair::mutable_song()
+inline ::absl::string_view PlaylistTracker_PairPlatformId::id_hash() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:proto.PlaylistTracker.PairPlatformId.id_hash)
+  return _internal_id_hash();
+}
+template <typename Arg_>
+PROTOBUF_ALWAYS_INLINE void PlaylistTracker_PairPlatformId::set_id_hash(Arg_&& arg) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
   SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  ::proto::Song* _msg = _internal_mutable_song();
-  // @@protoc_insertion_point(field_mutable:proto.PlaylistItems.SongCountPair.song)
-  return _msg;
+  _impl_.id_hash_.Set(static_cast<Arg_&&>(arg), GetArena());
+  // @@protoc_insertion_point(field_set:proto.PlaylistTracker.PairPlatformId.id_hash)
 }
-inline void PlaylistItems_SongCountPair::set_allocated_song(::proto::Song* PROTOBUF_NULLABLE value) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (message_arena == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.song_);
-  }
-
-  if (value != nullptr) {
-    ::google::protobuf::Arena* submessage_arena = value->GetArena();
-    if (message_arena != submessage_arena) {
-      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
-    }
-    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
-  } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
-  }
-
-  _impl_.song_ = reinterpret_cast<::proto::Song*>(value);
-  // @@protoc_insertion_point(field_set_allocated:proto.PlaylistItems.SongCountPair.song)
-}
-
-// uint32 cnt = 2;
-inline bool PlaylistItems_SongCountPair::has_cnt() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
-  return value;
-}
-inline void PlaylistItems_SongCountPair::clear_cnt() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.cnt_ = 0u;
-  ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::uint32_t PlaylistItems_SongCountPair::cnt() const {
-  // @@protoc_insertion_point(field_get:proto.PlaylistItems.SongCountPair.cnt)
-  return _internal_cnt();
-}
-inline void PlaylistItems_SongCountPair::set_cnt(::uint32_t value) {
-  _internal_set_cnt(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
-  // @@protoc_insertion_point(field_set:proto.PlaylistItems.SongCountPair.cnt)
-}
-inline ::uint32_t PlaylistItems_SongCountPair::_internal_cnt() const {
+inline ::absl::string_view PlaylistTracker_PairPlatformId::_internal_id_hash() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.cnt_;
+  return _impl_.id_hash_.Get();
 }
-inline void PlaylistItems_SongCountPair::_internal_set_cnt(::uint32_t value) {
+inline void PlaylistTracker_PairPlatformId::_internal_set_id_hash(::absl::string_view value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.cnt_ = value;
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.id_hash_.Set(value, GetArena());
 }
 
 // -------------------------------------------------------------------
 
-// PlaylistItems
+// PlaylistTracker
 
-// repeated .proto.PairPlatformPlaylist tracked = 1;
-inline int PlaylistItems::_internal_tracked_size() const {
-  return _internal_tracked().size();
+// repeated .proto.PlaylistTracker.PairPlatformId plat_id_hash_pairs = 1;
+inline int PlaylistTracker::_internal_plat_id_hash_pairs_size() const {
+  return _internal_plat_id_hash_pairs().size();
 }
-inline int PlaylistItems::tracked_size() const {
-  return _internal_tracked_size();
+inline int PlaylistTracker::plat_id_hash_pairs_size() const {
+  return _internal_plat_id_hash_pairs_size();
 }
-inline void PlaylistItems::clear_tracked() {
+inline void PlaylistTracker::clear_plat_id_hash_pairs() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.tracked_.Clear();
+  _impl_.plat_id_hash_pairs_.Clear();
   ClearHasBitForRepeated(_impl_._has_bits_[0],
                   0x00000001U);
 }
-inline ::proto::PairPlatformPlaylist* PROTOBUF_NONNULL PlaylistItems::mutable_tracked(int index)
+inline ::proto::PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL PlaylistTracker::mutable_plat_id_hash_pairs(int index)
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_mutable:proto.PlaylistItems.tracked)
-  return _internal_mutable_tracked()->Mutable(index);
+  // @@protoc_insertion_point(field_mutable:proto.PlaylistTracker.plat_id_hash_pairs)
+  return _internal_mutable_plat_id_hash_pairs()->Mutable(index);
 }
-inline ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>* PROTOBUF_NONNULL PlaylistItems::mutable_tracked()
+inline ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>* PROTOBUF_NONNULL PlaylistTracker::mutable_plat_id_hash_pairs()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
   SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_mutable_list:proto.PlaylistItems.tracked)
+  // @@protoc_insertion_point(field_mutable_list:proto.PlaylistTracker.plat_id_hash_pairs)
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _internal_mutable_tracked();
+  return _internal_mutable_plat_id_hash_pairs();
 }
-inline const ::proto::PairPlatformPlaylist& PlaylistItems::tracked(int index) const
+inline const ::proto::PlaylistTracker_PairPlatformId& PlaylistTracker::plat_id_hash_pairs(int index) const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PlaylistItems.tracked)
-  return _internal_tracked().Get(index);
+  // @@protoc_insertion_point(field_get:proto.PlaylistTracker.plat_id_hash_pairs)
+  return _internal_plat_id_hash_pairs().Get(index);
 }
-inline ::proto::PairPlatformPlaylist* PROTOBUF_NONNULL PlaylistItems::add_tracked()
+inline ::proto::PlaylistTracker_PairPlatformId* PROTOBUF_NONNULL PlaylistTracker::add_plat_id_hash_pairs()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::proto::PairPlatformPlaylist* _add =
-      _internal_mutable_tracked()->InternalAddWithArena(
+  ::proto::PlaylistTracker_PairPlatformId* _add =
+      _internal_mutable_plat_id_hash_pairs()->InternalAddWithArena(
           ::google::protobuf::MessageLite::internal_visibility(), GetArena());
   SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
-  // @@protoc_insertion_point(field_add:proto.PlaylistItems.tracked)
+  // @@protoc_insertion_point(field_add:proto.PlaylistTracker.plat_id_hash_pairs)
   return _add;
 }
-inline const ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>& PlaylistItems::tracked() const
+inline const ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>& PlaylistTracker::plat_id_hash_pairs() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_list:proto.PlaylistItems.tracked)
-  return _internal_tracked();
+  // @@protoc_insertion_point(field_list:proto.PlaylistTracker.plat_id_hash_pairs)
+  return _internal_plat_id_hash_pairs();
 }
-inline const ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>&
-PlaylistItems::_internal_tracked() const {
+inline const ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>&
+PlaylistTracker::_internal_plat_id_hash_pairs() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.tracked_;
+  return _impl_.plat_id_hash_pairs_;
 }
-inline ::google::protobuf::RepeatedPtrField<::proto::PairPlatformPlaylist>* PROTOBUF_NONNULL
-PlaylistItems::_internal_mutable_tracked() {
+inline ::google::protobuf::RepeatedPtrField<::proto::PlaylistTracker_PairPlatformId>* PROTOBUF_NONNULL
+PlaylistTracker::_internal_mutable_plat_id_hash_pairs() {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return &_impl_.tracked_;
-}
-
-// repeated .proto.PairSongItems song_to_items_entries = 2;
-inline int PlaylistItems::_internal_song_to_items_entries_size() const {
-  return _internal_song_to_items_entries().size();
-}
-inline int PlaylistItems::song_to_items_entries_size() const {
-  return _internal_song_to_items_entries_size();
-}
-inline void PlaylistItems::clear_song_to_items_entries() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.song_to_items_entries_.Clear();
-  ClearHasBitForRepeated(_impl_._has_bits_[0],
-                  0x00000002U);
-}
-inline ::proto::PairSongItems* PROTOBUF_NONNULL PlaylistItems::mutable_song_to_items_entries(int index)
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_mutable:proto.PlaylistItems.song_to_items_entries)
-  return _internal_mutable_song_to_items_entries()->Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>* PROTOBUF_NONNULL PlaylistItems::mutable_song_to_items_entries()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000002U);
-  // @@protoc_insertion_point(field_mutable_list:proto.PlaylistItems.song_to_items_entries)
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _internal_mutable_song_to_items_entries();
-}
-inline const ::proto::PairSongItems& PlaylistItems::song_to_items_entries(int index) const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:proto.PlaylistItems.song_to_items_entries)
-  return _internal_song_to_items_entries().Get(index);
-}
-inline ::proto::PairSongItems* PROTOBUF_NONNULL PlaylistItems::add_song_to_items_entries()
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::proto::PairSongItems* _add =
-      _internal_mutable_song_to_items_entries()->InternalAddWithArena(
-          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
-  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000002U);
-  // @@protoc_insertion_point(field_add:proto.PlaylistItems.song_to_items_entries)
-  return _add;
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>& PlaylistItems::song_to_items_entries() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_list:proto.PlaylistItems.song_to_items_entries)
-  return _internal_song_to_items_entries();
-}
-inline const ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>&
-PlaylistItems::_internal_song_to_items_entries() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.song_to_items_entries_;
-}
-inline ::google::protobuf::RepeatedPtrField<::proto::PairSongItems>* PROTOBUF_NONNULL
-PlaylistItems::_internal_mutable_song_to_items_entries() {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return &_impl_.song_to_items_entries_;
+  return &_impl_.plat_id_hash_pairs_;
 }
 
 // -------------------------------------------------------------------

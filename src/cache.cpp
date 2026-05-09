@@ -18,7 +18,7 @@
 namespace fs = std::filesystem;
 
 inline fs::path get_ensure_root(Platform plat) {
-    fs::path root = fs::path(get_setting("cache_dir")) / "playlist_tree" /
+    fs::path root = fs::path(get_setting("cache_dir")) / "playlist" /
                     platform_title_lower(plat);
     fs::create_directories(root);
     return root;
@@ -166,6 +166,28 @@ void playlist_tree_remove(const std::string& id_hash, Platform plat) {
     trim_path(leaf.parent_path().parent_path(), plat);
 }
 
+static proto::Platform get_proto_platform(Platform plat) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return proto::Platform::YOUTUBE;
+    case Platform::SPOTIFY:
+        return proto::Platform::SPOTIFY;
+    default:
+        return proto::Platform::INVALID;
+    }
+}
+
+static Platform get_platform(proto::Platform plat) {
+    switch (plat) {
+    case proto::Platform::YOUTUBE:
+        return Platform::YOUTUBE;
+    case proto::Platform::SPOTIFY:
+        return Platform::SPOTIFY;
+    default:
+        return Platform::INVALID;
+    }
+}
+
 namespace PlaylistCache {
 
 static inline void set_next(proto::CacheHead& proto_head, Node* node) {
@@ -207,30 +229,31 @@ static inline void free_and_advance_node(Node** ptr) {
 static void update_playlist(Playlist& pl, const proto::Playlist& proto_pl) {
     pl.id = std::string(proto_pl.id());
     pl.id_hash = std::string(proto_pl.id_hash());
+    pl.title = std::string(proto_pl.title());
+    pl.plat = get_platform(proto_pl.plat());
+    pl.is_private = proto_pl.is_private();
     pl.etag = std::string(proto_pl.etag());
     pl.version = std::string(proto_pl.version());
-    pl.title = std::string(proto_pl.title());
-    pl.is_private = proto_pl.is_private();
-    pl.num_items = proto_pl.items();
+    pl.num_items = proto_pl.num_items();
+    pl.tracker = proto_pl.tracker();
 }
 
 static proto::CacheNode create_proto_node(const Node* node) {
     proto::CacheNode proto_node;
-    proto_node.set_items_id(node->items_id);
-
-    auto proto_pl = proto_node.mutable_playlist();
+    auto* proto_pl = proto_node.mutable_playlist();
     proto_pl->set_id(node->playlist.id);
     proto_pl->set_id_hash(node->playlist.id_hash);
+    proto_pl->set_title(node->playlist.title);
+    proto_pl->set_plat(get_proto_platform(node->playlist.plat));
+    proto_pl->set_is_private(node->playlist.is_private);
     proto_pl->set_etag(node->playlist.etag);
     proto_pl->set_version(node->playlist.version);
-    proto_pl->set_title(node->playlist.title);
-    proto_pl->set_is_private(node->playlist.is_private);
-    proto_pl->set_items(node->playlist.num_items);
+    proto_pl->set_num_items(node->playlist.num_items);
+    proto_pl->set_tracker(node->playlist.tracker);
     return proto_node;
 }
 
-Node::Node(const proto::CacheNode& proto_node)
-    : items_id(proto_node.items_id()), was_changed(false) {
+Node::Node(const proto::CacheNode& proto_node) : was_changed(false) {
     update_playlist(playlist, proto_node.playlist());
 }
 
@@ -547,32 +570,6 @@ iterator Handle::end() { return PlaylistCache::end(); }
 
 } // namespace PlaylistCache
 
-static inline fs::path playlist_items_cache_dir() {
-    return fs::path(get_setting("cache_dir")) / "playlist_items";
-}
-
-static proto::Platform get_proto_platform(Platform plat) {
-    switch (plat) {
-    case Platform::YOUTUBE:
-        return proto::Platform::YOUTUBE;
-    case Platform::SPOTIFY:
-        return proto::Platform::SPOTIFY;
-    default:
-        return proto::Platform::INVALID;
-    }
-}
-
-static Platform get_platform(proto::Platform plat) {
-    switch (plat) {
-    case proto::Platform::YOUTUBE:
-        return Platform::YOUTUBE;
-    case proto::Platform::SPOTIFY:
-        return Platform::SPOTIFY;
-    default:
-        return Platform::INVALID;
-    }
-}
-
 static proto::PlaylistItems get_proto_pl_items(const fs::path& path) {
     proto::PlaylistItems proto_items;
     {
@@ -600,23 +597,125 @@ static proto::Song get_proto_song(const Song& song) {
     return proto_song;
 }
 
-static PlaylistItems load_from_path(const fs::path& path) {
-    PlaylistItems pl_items;
-    auto proto_pl_items = get_proto_pl_items(path);
-    for (const auto& p : proto_pl_items.tracked()) {
-        pl_items.tracked.emplace_back(
-            get_platform(p.plat()),
-            Playlist(std::string(p.playlist().id()),
-                     std::string(p.playlist().id_hash()),
-                     std::string(p.playlist().items_etag())));
+static inline fs::path playlist_tracker_dir() {
+    return fs::path(get_setting("cache_dir")) / "playlist_tracker";
+}
+
+static inline fs::path playlist_items_dir(Platform plat) {
+    return fs::path(get_setting("cache_dir")) / "playlist_items" /
+           platform_title_lower(plat);
+}
+
+PlaylistTracker::PlaylistTracker(const std::string& id)
+    : id(id), was_changed(false) {
+    fs::path p = playlist_tracker_dir() / id;
+    assert(fs::exists(p));
+    proto::PlaylistTracker proto_tracker;
+    {
+        std::ifstream f(p, std::ios::binary);
+        proto_tracker.ParseFromIstream(&f);
     }
-    for (const auto& e : proto_pl_items.song_to_items_entries()) {
-        Song s = get_song(e.song());
-        std::copy(e.items().begin(), e.items().end(),
-                  std::back_inserter(pl_items.song_to_items[s]));
+
+    for (const auto p1 : proto_tracker.plat_id_hash_pairs()) {
+        auto node = PlaylistCache::load_node_id_hash(std::string(p1.id_hash()),
+                                                     get_platform(p1.plat()));
+        PlaylistItems& items = node.playlist.items;
+        proto::PlaylistItems proto_items;
+        {
+            auto f = ensure_bin_file<std::ifstream>(
+                playlist_items_dir(node.playlist.plat) / node.playlist.id);
+            proto_items.ParseFromIstream(&f);
+        }
+
+        items.etag = std::string(proto_items.etag());
+        for (const auto& p2 : proto_items.song_items_pairs()) {
+            Song song = get_song(p2.song());
+            std::copy(p2.items().begin(), p2.items().end(),
+                      std::back_inserter(items.data[song]));
+        }
+        nodes.push_back(std::move(node));
     }
-    pl_items.id = path.filename();
-    return pl_items;
+}
+
+// TODO prefix all static methods with _ to make clear what they are
+static void untrack_node(PlaylistCache::Node& node) {
+    node.playlist.tracker.clear();
+    PlaylistCache::save_node(node, node.playlist.plat);
+}
+
+void PlaylistTracker::untrack(Platform plat) {
+    auto eq_plat = [&plat](const PlaylistCache::Node& n) {
+        return n.playlist.plat == plat;
+    };
+    auto node = std::find_if(nodes.begin(), nodes.end(), eq_plat);
+    assert(node != nodes.end());
+
+    untrack_node(*node);
+    nodes.erase(node);
+    was_changed = true;
+    if (nodes.size() < 2) {
+        remove();
+    }
+}
+
+void PlaylistTracker::remove() {
+    fs::remove(playlist_tracker_dir() / id);
+    std::for_each(nodes.begin(), nodes.end(), untrack_node);
+    id.clear();
+    nodes.clear();
+    was_changed = false;
+}
+
+void PlaylistTracker::save() {
+    if (was_changed) {
+        // save PlaylistTracker
+        proto::PlaylistTracker proto_tracker;
+        for (const PlaylistCache::Node& node : nodes) {
+            auto* pair = proto_tracker.add_plat_id_hash_pairs();
+            pair->set_id_hash(node.playlist.id_hash);
+            pair->set_plat(get_proto_platform(node.playlist.plat));
+        }
+        auto f = ensure_bin_file<std::ofstream>(playlist_tracker_dir() / id);
+        proto_tracker.SerializeToOstream(&f);
+    }
+
+    for (const PlaylistCache::Node& node : nodes) {
+        if (node.was_changed) {
+            // save Playlist
+            PlaylistCache::save_node(node, node.playlist.plat);
+        }
+        if (!node.playlist.items.was_changed) {
+            continue;
+        }
+
+        // save PlaylistItems
+        const PlaylistItems& items = node.playlist.items;
+        proto::PlaylistItems proto_items;
+        proto_items.set_id(node.playlist.id);
+        proto_items.set_etag(items.etag);
+        for (const auto& [song, items] : items.data) {
+            auto* p = proto_items.add_song_items_pairs();
+            *p->mutable_song() = get_proto_song(song);
+            for (const std::string& i : items) {
+                p->add_items(i);
+            }
+        }
+        auto f = ensure_bin_file<std::ofstream, class Types>(
+            playlist_items_dir(node.playlist.plat) / node.playlist.id);
+        proto_items.SerializeToOstream(&f);
+    }
+}
+
+PlaylistItemsCache::PlaylistItemsCache() {
+    for (auto it : fs::directory_iterator(playlist_tracker_dir())) {
+        trackers.emplace_front(it.path().filename());
+    }
+}
+
+void PlaylistItemsCache::save() {
+    for (PlaylistTracker& t : trackers) {
+        t.save();
+    }
 }
 
 PlaylistDiff operator-(const SongCounts& lhs, const SongCounts& rhs) {
@@ -703,116 +802,8 @@ PlaylistDiff PlaylistDiff::operator-(const PlaylistDiff& rhs) const {
     return res;
 }
 
-PlaylistItems load_playlist_items(const std::string& id) {
-    return load_from_path(playlist_items_cache_dir() / id);
-}
-
-PlaylistItemsCache load_playlist_items_cache() {
-    PlaylistItemsCache cache;
-    for (const auto& p : fs::directory_iterator(playlist_items_cache_dir())) {
-        cache.push_front(load_from_path(p.path()));
-    }
-    return cache;
-}
-
-void update_playlist_items_cache(
-    PlaylistItemsCache& cache, std::shared_ptr<CURL> curl,
-    const std::vector<std::string>& plat_to_access_tkn) {
-    auto prev = cache.before_begin();
-    auto curr = cache.begin();
-    while (curr != cache.end()) {
-        int i = 0;
-        while (i != curr->tracked.size()) {
-            auto& [plat, pl] = curr->tracked[i];
-            auto node = PlaylistCache::load_node_id_hash(pl.id_hash, plat);
-            pl.title = node.playlist.title;
-
-            const auto& access_tkn = plat_to_access_tkn[plat];
-            Playlist modified_playlist;
-            if (API::get_playlist(plat, curl.get(), access_tkn, pl.id,
-                                  node.playlist.etag, modified_playlist)) {
-                if (modified_playlist.id.empty()) {
-                    // playlist was deleted
-                    remove_node(node, plat);
-                    curr->tracked.erase(curr->tracked.begin() + i);
-                    curr->was_changed = true;
-                    continue;
-                } else {
-                    pl.title = modified_playlist.title;
-                    node.playlist = std::move(modified_playlist);
-                    save_node(node, plat);
-                }
-            }
-            i++;
-        }
-
-        if (curr->tracked.size() < 2) {
-            curr = cache.erase_after(prev);
-        } else {
-            curr++;
-            prev++;
-        }
-    }
-}
-
-void save_playlist_items_cache(const PlaylistItemsCache& cache) {
-    std::unordered_set<std::string> deleted_ids;
-    for (const auto& e : fs::directory_iterator(playlist_items_cache_dir())) {
-        deleted_ids.insert(e.path().filename());
-    }
-
-    for (const auto& pl_items : cache) {
-        deleted_ids.erase(pl_items.id);
-        if (!pl_items.was_changed) {
-            continue;
-        }
-        save_playlist_items(pl_items);
-    }
-
-    for (const auto& id : deleted_ids) {
-        remove_playlist_items(id);
-    }
-}
-
-void save_playlist_items(const PlaylistItems& pl_items) {
-    proto::PlaylistItems proto_items;
-    for (const auto& [plat, pl] : pl_items.tracked) {
-        auto* pair = proto_items.add_tracked();
-        pair->set_plat(get_proto_platform(plat));
-        pair->mutable_playlist()->set_id(pl.id);
-        pair->mutable_playlist()->set_id_hash(pl.id_hash);
-        pair->mutable_playlist()->set_items_etag(pl.items_etag);
-    }
-
-    for (const auto& [song, item_ids] : pl_items.song_to_items) {
-        auto* e = proto_items.add_song_to_items_entries();
-        *(e->mutable_song()) = get_proto_song(song);
-        std::copy(
-            item_ids.begin(), item_ids.end(),
-            google::protobuf::RepeatedFieldBackInserter(e->mutable_items()));
-    }
-    auto file = ensure_bin_file<std::ofstream>(playlist_items_cache_dir() /
-                                               pl_items.id);
-    proto_items.SerializeToOstream(&file);
-}
-
-void remove_playlist_items(const std::string& id) {
-    auto pl_items = get_proto_pl_items(playlist_items_cache_dir() / id);
-    for (const auto& p : pl_items.tracked()) {
-        Platform plat = get_platform(p.plat());
-        auto node = PlaylistCache::load_node_id_hash(
-            std::string(p.playlist().id_hash()), plat);
-        if (node.playlist.id.empty()) {
-            continue;
-        }
-        node.items_id.clear();
-        PlaylistCache::save_node(node, plat);
-    }
-    fs::remove(playlist_items_cache_dir() / id);
-}
-
 static inline fs::path song_cache_dir(Platform plat) {
-    return fs::path(get_setting("cache_dir")) / "song_cache" /
+    return fs::path(get_setting("cache_dir")) / "song" /
            platform_title_lower(plat);
 }
 

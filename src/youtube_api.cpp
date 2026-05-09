@@ -1,6 +1,6 @@
-#include "../include/youtube_api.h"
 #include "../include/cache.h"
 #include "../include/util.h"
+#include "../include/youtube_api.h"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
@@ -68,7 +68,7 @@ bool YoutubeAPI::get_playlists(std::vector<Playlist>& playlists,
                 // former after call to get_playlist
                 /*etag=*/"",
                 /*version=*/std::move(playlist["etag"]),
-                std::move(playlist["snippet"]["title"]),
+                std::move(playlist["snippet"]["title"]), Platform::YOUTUBE,
                 playlist["status"]["privacyStatus"] == "private",
                 playlist["contentDetails"]["itemCount"]);
         }

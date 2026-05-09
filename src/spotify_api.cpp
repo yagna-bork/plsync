@@ -1,5 +1,5 @@
-#include "../include/spotify_api.h"
 #include "../include/cache.h"
+#include "../include/spotify_api.h"
 #include "../include/util.h"
 #include <algorithm>
 #include <cstdint>
@@ -81,8 +81,8 @@ bool SpotifyAPI::get_playlists(std::vector<Playlist>& playlists,
         ids.insert(plist["id"]);
         playlists.emplace_back(std::move(plist["id"]),
                                /*etag=*/"", std::move(plist["snapshot_id"]),
-                               std::move(plist["name"]), !plist["public"],
-                               plist["items"]["total"]);
+                               std::move(plist["name"]), Platform::SPOTIFY,
+                               !plist["public"], plist["items"]["total"]);
     }
     return true;
 }
