@@ -44,6 +44,11 @@ obj/youtube_api.o: src/youtube_api.cpp include/youtube_api.h include/platform.h 
 obj/spotify_api.o: src/spotify_api.cpp include/spotify_api.h include/platform.h include/api.h include/cache.h
 	clang++ -o obj/spotify_api.o -c $(CXX) src/spotify_api.cpp $(DEBUG_OR_PROD)
 
+src/cache.pb.cc include/cache.pb.h:
+	protoc -Iinclude --cpp_out=include cache.proto
+	mv include/cache.pb.cc src/
+	sed -i '' 's|#include "cache.pb.h"|#include "../include/cache.pb.h"|g' src/cache.pb.cc
+
 obj/cache.pb.o: src/cache.pb.cc include/cache.pb.h
 	clang++ -o obj/cache.pb.o -c $(CXX) src/cache.pb.cc $(DEBUG_OR_PROD)
 
