@@ -171,6 +171,17 @@ int run_untracked(int argc, char* argv[]) {
     return 0;
 }
 
+int run_untracked(int argc, char* argv[]) {
+    try {
+        return untracked(argc, argv);
+    } catch (const TokenStorageAccessError& e) {
+        std::cerr << "Couldn't get access token. Please try again\n";
+    } catch (const BaseAPI::RequestError& e) {
+        std::cerr << "Something went wrong. Try again.\n";
+    }
+    return 1;
+}
+
 /* track-start */
 const std::string track_description = "Start tracking an untracked playlist";
 
@@ -222,7 +233,7 @@ std::unordered_map<Platform, std::string> parse_track_args(int argc,
     return plat_to_sid;
 }
 
-void track(int argc, char* argv[]) {
+int track(int argc, char* argv[]) {
     std::unordered_map<Platform, std::string> plat_to_sid =
         parse_track_args(argc, argv);
     std::shared_ptr<CURL> curl = get_curl();
@@ -287,16 +298,18 @@ void track(int argc, char* argv[]) {
         tracker.was_changed = true;
     }
     tracker.save();
+    return 0;
 }
 
 int run_track(int argc, char* argv[]) {
     try {
-        track(argc, argv);
-        return 0;
+        return track(argc, argv);
     } catch (const std::invalid_argument& e) {
         print_track_usage();
-    } catch (const std::exception& e) {
-        std::cerr << "Something went wrong please try again\n";
+    } catch (const TokenStorageAccessError& e) {
+        std::cout << "Something went wrong. Please try again\n";
+    } catch (const API::RequestError& e) {
+        std::cout << "Something went wrong. Please try again\n";
     }
     return 1;
 }
@@ -415,8 +428,8 @@ int run_untrack(int argc, char* argv[]) {
         return untrack(argc, argv);
     } catch (const std::invalid_argument& e) {
         print_untrack_usage();
-        return 1;
     }
+    return 1;
 }
 
 /* sync-start */
@@ -492,7 +505,6 @@ int sync(PlaylistItemsCache& cache) {
                 pl.plat, curl.get(), plat_to_access_tkn[pl.plat],
                 plat_to_access_tkn[Platform::SPOTIFY], pl);
             if (modified) {
-                std::cout << "modified\n";
                 pl.items.was_changed = true;
                 SongCounts mod_song_cnts;
                 for (const auto& [song, items] : pl.items.data) {
@@ -548,11 +560,10 @@ int run_sync(int argc, char* argv[]) {
         return sync(cache);
     } catch (const TokenStorageAccessError& e) {
         cache.save();
-        return 1;
     } catch (const API::RequestError& e) {
         cache.save();
-        return 1;
     }
+    return 1;
 }
 
 /* plsync-start */

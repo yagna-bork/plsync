@@ -362,7 +362,7 @@ bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
     out_pl.items.data.clear();
     out_pl.items.etag = resp["etag"];
     json& items = resp["items"];
-    SongCache song_cache = load_song_cache(Platform::YOUTUBE);
+    SongCache cache(Platform::YOUTUBE);
 
     std::vector<json*> new_items;
     std::unordered_set<std::string> new_vid_ids;
@@ -370,8 +370,8 @@ bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
         const std::string& iid = item["id"].get_ref<std::string&>();
         const std::string& vid =
             item["contentDetails"]["videoId"].get_ref<std::string&>();
-        if (song_cache.count(vid)) {
-            Song& song = song_cache[vid];
+        if (cache.songs.count(vid)) {
+            Song& song = cache.songs[vid];
             out_pl.items.data[song].push_back(get_item(iid, vid));
         } else {
             new_items.push_back(&item);
@@ -432,9 +432,9 @@ bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
         }
         out_pl.items.data[sp_song].push_back(
             get_item(item->at("id").get_ref<std::string&>(), vid_id));
-        song_cache[vid_id] = std::move(sp_song);
+        cache.songs[vid_id] = std::move(sp_song);
     }
-    save_song_cache(song_cache, Platform::YOUTUBE);
+    cache.save();
     return true;
 }
 

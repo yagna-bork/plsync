@@ -14,41 +14,16 @@
 #include <utility>
 #include <vector>
 
-// TODO convert everything to a class for legibility
-
 struct Song {
     std::vector<std::string> artists;
     std::string track;
 
-    bool operator==(const Song& rhs) const {
-        return artists == rhs.artists && track == rhs.track;
-    }
+    bool operator==(const Song& rhs) const;
+    std::ostream& operator<<(std::ostream& os);
 };
 
-#ifndef NDEBUG
-inline std::ostream& operator<<(std::ostream& os, const Song& song) {
-    os << song.track << " - ";
-    for (int i = 0; i != song.artists.size(); i++) {
-        if (i != 0) {
-            os << ",";
-        }
-        os << song.artists[i];
-    }
-    return os;
-}
-#endif // !NDEBUG
-
-// https://stackoverflow.com/a/27216842
-// https://stackoverflow.com/a/20602159
 template <> struct std::hash<Song> {
-    size_t operator()(const Song& song) const {
-        size_t seed = song.artists.size();
-        std::hash<std::string> hasher;
-        for (const std::string& artist : song.artists) {
-            seed ^= hasher(artist) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed ^ hasher(song.track);
-    }
+    size_t operator()(const Song& song) const;
 };
 
 /* This data is stored in PlaylistItemsCache, not PlaylistCache */
@@ -57,16 +32,7 @@ struct PlaylistItems {
     std::string etag;
     std::unordered_map<Song, std::vector<std::string>> data;
 
-    void merge(PlaylistItems&& other) {
-        if (other.etag.empty()) {
-            auto etag = std::move(other.etag);
-            auto data = std::move(other.data);
-        } else {
-            was_changed = other.was_changed;
-            etag = std::move(other.etag);
-            data = std::move(other.data);
-        }
-    }
+    void merge(PlaylistItems&& other);
 };
 
 struct Playlist {
@@ -104,64 +70,35 @@ struct Playlist {
         id_hash = sha1(this->id);
     }
 
-    void merge(Playlist&& other) {
-        std::string tmp;
-        if (!other.id.empty()) {
-            id = std::move(other.id);
-        } else {
-            tmp = std::move(other.id);
-        }
-
-        if (!other.id_hash.empty()) {
-            id_hash = std::move(other.id_hash);
-        } else {
-            tmp = std::move(other.id_hash);
-        }
-
-        if (!other.etag.empty()) {
-            etag = std::move(other.etag);
-        } else {
-            tmp = std::move(other.etag);
-        }
-
-        if (!other.version.empty()) {
-            version = std::move(other.version);
-        } else {
-            tmp = std::move(other.version);
-        }
-
-        if (!other.title.empty()) {
-            title = std::move(other.title);
-        } else {
-            tmp = std::move(other.title);
-        }
-
-        if (!other.tracker.empty()) {
-            tracker = std::move(other.tracker);
-        } else {
-            tmp = std::move(other.tracker);
-        }
-        items.merge(std::move(other.items));
-        is_private = (is_private == other.is_private) ? is_private : true;
-        num_items = other.num_items != 0 ? other.num_items : num_items;
-    }
+    void merge(Playlist&& other);
 };
 
-/* playlist-tree-start */
-/* id_hash and sid expected in binary format, not hex */
-std::filesystem::path
-playlist_tree_path_from_id_hash(const std::string& id_hash, Platform plat);
-void playlist_tree_path_sid_from_id_hash(const std::string& id_hash,
-                                         Platform plat,
-                                         std::filesystem::path& out_path,
-                                         std::string& out_sid);
-std::filesystem::path playlist_tree_path_from_sid(const std::string& sid,
-                                                  Platform plat);
-int playlist_tree_height(Platform plat);
-std::filesystem::path playlist_tree_add(const std::string& id_hash,
-                                        Platform plat);
-void playlist_tree_remove(const std::string& id_hash, Platform plat);
+class PlaylistTree {
+public:
+    std::filesystem::path root;
 
+    PlaylistTree(Platform plat);
+    std::filesystem::path head();
+    int height();
+
+    /* id_hash and sid expected in binary format, not hex */
+    std::filesystem::path search_id_hash(const std::string& id_hash);
+    std::filesystem::path search_sid(const std::string& sid);
+    std::filesystem::path add(const std::string& id_hash);
+    void erase(const std::string& id_hash);
+
+private:
+    void _search(const std::string& id_hash, std::filesystem::path dir,
+                 int depth, std::filesystem::path& out_path,
+                 std::string& out_sid);
+    bool _is_leaf(const std::filesystem::directory_iterator& it);
+    int _height(const std::filesystem::path& dir);
+    std::filesystem::path _add(const std::filesystem::path& dir,
+                               const std::string& id_hash, int depth);
+    void _trim_path(const std::filesystem::path& dir);
+};
+
+// TODO result classes needs PlaylistTree member
 namespace PlaylistCache {
 
 struct Node;
@@ -197,7 +134,7 @@ void update(Head* head, Platform plat, const std::vector<Playlist>& playlists,
             const std::string& etag);
 void save(Head* head, Platform plat);
 void cleanup(Head* head, Platform plat);
-inline int short_id_len(Platform plat) { return playlist_tree_height(plat); }
+inline int short_id_len(Platform plat) { return PlaylistTree(plat).height(); }
 
 /* Providing an invalid id is undefined behaviour */
 Node load_node_id_hash(const std::string& id_hash, Platform plat);
@@ -289,7 +226,6 @@ struct Handle {
 
 } // namespace PlaylistCache
 
-/* playlist-diff-start */
 struct PlaylistDiff;
 using SongCounts = std::unordered_map<Song, unsigned int>;
 PlaylistDiff operator-(const SongCounts& lhs, const SongCounts& rhs);
@@ -303,28 +239,42 @@ struct PlaylistDiff {
     PlaylistDiff operator-(const PlaylistDiff& rhs) const;
 };
 
-struct PlaylistTracker {
+class PlaylistTracker {
+public:
     std::string id;
     // a necessary evil for now
     std::vector<PlaylistCache::Node> nodes;
     bool was_changed;
+    std::filesystem::path path;
 
-    PlaylistTracker() : id(bin_to_hex(rndstr(16))) {}
+    static std::filesystem::path dir();
+
+    PlaylistTracker() : id(bin_to_hex(rndstr(16))), path(dir() / id) {}
     PlaylistTracker(const std::string& id);
     void untrack(Platform plat);
     void remove();
     void save();
+
+private:
+    std::filesystem::path _playlist_items_dir(Platform plat);
+    static void _untrack_node(PlaylistCache::Node& node);
 };
 
-struct PlaylistItemsCache {
+class PlaylistItemsCache {
+public:
     std::forward_list<PlaylistTracker> trackers;
 
     PlaylistItemsCache();
     void save();
 };
 
-/* song-cache-start */
-using SongCache = std::unordered_map<std::string, Song>;
-SongCache load_song_cache(Platform plat);
-void save_song_cache(const SongCache& cache, Platform plat);
+class SongCache {
+public:
+    static const int NUM_BUCKETS = 500;
+    std::filesystem::path dir;
+    std::unordered_map<std::string, Song> songs;
+
+    SongCache(Platform plat);
+    void save();
+};
 #endif
