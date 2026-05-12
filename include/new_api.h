@@ -2,14 +2,35 @@
 #define GUARD_NEW_API_H
 #include "cache.h"
 #include "platform.h"
+#include <ctime>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace NewYoutubeAPI {
 
 const std::string base_url = "https://www.googleapis.com/youtube/v3";
+const std::string base_auth_url = "https://oauth2.googleapis.com";
+const std::string oauth_url = "https://accounts.google.com/o/oauth2/v2/auth";
+const std::vector<std::string> scopes = {
+    "https://www.googleapis.com/auth/youtube"};
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+bool get_playlists(CURL* curl, std::vector<Playlist>& out_playlists,
+                   std::string& in_out_etag);
 
 bool get_playlist(CURL* curl, const std::string& access_tkn,
                   const std::string& id, const std::string& etag,
@@ -35,6 +56,26 @@ void playlist_items_remove(CURL* curl, const std::string& access_tkn,
 namespace NewSpotifyAPI {
 
 const std::string base_url = "https://api.spotify.com/v1";
+const std::string base_auth_url = "https://accounts.spotify.com/api";
+const std::string oauth_url = "https://accounts.spotify.com/authorize";
+const std::vector<std::string> scopes = {
+    "playlist-read-private",   "playlist-read-collaborative",
+    "playlist-modify-private", "playlist-modify-public",
+    "user-library-read",       "user-follow-read"};
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+bool get_playlists(CURL* curl, std::vector<Playlist>& out_playlists,
+                   std::string& in_out_etag);
 
 bool was_playlist_deleted(CURL* curl, const std::string& access_tkn,
                           const std::string& id);
@@ -67,11 +108,18 @@ namespace API {
 
 class RequestError : public std::runtime_error {
 public:
-    RequestError(const char* msg) : std::runtime_error(msg) {}
+    RequestError(const std::string& msg) : std::runtime_error(msg) {}
+};
+
+class AuthError : public std::runtime_error {
+public:
+    AuthError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 using Params = std::vector<std::pair<std::string, std::string>>;
 using Fields = Params;
+
+const std::string redirect_url = "http://127.0.0.1";
 
 /*
  * Performs a GET request at the specified url.
@@ -109,6 +157,80 @@ long POST(CURL* curl, const std::string& url, const std::string& data,
 long DELETE(CURL* curl, const std::string& url, nlohmann::json& resp,
             const std::string& access_tkn, const Params& params = {},
             const std::string& data = "");
+
+std::string generate_verifier();
+
+inline std::string get_redirect_port(Platform plat) {
+    return std::to_string(8000 + plat);
+}
+
+std::string get_auth_url(Platform plat, CURL* curl, const std::string& verfier,
+                         const std::string& state);
+
+std::string collect_auth_code(Platform plat, const std::string& state);
+
+bool are_scopes_valid(const std::string& granted, const std::string& required);
+
+inline void
+exchange_auth_code(Platform plat, CURL* curl, const std::string& verifier,
+                   const std::string& auth_code, std::string& out_access_tkn,
+                   time_t& out_access_duration, std::string& out_refresh_tkn) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        NewYoutubeAPI::exchange_auth_code(curl, verifier, auth_code,
+                                          out_access_tkn, out_access_duration,
+                                          out_refresh_tkn);
+        break;
+    case Platform::SPOTIFY:
+        NewSpotifyAPI::exchange_auth_code(curl, verifier, auth_code,
+                                          out_access_tkn, out_access_duration,
+                                          out_refresh_tkn);
+        break;
+    default:
+        // TODO make this the default across all methods
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
+
+inline void refresh_access_tkn(Platform plat, CURL* curl,
+                               const std::string& refresh_tkn,
+                               std::string& out_access_tkn,
+                               time_t& out_access_duration,
+                               std::string& out_refresh_tkn) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        NewYoutubeAPI::refresh_access_tkn(curl, refresh_tkn, out_access_tkn,
+                                          out_access_duration, out_refresh_tkn);
+        break;
+    case Platform::SPOTIFY:
+        NewSpotifyAPI::refresh_access_tkn(curl, refresh_tkn, out_access_tkn,
+                                          out_access_duration, out_refresh_tkn);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
+
+/* returns whether users playlists have changed according to etag */
+inline bool get_playlists(Platform plat, CURL* curl,
+                          std::vector<Playlist>& out_playlists,
+                          std::string& in_out_etag) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        NewYoutubeAPI::get_playlists(curl, out_playlists, in_out_etag);
+        break;
+    case Platform::SPOTIFY:
+        NewSpotifyAPI::get_playlists(curl, out_playlists, in_out_etag);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+    // TODO remove
+    return false;
+}
 
 /*
  * Returns whether playlist was modified.

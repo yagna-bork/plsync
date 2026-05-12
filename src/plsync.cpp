@@ -26,40 +26,32 @@ const std::string init_description =
     "Allow OAuth permissions for Youtube and Spotify. Initially the only valid "
     "command.";
 
-bool get_user_permissions(Platform plat, std::shared_ptr<CURL> curl) {
-    auto api = BaseAuthAPI::get_api(plat, curl);
-
+void get_user_permissions(Platform plat, std::shared_ptr<CURL> curl) {
+    std::string verifier = API::generate_verifier();
+    std::string state = urlencode64(rndstr(128));
     // direct user to permission screen
     std::ostringstream cmd;
-    cmd << "open '" << api->get_auth_url() << "'";
+    cmd << "open '" << API::get_auth_url(plat, curl.get(), verifier, state)
+        << "'";
     system(cmd.str().c_str());
 
     // listen at redirect url for auth_code
-    std::string auth_code;
     std::cout << "Waiting for " << platform_title(plat)
               << " authentication code... " << std::flush;
-    if (!api->collect_auth_code()) {
-        std::cout << "Unable to complete " << platform_title(plat)
-                  << " authentication. Please try again" << '\n';
-        return false;
-    }
+    std::string auth_code = API::collect_auth_code(plat, state);
     std::cout << "Got it!\n";
 
     // exchange auth_code for access & refresh tokens
-    BaseAuthAPI::TokenResponse tkn_resp;
-    try {
-        tkn_resp = api->exchange_auth_code();
-    } catch (const BaseAuthAPI::RequestError& e) {
-        std::cerr << "Something went wrong. Please try again\n";
-        return false;
-    }
+    std::string access_tkn, refresh_tkn;
+    time_t access_duration;
+    API::exchange_auth_code(plat, curl.get(), verifier, auth_code, access_tkn,
+                            access_duration, refresh_tkn);
 
     // finally store the tokens
-    save_access_tkn(plat, tkn_resp.access_tkn, tkn_resp.access_duration);
-    save_refresh_tkn(plat, tkn_resp.refresh_tkn);
+    save_access_tkn(plat, access_tkn, access_duration);
+    save_refresh_tkn(plat, refresh_tkn);
     std::cout << "Success! " << platform_title(plat)
               << " authentication completed" << '\n';
-    return true;
 }
 
 int run_init(bool init_youtube, bool init_spotify) {
@@ -71,14 +63,15 @@ int run_init(bool init_youtube, bool init_spotify) {
         if (init_spotify) {
             get_user_permissions(Platform::SPOTIFY, curl);
         }
+        return 0;
     } catch (const API::RequestError& e) {
         std::cerr << "Something went wrong. Please try again\n";
-        return 1;
+    } catch (const API::AuthError& e) {
+        std::cerr << "Something went wrong. Please try again\n";
     } catch (const TokenStorageAccessError& e) {
         std::cerr << "Something went wrong. Please try again\n";
-        return 1;
     }
-    return 0;
+    return 1;
 }
 
 /* untracked-start */
@@ -101,12 +94,12 @@ Platform parse_untracked_args(int argc, char* argv[]) {
         print_untracked_usage();
         exit(1);
     }
-    auto platform = parse_platform(argv[0]);
-    if (platform == Platform::INVALID) {
+    auto plat = parse_platform(argv[0]);
+    if (plat == Platform::INVALID) {
         print_untracked_usage();
         exit(1);
     }
-    return platform;
+    return plat;
 }
 
 int untracked(int argc, char* argv[]) {

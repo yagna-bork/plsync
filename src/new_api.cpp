@@ -1,4 +1,5 @@
 #include "../include/cache.h"
+#include "../include/client_secret.h"
 #include "../include/new_api.h"
 #include "../include/platform.h"
 #include "../include/util.h"
@@ -10,11 +11,15 @@
 #include <ios>
 #include <iostream>
 #include <iterator>
+#include <netdb.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <random>
 #include <regex>
 #include <sstream>
 #include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -184,6 +189,166 @@ long DELETE(CURL* curl, const std::string& url, nlohmann::json& jresp,
     return status_code(curl);
 }
 
+std::string generate_verifier() {
+    std::string res;
+    res.reserve(128);
+    std::random_device rd;
+    std::mt19937_64 gen64(rd());
+
+    unsigned long long rnd_num;
+    unsigned char byte;
+    // between 0-65 and represents a char allowed in verifier
+    int char_opt;
+    for (int i = 0; i != 128; i += 8) {
+        rnd_num = gen64();
+
+        for (int j = 0; j != 8; j++) {
+            byte = static_cast<unsigned char>(rnd_num);
+            char_opt = byte % 66;
+
+            if (char_opt < 26) { // A-Z
+                res.push_back('A' + char_opt);
+            } else if (char_opt < 52) { // a-z
+                res.push_back('a' + (char_opt - 26));
+            } else if (char_opt < 62) { // 0-9
+                res.push_back('0' + (char_opt - 52));
+            } else if (char_opt == 62) {
+                res.push_back('-');
+            } else if (char_opt == 63) {
+                res.push_back('.');
+            } else if (char_opt == 64) {
+                res.push_back('_');
+            } else {
+                res.push_back('~');
+            }
+            rnd_num >>= 8;
+        }
+    }
+    return res;
+}
+
+std::string get_auth_url(Platform plat, CURL* curl, const std::string& verfier,
+                         const std::string& state) {
+    std::string oauth_url;
+    std::vector<std::string> scopes;
+    switch (plat) {
+    case Platform::YOUTUBE:
+        oauth_url = NewYoutubeAPI::oauth_url;
+        scopes = NewYoutubeAPI::scopes;
+        break;
+    case Platform::SPOTIFY:
+        oauth_url = NewSpotifyAPI::oauth_url;
+        scopes = NewSpotifyAPI::scopes;
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+
+    Params params = {
+        {"client_id", get_setting("client_id", plat)},
+        {"code_challenge", urlencode64(sha256(verfier))},
+        {"redirect_uri", redirect_url + ':' + get_redirect_port(plat)},
+        {"response_type", "code"},
+        {"scope", join(scopes, ",")},
+        {"code_challenge_method", "S256"},
+        {"state", state}};
+    return append_params(oauth_url, params);
+}
+
+std::string collect_auth_code(Platform plat, const std::string& state) {
+    int status, listenfd, sockfd, yes = 1;
+    struct addrinfo hints, *svr_info, *p;
+    struct sockaddr_storage client_addr;
+    socklen_t addr_len;
+    std::string res;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; // IPv4 or IPv6, whatever auth server decides
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE; // figure out host ip for me
+
+    status =
+        getaddrinfo(NULL, get_redirect_port(plat).c_str(), &hints, &svr_info);
+    if (status != 0) {
+        throw AuthError("Couldn't get host network information");
+    }
+
+    for (p = svr_info; p != nullptr; p = p->ai_next) {
+        listenfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (listenfd == -1) {
+            continue;
+        }
+        status =
+            setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
+        if (status == -1) {
+            continue;
+        }
+        if (bind(listenfd, p->ai_addr, p->ai_addrlen) == -1) {
+            continue;
+        }
+        break;
+    }
+
+    if (p == nullptr) {
+        throw AuthError("Couldn't connect listener socket");
+    }
+    if (listen(listenfd, /*backlog=*/5) == -1) {
+        throw AuthError("Couldn't listen for connections");
+    }
+
+    sockfd = accept(listenfd, (struct sockaddr*)&client_addr, &addr_len);
+    close(listenfd);
+    if (sockfd == -1) {
+        throw AuthError("Server crashed");
+    }
+
+    // stuff those pesky params into a map
+    std::size_t buff_sz = 1024;
+    std::vector<char> buff(buff_sz);
+    size_t bytes_recv = recv(sockfd, buff.data(), buff_sz, 0);
+    std::unordered_map<std::string, std::string> params;
+    std::string param, val;
+    char* beg = std::find(buff.data(), buff.data() + bytes_recv, '?') + 1;
+    char* end = std::find(beg, buff.data() + bytes_recv, ' ');
+    char *amp, *eq;
+    do {
+        amp = std::find(beg, end, '&');
+        eq = std::find(beg, amp, '=');
+        param = std::string(beg, eq);
+        val = std::string(eq + 1, amp);
+        params[param] = val;
+        beg = amp + 1;
+    } while (amp != end);
+
+    if (params.count("error")) {
+        res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nError "
+              "occured: " +
+              params["error"] + ". Please return to terminal and try again";
+        send(sockfd, res.c_str(), res.size(), 0);
+        throw AuthError(params["error"]);
+    }
+
+    if (!params.count("state") || params["state"] != state) {
+        throw AuthError("Blocked cross-site request forgery attempt");
+    }
+    res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nSuccess! Return "
+          "to terminal to continue";
+    send(sockfd, res.c_str(), res.size(), 0);
+    close(sockfd);
+    return params["code"];
+}
+
+bool are_scopes_valid(const std::string& granted,
+                      const std::vector<std::string>& required) {
+    for (const auto& scope : required) {
+        if (!contains(granted, scope)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace API
 
 using namespace API;
@@ -221,6 +386,58 @@ static long GET_paginated(CURL* curl, const std::string& url, json& resp,
     } else {
         return status_code;
     }
+}
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn) {
+    std::string url = base_auth_url + "/token";
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"client_id", get_setting("client_id", Platform::YOUTUBE)},
+        {"code", auth_code},
+        {"code_verifier", verifier},
+        {"grant_type", "authorization_code"},
+        {"client_secret", CLIENT_NOT_SO_SECRET},
+        {"redirect_uri",
+         API::redirect_url + ":" + API::get_redirect_port(Platform::YOUTUBE)}};
+    nlohmann::json resp;
+
+    long status_code = API::POST(curl, url, urlencode_form(data), resp,
+                                 "application/x-www-form-urlencoded");
+    if (status_code != 200) {
+        // TODO remove
+        std::cout << resp.dump() << '\n';
+        throw RequestError("invalid token response from youtube");
+    }
+    if (!API::are_scopes_valid(resp["scope"], scopes)) {
+        throw AuthError("user didn't grant necessary scopes");
+    }
+
+    out_access_tkn = std::move(resp["access_token"].get_ref<std::string&>());
+    out_access_duration = resp["expires_in"];
+    out_refresh_tkn = std::move(resp["refresh_token"].get_ref<std::string&>());
+}
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn) {
+    std::string url = base_auth_url + "/token";
+    json data = {
+        {"client_id", get_setting("client_id", Platform::YOUTUBE)},
+        {"grant_type", "refresh_token"},
+        {"refresh_token", refresh_tkn},
+        {"client_secret", get_setting("client_secret", Platform::YOUTUBE)}};
+    json resp;
+    if (API::POST(curl, url, data.dump(), resp) != 200) {
+        throw RequestError("invalid token response from youtube");
+    }
+
+    out_access_tkn = std::move(resp["access_token"].get_ref<std::string&>());
+    out_access_duration = resp["expires_in"];
+    out_refresh_tkn = std::move(resp["refresh_token"].get_ref<std::string&>());
 }
 
 bool get_playlist(CURL* curl, const std::string& access_tkn,
@@ -571,6 +788,54 @@ static long GET_paginated(CURL* curl, const std::string& url,
                   std::back_inserter(initial_page["items"]));
     }
     return status_code;
+}
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn) {
+    std::string url = base_auth_url + "/token";
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"client_id", get_setting("client_id", Platform::SPOTIFY)},
+        {"code", auth_code},
+        {"code_verifier", verifier},
+        {"grant_type", "authorization_code"},
+        {"redirect_uri",
+         API::redirect_url + ":" + API::get_redirect_port(Platform::SPOTIFY)}};
+    nlohmann::json resp;
+
+    long status_code = API::POST(curl, url, urlencode_form(data), resp,
+                                 "application/x-www-form-urlencoded");
+    if (status_code != 200) {
+        throw RequestError("invalid token response from spotify");
+    }
+    if (!API::are_scopes_valid(resp["scope"], scopes)) {
+        throw AuthError("user didn't grant necessary scopes");
+    }
+    out_access_tkn = std::move(resp["access_token"].get_ref<std::string&>());
+    out_access_duration = resp["expires_in"];
+    out_refresh_tkn = std::move(resp["refresh_token"].get_ref<std::string&>());
+}
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn) {
+    std::string url = base_auth_url + "/token";
+    Params params = {{"client_id", get_setting("client_id", Platform::SPOTIFY)},
+                     {"grant_type", "refresh_token"},
+                     {"refresh_token", refresh_tkn}};
+
+    nlohmann::json resp;
+    long status_code =
+        POST(curl, url, /*data*/ "", resp, /*application_type=*/"", params);
+    if (status_code != 200L) {
+        throw RequestError("invalid token response from spotify");
+    }
+    out_access_tkn = std::move(std::move(resp.at("access_token")));
+    out_access_duration = std::move(resp.at("expires_in"));
+    out_refresh_tkn = std::move(resp.value("refresh_token", ""));
 }
 
 bool was_playlist_deleted(CURL* curl, const std::string& access_tkn,

@@ -1,6 +1,7 @@
 #include "../include/api.h"
 #include "../include/client_secret.h"
 #include "../include/emoji_codepoint_ranges.h"
+#include "../include/new_api.h"
 #include "../include/util.h"
 #include <algorithm>
 #include <cassert>
@@ -133,14 +134,15 @@ std::string get_or_refresh_access_tkn(Platform platform,
 
     std::string refresh_tkn;
     get_refresh_tkn(platform, refresh_tkn);
-    std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
-    BaseAuthAPI::AccessTokenResponse resp =
-        api->refresh_access_tkn(refresh_tkn);
-    save_access_tkn(platform, resp.access_tkn, resp.access_duration);
+    std::string access_tkn;
+    time_t access_duration;
+    API::refresh_access_tkn(platform, curl.get(), refresh_tkn, access_tkn,
+                            access_duration, refresh_tkn);
+    save_access_tkn(platform, access_tkn, access_duration);
     if (platform == Platform::SPOTIFY) {
-        save_refresh_tkn(platform, resp.refresh_tkn);
+        save_refresh_tkn(platform, refresh_tkn);
     }
-    return resp.access_tkn;
+    return access_tkn;
 }
 
 const std::unordered_map<std::string, std::string>& get_config() {
@@ -282,6 +284,18 @@ std::string urlencode(const std::string& s) {
         } else {
             res << '%' << bin_to_hex(s[i], /*upper=*/true);
         }
+    }
+    return res.str();
+}
+
+std::string
+urlencode_form(const std::vector<std::pair<std::string, std::string>>& fields) {
+    std::ostringstream res;
+    for (int i = 0; i != fields.size(); i++) {
+        if (i > 0) {
+            res << '&';
+        }
+        res << fields[i].first << '=' << fields[i].second;
     }
     return res.str();
 }

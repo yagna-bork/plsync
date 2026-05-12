@@ -63,6 +63,10 @@ std::string urlencode64(const std::string& s, bool pad = false);
 // https://en.wikipedia.org/wiki/Percent-encoding
 std::string urlencode(const std::string& s);
 
+// https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type
+std::string
+urlencode_form(const std::vector<std::pair<std::string, std::string>>& fields);
+
 template <class RndIt>
 RndIt find_range(RndIt first1, RndIt last1, RndIt first2, RndIt last2) {
     if (first1 == last1) {
