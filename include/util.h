@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string>
+#include <utility>
 #include <vector>
 #include <zlib.h>
 
@@ -23,9 +24,11 @@ public:
     TokenStorageAccessError() : std::runtime_error("") {}
 };
 
-bool save_access_tkn(Platform platform, const std::string& tkn,
+/* throws TokenStorageAccessError on failure */
+void save_access_tkn(Platform platform, const std::string& tkn,
                      std::time_t duration);
-bool save_refresh_tkn(Platform platform, const std::string& tkn);
+/* throws TokenStorageAccessError on failure */
+void save_refresh_tkn(Platform platform, const std::string& tkn);
 
 /*
  * Get access token or refresh it if it's expired.
@@ -33,15 +36,16 @@ bool save_refresh_tkn(Platform platform, const std::string& tkn);
  * is valid. Use is_refresh_tkn_valid to check
  * otherwise you must initialise the platform,
  * see 'init.h'.
+ * throws TokenStorageAccessError or API::RequestError on failure.
  */
-bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl,
+void get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl,
                              std::string& tkn);
-// TODO make this the only way to handle token_store errors
 /* throws TokenStorageAccessError on storage access or API::RequestError on
  * token refresh failure */
 std::string get_or_refresh_access_tkn(Platform platform,
                                       std::shared_ptr<CURL> curl);
-bool get_refresh_tkn(Platform platform, std::string& tkn);
+/* throws TokenStorageAccessError on failure */
+void get_refresh_tkn(Platform platform, std::string& tkn);
 
 bool is_refresh_tkn_valid(Platform platform);
 

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <ctime>
 #include <iomanip>
 #include <ios>
 #include <iostream>
@@ -25,8 +26,8 @@ const std::string init_description =
     "Allow OAuth permissions for Youtube and Spotify. Initially the only valid "
     "command.";
 
-bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
-    auto api = BaseAuthAPI::get_api(platform, curl);
+bool get_user_permissions(Platform plat, std::shared_ptr<CURL> curl) {
+    auto api = BaseAuthAPI::get_api(plat, curl);
 
     // direct user to permission screen
     std::ostringstream cmd;
@@ -35,10 +36,10 @@ bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
 
     // listen at redirect url for auth_code
     std::string auth_code;
-    std::cout << "Waiting for " << platform_title(platform)
+    std::cout << "Waiting for " << platform_title(plat)
               << " authentication code... " << std::flush;
     if (!api->collect_auth_code()) {
-        std::cout << "Unable to complete " << platform_title(platform)
+        std::cout << "Unable to complete " << platform_title(plat)
                   << " authentication. Please try again" << '\n';
         return false;
     }
@@ -54,28 +55,27 @@ bool get_user_permissions(Platform platform, std::shared_ptr<CURL> curl) {
     }
 
     // finally store the tokens
-    if (!save_access_tkn(platform, tkn_resp.access_tkn,
-                         tkn_resp.access_duration)) {
-        std::cerr << "Couldn't store tokens in keychain. Please try again"
-                  << '\n';
-        return false;
-    }
-    if (!save_refresh_tkn(platform, tkn_resp.refresh_tkn)) {
-        std::cerr << "Couldn't store tokens in keychain. Please try again"
-                  << '\n';
-        return false;
-    }
-    std::cout << "Success! " << platform_title(platform)
+    save_access_tkn(plat, tkn_resp.access_tkn, tkn_resp.access_duration);
+    save_refresh_tkn(plat, tkn_resp.refresh_tkn);
+    std::cout << "Success! " << platform_title(plat)
               << " authentication completed" << '\n';
     return true;
 }
 
 int run_init(bool init_youtube, bool init_spotify) {
     auto curl = get_curl();
-    if (init_youtube && !get_user_permissions(Platform::YOUTUBE, curl)) {
+    try {
+        if (init_youtube) {
+            get_user_permissions(Platform::YOUTUBE, curl);
+        }
+        if (init_spotify) {
+            get_user_permissions(Platform::SPOTIFY, curl);
+        }
+    } catch (const API::RequestError& e) {
+        std::cerr << "Something went wrong. Please try again\n";
         return 1;
-    }
-    if (init_spotify && !get_user_permissions(Platform::SPOTIFY, curl)) {
+    } catch (const TokenStorageAccessError& e) {
+        std::cerr << "Something went wrong. Please try again\n";
         return 1;
     }
     return 0;
@@ -109,27 +109,18 @@ Platform parse_untracked_args(int argc, char* argv[]) {
     return platform;
 }
 
-int run_untracked(int argc, char* argv[]) {
-    Platform platform = parse_untracked_args(argc, argv);
+int untracked(int argc, char* argv[]) {
+    Platform plat = parse_untracked_args(argc, argv);
     std::string tkn;
     std::shared_ptr<CURL> curl = get_curl();
-    if (!get_or_fetch_access_tkn(platform, curl, tkn)) {
-        std::cerr << "Couldn't get access token. Please try again\n";
-        return 1;
-    }
-    std::unique_ptr<BaseDataAPI> api =
-        BaseDataAPI::get_api(platform, curl, tkn);
 
-    PlaylistCache::Handle cache(platform);
+    get_or_fetch_access_tkn(plat, curl, tkn);
+    std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(plat, curl, tkn);
+
+    PlaylistCache::Handle cache(plat);
     std::vector<Playlist> modified_playlists;
     std::string modified_etag = cache.head->etag;
-    bool modified;
-    try {
-        modified = api->get_playlists(modified_playlists, modified_etag);
-    } catch (const BaseAPI::RequestError& e) {
-        std::cerr << "Something went wrong. Try again.\n";
-        return 1;
-    }
+    bool modified = api->get_playlists(modified_playlists, modified_etag);
     if (modified) {
         PlaylistCache::update(cache.head, cache.plat, modified_playlists,
                               modified_etag);
@@ -141,7 +132,7 @@ int run_untracked(int argc, char* argv[]) {
         longest_title = std::max(longest_title, utf8_len(it->title));
     }
 
-    int sid_len = PlaylistCache::short_id_len(platform);
+    int sid_len = PlaylistCache::short_id_len(plat);
     int id_wd = std::max(2, sid_len * 2) + 1;
     int privacy_wd = strlen("private") + 1;
 

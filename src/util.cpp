@@ -4,32 +4,38 @@
 #include "../include/util.h"
 #include <algorithm>
 #include <cassert>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <libcred.hpp>
 #include <openssl/evp.h>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utf8proc.h>
 
 static const std::string KEYCHAIN_SERVICE = "plsync-token-service";
 
-bool save_access_tkn(Platform platform, const std::string& tkn,
+void save_access_tkn(Platform platform, const std::string& tkn,
                      std::time_t duration) {
     std::string acc = platform_title_lower(platform) + "-access-token";
     std::string expiry = std::to_string(time(nullptr) + duration);
     std::string pwd = tkn + ":" + expiry;
     std::string err;
-    return libcred::set_password(KEYCHAIN_SERVICE, acc, pwd, &err) ==
-           libcred::SUCCESS;
+    if (libcred::set_password(KEYCHAIN_SERVICE, acc, pwd, &err) !=
+        libcred::SUCCESS) {
+        throw TokenStorageAccessError();
+    }
 }
 
-bool save_refresh_tkn(Platform platform, const std::string& tkn) {
+void save_refresh_tkn(Platform platform, const std::string& tkn) {
     std::string acc = platform_title_lower(platform) + "-refresh-token";
     std::string err;
-    return libcred::set_password(KEYCHAIN_SERVICE, acc, tkn, &err) ==
-           libcred::SUCCESS;
+    if (libcred::set_password(KEYCHAIN_SERVICE, acc, tkn, &err) !=
+        libcred::SUCCESS) {
+        throw TokenStorageAccessError();
+    }
 }
 
 template <class T> static T stot(const std::string& s) {
@@ -45,42 +51,44 @@ template <class T> static T stot(const std::string& s) {
     }
 }
 
-static bool get_access_tkn(Platform platform, std::string& tkn,
+static void get_access_tkn(Platform platform, std::string& tkn,
                            std::time_t& expiry) {
     std::string acc = platform_title_lower(platform) + "-access-token";
     std::string pass, err;
     if (libcred::get_password(KEYCHAIN_SERVICE, acc, &pass, &err) !=
         libcred::SUCCESS) {
-        return false;
+        throw TokenStorageAccessError();
     }
     std::string::iterator sep = std::find(pass.begin(), pass.end(), ':');
     tkn = std::string(pass.begin(), sep);
     std::string expiry_str(sep + 1, pass.end());
     expiry = stot<std::time_t>(expiry_str);
-    return true;
 }
 
-static bool get_access_tkn(Platform platform, std::string& tkn) {
+static void get_access_tkn(Platform platform, std::string& tkn) {
     std::time_t _;
-    return get_access_tkn(platform, tkn, _);
+    get_access_tkn(platform, tkn, _);
 }
 
-static bool get_access_tkn(Platform platform, std::time_t& expiry) {
+static void get_access_tkn(Platform platform, std::time_t& expiry) {
     std::string _;
-    return get_access_tkn(platform, _, expiry);
+    get_access_tkn(platform, _, expiry);
 }
 
-bool get_refresh_tkn(Platform platform, std::string& tkn) {
+void get_refresh_tkn(Platform platform, std::string& tkn) {
     std::string acc = platform_title_lower(platform) + "-refresh-token";
     std::string err;
-    return libcred::get_password(KEYCHAIN_SERVICE, acc, &tkn, &err) ==
-           libcred::SUCCESS;
+    if (libcred::get_password(KEYCHAIN_SERVICE, acc, &tkn, &err) !=
+        libcred::SUCCESS) {
+        throw TokenStorageAccessError();
+    }
 }
 
 static bool is_access_tkn_valid(Platform platform) {
     std::time_t expiry;
-    if (!get_access_tkn(platform, expiry)) {
-        // not in keychain
+    try {
+        get_access_tkn(platform, expiry);
+    } catch (const TokenStorageAccessError& e) {
         return false;
     }
     return expiry > time(nullptr);
@@ -88,60 +96,51 @@ static bool is_access_tkn_valid(Platform platform) {
 
 bool is_refresh_tkn_valid(Platform platform) {
     std::string _;
-    return get_refresh_tkn(platform, _);
+    try {
+        get_refresh_tkn(platform, _);
+        return true;
+    } catch (const TokenStorageAccessError& e) {
+        return false;
+    }
 }
 
-bool get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl,
+void get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl,
                              std::string& tkn) {
     if (is_access_tkn_valid(platform)) {
-        return get_access_tkn(platform, tkn);
+        get_access_tkn(platform, tkn);
+        return;
     }
-
     std::string refresh_tkn;
-    if (!get_refresh_tkn(platform, refresh_tkn)) {
-        return false;
-    }
-
+    get_refresh_tkn(platform, refresh_tkn);
     std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
     BaseAuthAPI::AccessTokenResponse resp;
-    try {
-        resp = api->refresh_access_tkn(refresh_tkn);
-    } catch (const BaseAuthAPI::RequestError& e) {
-        return false;
-    }
+    resp = api->refresh_access_tkn(refresh_tkn);
 
     save_access_tkn(platform, resp.access_tkn, resp.access_duration);
     tkn = std::move(resp.access_tkn);
-    if (platform == Platform::SPOTIFY &&
-        !save_refresh_tkn(platform, resp.refresh_tkn)) {
-        return false;
+    if (platform == Platform::SPOTIFY) {
+        save_refresh_tkn(platform, resp.refresh_tkn);
     }
-    return true;
 }
 
 std::string get_or_refresh_access_tkn(Platform platform,
                                       std::shared_ptr<CURL> curl) {
     std::string tkn;
     if (is_access_tkn_valid(platform)) {
-        if (!get_access_tkn(platform, tkn)) {
-            throw TokenStorageAccessError();
-        }
+        get_access_tkn(platform, tkn);
         return tkn;
     }
 
     std::string refresh_tkn;
-    if (!get_refresh_tkn(platform, refresh_tkn)) {
-        throw TokenStorageAccessError();
-    }
+    get_refresh_tkn(platform, refresh_tkn);
     std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
     BaseAuthAPI::AccessTokenResponse resp =
         api->refresh_access_tkn(refresh_tkn);
     save_access_tkn(platform, resp.access_tkn, resp.access_duration);
-    if (platform == Platform::SPOTIFY &&
-        !save_refresh_tkn(platform, resp.refresh_tkn)) {
-        throw TokenStorageAccessError();
+    if (platform == Platform::SPOTIFY) {
+        save_refresh_tkn(platform, resp.refresh_tkn);
     }
-    return std::move(resp.access_tkn);
+    return resp.access_tkn;
 }
 
 const std::unordered_map<std::string, std::string>& get_config() {
@@ -216,7 +215,7 @@ std::string sha256(const std::string& s) { return sha("SHA256", s); }
 
 std::string sha1(const std::string& s) { return sha("SHA1", s); }
 
-char getb64char(int value) {
+inline char getb64char(int value) {
     if (value < 26) {
         return 'A' + value;
     } else if (value < 52) {
