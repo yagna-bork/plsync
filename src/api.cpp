@@ -517,6 +517,17 @@ Playlist create_playlist(CURL* curl, const std::string& access_tkn,
                     resp["contentDetails"]["itemCount"]);
 }
 
+void strip_title_tag(std::string& title) {
+    std::string p = " (\\(|\\[)"
+                    " *(official|lyric).+(video|audio|visualizer|"
+                    "performance|mv|m/v) *(\\)|\\])$";
+    std::regex re(p, std::regex::icase);
+    std::smatch m;
+    if (std::regex_search(title, m, re)) {
+        title.erase(m[0].first, m[0].second);
+    }
+}
+
 static bool parse_song_from_html(CURL* curl, const std::string& video_id,
                                  Song& out_song) {
     std::string url = "https://www.youtube.com/watch?v=" + video_id;
@@ -549,11 +560,17 @@ static bool parse_song_from_html(CURL* curl, const std::string& video_id,
         }
         i++;
     }
+
     json attrs = json::parse(
         std::string(html_data.begin() + attrs_beg, html_data.begin() + i));
-    out_song.artists.push_back(
-        std::move(attrs["videoAttributeViewModel"]["subtitle"]));
-    out_song.track = std::move(attrs["videoAttributeViewModel"]["title"]);
+    std::string& artists_str =
+        attrs["videoAttributeViewModel"]["subtitle"].get_ref<std::string&>();
+    std::vector<std::string> artists = split(artists_str, ", ");
+    std::copy(artists.begin(), artists.end(),
+              std::back_inserter(out_song.artists));
+    out_song.track = std::move(
+        attrs["videoAttributeViewModel"]["title"].get_ref<std::string&>());
+    strip_title_tag(out_song.track);
     return true;
 }
 
@@ -567,6 +584,7 @@ static bool parse_song_from_title(const std::string& title, Song& out_song) {
     }
 
     out_song.track = std::string(m[3].first, m[3].second);
+    strip_title_tag(out_song.track);
     out_song.artists = split(std::string(m[1].first, m[1].second), ", ");
     if (m[6].matched) {
         std::vector<std::string> features =
@@ -661,6 +679,7 @@ bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
             !parse_song_from_title(title, song)) {
             song.artists.push_back(std::move(channel));
             song.track = std::move(title);
+            strip_title_tag(song.track);
         }
 
         Song sp_song = SpotifyAPI::get_ssot_song(curl, sp_access_tkn, song);
