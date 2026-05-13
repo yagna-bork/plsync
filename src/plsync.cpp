@@ -1,6 +1,5 @@
 #include "../include/api.h"
 #include "../include/cache.h"
-#include "../include/new_api.h"
 #include "../include/platform.h"
 #include "../include/util.h"
 #include <algorithm>
@@ -108,12 +107,11 @@ int untracked(int argc, char* argv[]) {
     std::shared_ptr<CURL> curl = get_curl();
 
     get_or_fetch_access_tkn(plat, curl, tkn);
-    std::unique_ptr<BaseDataAPI> api = BaseDataAPI::get_api(plat, curl, tkn);
-
     PlaylistCache::Handle cache(plat);
     std::vector<Playlist> modified_playlists;
     std::string modified_etag = cache.head->etag;
-    bool modified = api->get_playlists(modified_playlists, modified_etag);
+    bool modified = API::get_playlists(plat, curl.get(), tkn,
+                                       modified_playlists, modified_etag);
     if (modified) {
         PlaylistCache::update(cache.head, cache.plat, modified_playlists,
                               modified_etag);
@@ -160,7 +158,8 @@ int run_untracked(int argc, char* argv[]) {
         return untracked(argc, argv);
     } catch (const TokenStorageAccessError& e) {
         std::cerr << "Couldn't get access token. Please try again\n";
-    } catch (const BaseAPI::RequestError& e) {
+        return 1;
+    } catch (const API::RequestError& e) {
         std::cerr << "Something went wrong. Try again.\n";
     }
     return 1;

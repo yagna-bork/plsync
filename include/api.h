@@ -4,177 +4,323 @@
 #include "platform.h"
 #include <ctime>
 #include <curl/curl.h>
-#include <filesystem>
-#include <memory>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-/*
- * Abstract base class for platform-specific API clients.
- * Do not inherit from this directly. Inherit from
- * the other two ABCs instead.
- */
-class BaseAPI {
+namespace YoutubeAPI {
+
+const std::string base_url = "https://www.googleapis.com/youtube/v3";
+const std::string base_auth_url = "https://oauth2.googleapis.com";
+const std::string oauth_url = "https://accounts.google.com/o/oauth2/v2/auth";
+const std::vector<std::string> scopes = {
+    "https://www.googleapis.com/auth/youtube"};
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration);
+
+bool get_playlists(CURL* curl, const std::string& access_tkn,
+                   std::vector<Playlist>& out_playlists,
+                   std::string& in_out_etag);
+
+bool get_playlist(CURL* curl, const std::string& access_tkn,
+                  const std::string& id, const std::string& etag,
+                  Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn,
+                         const std::string& title);
+
+bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
+                        const std::string& sp_access_tkn, Playlist& out_pl);
+
+std::string search_song(CURL* curl, const std::string& access_tkn,
+                        const Song& song);
+
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts);
+
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts);
+
+} // namespace YoutubeAPI
+
+namespace SpotifyAPI {
+
+const std::string base_url = "https://api.spotify.com/v1";
+const std::string base_auth_url = "https://accounts.spotify.com/api";
+const std::string oauth_url = "https://accounts.spotify.com/authorize";
+const std::vector<std::string> scopes = {
+    "playlist-read-private",   "playlist-read-collaborative",
+    "playlist-modify-private", "playlist-modify-public",
+    "user-library-read",       "user-follow-read"};
+
+void exchange_auth_code(CURL* curl, const std::string& verifier,
+                        const std::string& auth_code,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+void refresh_access_tkn(CURL* curl, const std::string& refresh_tkn,
+                        std::string& out_access_tkn,
+                        time_t& out_access_duration,
+                        std::string& out_refresh_tkn);
+
+const std::string get_user_id(CURL* curl, const std::string& access_tkn);
+
+bool get_playlists(CURL* curl, const std::string& access_tkn,
+                   std::vector<Playlist>& out_playlists,
+                   std::string& in_out_etag);
+
+bool was_playlist_deleted(CURL* curl, const std::string& access_tkn,
+                          const std::string& id);
+
+bool get_playlist(CURL* curl, const std::string& access_tkn,
+                  const std::string& id, const std::string& etag,
+                  Playlist& res);
+
+Playlist create_playlist(CURL* curl, const std::string& access_tkn,
+                         const std::string& title);
+
+bool get_playlist_items(CURL* curl, const std::string& yt_access_tkn,
+                        Playlist& out_pl);
+
+// spotify is the single source of truth for a song across every platforms
+Song get_ssot_song(CURL* curl, const std::string& access_tkn, const Song& song);
+
+std::string search_song(CURL* curl, const std::string& access_tkn,
+                        const Song& song);
+
+void playlist_items_add(CURL* curl, const std::string& access_tkn, Playlist& pl,
+                        const SongCounts& song_cnts);
+
+void playlist_items_remove(CURL* curl, const std::string& access_tkn,
+                           Playlist& pl, const SongCounts& song_cnts);
+
+} // namespace SpotifyAPI
+
+namespace API {
+
+class RequestError : public std::runtime_error {
 public:
-    class RequestError : public std::runtime_error {
-    public:
-        RequestError(const char* msg) : std::runtime_error(msg) {}
-    };
-
-    typedef std::vector<std::pair<std::string, std::string>> Fields;
-    typedef std::vector<std::pair<std::string, std::string>> Params;
-
-public:
-    /*
-     * TODO figure out how to test without making public
-     * Performs a POST request at the specified endpoint.
-     * This will use the default urlencoded POST type.
-     * Throws RequestError if the request couldn't be made.
-     * If response is JSON then it's saved in `resp`
-     * and returns the http response status code.
-     */
-    long POST(const std::string& endpoint, const Fields& fields,
-              nlohmann::json& resp);
-
-    /*
-     * TODO figure out how to test without making public
-     * Performs a GET request at the specified endpoint.
-     * Throws RequestError if the request couldn't be made.
-     * If response is JSON then it's saved in `resp`
-     * and returns the http response status code.
-     * If you provide an etag status code can also be 304.
-     * You can provide an access token to make an
-     * authenticated request.
-     */
-    long GET(const std::string& endpoint, nlohmann::json& resp,
-             const Params& params = {}, const std::string& access_tkn = "",
-             const std::string& etag = "");
-
-    virtual ~BaseAPI() = default;
-
-protected:
-    BaseAPI(Platform p, const std::string& url, std::shared_ptr<CURL> curl)
-        : platform(p), url(url), curl(curl) {}
-
-    Platform platform;
-
-private:
-    /* concat url, endpoint & query parameters with
-     * {url}/{endpoint}?{key}={val}&... format */
-    std::string full_url(const std::string& endpoint,
-                         const Fields& fields = Fields());
-
-    /* throws RequestError if indeterminable */
-    long status_code();
-
-    /* throws RequestError if indeterminable */
-    bool is_response_json();
-
-    /* throws RequestError on failure */
-    std::string decompress_gzip(std::filesystem::path file_path);
-
-protected:
-    const std::string url;
-    std::shared_ptr<CURL> curl;
+    RequestError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-/*
- * Abstract base class for platform specific data APIs.
- */
-class BaseDataAPI : public BaseAPI {
+class AuthError : public std::runtime_error {
 public:
-    /* returns whether users playlists have changed according to etag */
-    virtual bool get_playlists(std::vector<Playlist>& playlists,
-                               std::string& etag) = 0;
-
-    static std::unique_ptr<BaseDataAPI> get_api(Platform platform,
-                                                std::shared_ptr<CURL> curl,
-                                                const std::string& access_tkn);
-
-protected:
-    BaseDataAPI(Platform p, const std::string& url, std::shared_ptr<CURL> curl,
-                const std::string& access_tkn = "")
-        : BaseAPI(p, url, curl), access_tkn(access_tkn) {}
-
-protected:
-    const std::string access_tkn;
+    AuthError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
+using Params = std::vector<std::pair<std::string, std::string>>;
+using Fields = Params;
+
+const std::string redirect_url = "http://127.0.0.1";
+
 /*
- * Abstract base class only for platform specific authentication
- * APIs. Use BaseDataAPI for APIs that implement endpoints that can
- * be accessed once authentication is complete. The distinction is
- * required because authentication endpoints have a different
- * base url to data endpoints.
+ * Performs a GET request at the specified url.
+ * Throws RequestError if the request couldn't be made.
+ * If response is JSON then it's saved in `resp`
+ * and returns the http response status code.
+ * If you provide an etag status code can also be 304.
+ * You can provide an access token to make an
+ * authenticated request.
  */
-class BaseAuthAPI : public BaseAPI {
-public:
-    /*
-     * Used when error occurs due to an auth flow step being
-     * invovked without invoking the prerequisite steps first
-     */
-    class SequenceError : public std::logic_error {
-    public:
-        SequenceError(const char* msg) : std::logic_error(msg) {}
-    };
+long GET(CURL* curl, const std::string& url, nlohmann::json& resp,
+         const Params& params = {}, const std::string& access_tkn = "",
+         const std::string& etag = "");
 
-    struct AccessTokenResponse {
-        std::string access_tkn;
-        std::time_t access_duration;
-        std::string refresh_tkn;
+/*
+ * Performs a POST request at the specified endpoint.
+ * This will use the default urlencoded POST type unless
+ * specified in application_type.
+ * Throws RequestError if the request couldn't be made.
+ * Returns the http response status code and stores
+ * the result in resp.
+ */
+long POST(CURL* curl, const std::string& url, const std::string& data,
+          nlohmann::json& resp, const std::string& application_type = "",
+          const Params& params = {}, const std::string& access_tkn = "");
 
-        AccessTokenResponse() = default;
+/*
+ * Performs a DELETE request at the specified url.
+ * Throws RequestError if the request couldn't be made.
+ * If response is JSON then it's saved in `resp`
+ * and returns the http response status code.
+ * You can provide an access token to make an
+ * authenticated request.
+ */
+long DELETE(CURL* curl, const std::string& url, nlohmann::json& resp,
+            const std::string& access_tkn, const Params& params = {},
+            const std::string& data = "");
 
-        AccessTokenResponse(nlohmann::json&& resp)
-            : access_tkn(std::move(resp.at("access_token"))),
-              access_duration(std::move(resp.at("expires_in"))),
-              refresh_tkn(std::move(resp.value("refresh_token", ""))) {}
-    };
+std::string generate_verifier();
 
-    struct TokenResponse : public AccessTokenResponse {
-        std::string refresh_tkn;
+inline std::string get_redirect_port(Platform plat) {
+    return std::to_string(8000 + plat);
+}
 
-        TokenResponse() = default;
+std::string get_auth_url(Platform plat, CURL* curl, const std::string& verfier,
+                         const std::string& state);
 
-        TokenResponse(nlohmann::json&& resp)
-            : AccessTokenResponse(std::move(resp)),
-              refresh_tkn(std::move(resp["refresh_token"])) {}
-    };
+std::string collect_auth_code(Platform plat, const std::string& state);
 
-public:
-    std::string get_auth_url();
+bool are_scopes_valid(const std::string& granted, const std::string& required);
 
-    /* returns whether it succeeded */
-    bool collect_auth_code();
+inline void
+exchange_auth_code(Platform plat, CURL* curl, const std::string& verifier,
+                   const std::string& auth_code, std::string& out_access_tkn,
+                   time_t& out_access_duration, std::string& out_refresh_tkn) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        YoutubeAPI::exchange_auth_code(curl, verifier, auth_code,
+                                       out_access_tkn, out_access_duration,
+                                       out_refresh_tkn);
+        break;
+    case Platform::SPOTIFY:
+        SpotifyAPI::exchange_auth_code(curl, verifier, auth_code,
+                                       out_access_tkn, out_access_duration,
+                                       out_refresh_tkn);
+        break;
+    default:
+        // TODO make this the default across all methods
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-    virtual TokenResponse exchange_auth_code() = 0;
+inline void refresh_access_tkn(Platform plat, CURL* curl,
+                               const std::string& refresh_tkn,
+                               std::string& out_access_tkn,
+                               time_t& out_access_duration,
+                               std::string& out_refresh_tkn) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        YoutubeAPI::refresh_access_tkn(curl, refresh_tkn, out_access_tkn,
+                                       out_access_duration);
+        break;
+    case Platform::SPOTIFY:
+        SpotifyAPI::refresh_access_tkn(curl, refresh_tkn, out_access_tkn,
+                                       out_access_duration, out_refresh_tkn);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-    virtual AccessTokenResponse
-    refresh_access_tkn(const std::string& refresh_tkn) = 0;
+/* returns whether users playlists have changed according to etag */
+inline bool get_playlists(Platform plat, CURL* curl,
+                          const std::string& access_tkn,
+                          std::vector<Playlist>& out_playlists,
+                          std::string& in_out_etag) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return YoutubeAPI::get_playlists(curl, access_tkn, out_playlists,
+                                         in_out_etag);
+        break;
+    case Platform::SPOTIFY:
+        return SpotifyAPI::get_playlists(curl, access_tkn, out_playlists,
+                                         in_out_etag);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-    static std::unique_ptr<BaseAuthAPI> get_api(Platform platform,
-                                                std::shared_ptr<CURL> curl);
+/*
+ * Returns whether playlist was modified.
+ * res will be an empty playlist i.e. id attribute is empty
+ * if the playlist doesn't exist/was deleted.
+ */
+inline bool get_playlist(Platform plat, CURL* curl,
+                         const std::string& access_tkn, const std::string& id,
+                         const std::string& etag, Playlist& res) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return YoutubeAPI::get_playlist(curl, access_tkn, id, etag, res);
+        break;
+    case Platform::SPOTIFY:
+        return SpotifyAPI::get_playlist(curl, access_tkn, id, etag, res);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-protected:
-    BaseAuthAPI(Platform p, const std::string& url, std::shared_ptr<CURL> curl,
-                const std::vector<std::string>& scopes,
-                const std::string& auth_svr_url, int redirect_port)
-        : BaseAPI(p, url, curl), scopes(scopes), auth_svr_url(auth_svr_url),
-          redirect_port(redirect_port) {}
+inline Playlist create_playlist(Platform plat, CURL* curl,
+                                const std::string& access_tkn,
+                                const std::string& title) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return YoutubeAPI::create_playlist(curl, access_tkn, title);
+        break;
+    case Platform::SPOTIFY:
+        return SpotifyAPI::create_playlist(curl, access_tkn, title);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-    /* throws RequestError if user didn't grant some scopes */
-    void validate_scopes(const std::string& granted);
+inline bool get_playlist_items(Platform plat, CURL* curl,
+                               const std::string& plat_access_tkn,
+                               const std::string& sp_access_tkn,
+                               Playlist& out_pl) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        return YoutubeAPI::get_playlist_items(curl, plat_access_tkn,
+                                              sp_access_tkn, out_pl);
+        break;
+    case Platform::SPOTIFY:
+        return SpotifyAPI::get_playlist_items(curl, plat_access_tkn, out_pl);
+        break;
+    default:
+        throw std::domain_error("function not yet implemented for " +
+                                platform_title_lower(plat));
+    }
+}
 
-    std::string verifier;
-    std::string auth_code;
+inline void playlist_items_add(Platform plat, CURL* curl,
+                               const std::string& access_tkn, Playlist& pl,
+                               const SongCounts& song_cnts) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        YoutubeAPI::playlist_items_add(curl, access_tkn, pl, song_cnts);
+        break;
+    case Platform::SPOTIFY:
+        SpotifyAPI::playlist_items_add(curl, access_tkn, pl, song_cnts);
+        break;
+    default:
+        throw std::runtime_error("Not yet implemented");
+    }
+}
 
-private:
-    std::vector<std::string> scopes;
-    std::string state;
-    std::string auth_svr_url;
-    int redirect_port;
+inline void playlist_items_remove(Platform plat, CURL* curl,
+                                  const std::string& access_tkn, Playlist& pl,
+                                  const SongCounts& song_cnts) {
+    switch (plat) {
+    case Platform::YOUTUBE:
+        YoutubeAPI::playlist_items_remove(curl, access_tkn, pl, song_cnts);
+        break;
+    case Platform::SPOTIFY:
+        SpotifyAPI::playlist_items_remove(curl, access_tkn, pl, song_cnts);
+        break;
+    default:
+        throw std::runtime_error("Not yet implemented");
+    }
+}
 
-    std::string generate_code_verifier();
-};
+} // namespace API
+
 #endif

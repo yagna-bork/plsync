@@ -1,7 +1,6 @@
 #include "../include/api.h"
 #include "../include/client_secret.h"
 #include "../include/emoji_codepoint_ranges.h"
-#include "../include/new_api.h"
 #include "../include/util.h"
 #include <algorithm>
 #include <cassert>
@@ -111,16 +110,16 @@ void get_or_fetch_access_tkn(Platform platform, std::shared_ptr<CURL> curl,
         get_access_tkn(platform, tkn);
         return;
     }
-    std::string refresh_tkn;
+    std::string refresh_tkn, access_tkn;
+    time_t access_duration;
     get_refresh_tkn(platform, refresh_tkn);
-    std::unique_ptr<BaseAuthAPI> api = BaseAuthAPI::get_api(platform, curl);
-    BaseAuthAPI::AccessTokenResponse resp;
-    resp = api->refresh_access_tkn(refresh_tkn);
+    API::refresh_access_tkn(platform, curl.get(), refresh_tkn, access_tkn,
+                            access_duration, refresh_tkn);
 
-    save_access_tkn(platform, resp.access_tkn, resp.access_duration);
-    tkn = std::move(resp.access_tkn);
+    save_access_tkn(platform, access_tkn, access_duration);
+    tkn = std::move(access_tkn);
     if (platform == Platform::SPOTIFY) {
-        save_refresh_tkn(platform, resp.refresh_tkn);
+        save_refresh_tkn(platform, refresh_tkn);
     }
 }
 
