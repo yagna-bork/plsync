@@ -5,7 +5,8 @@ package proto;
 enum Platform {
 	YOUTUBE = 0;
 	SPOTIFY = 1;
-	INVALID = 2;
+    TEST = 2;
+	INVALID = 3;
 }
 
 message Song {
