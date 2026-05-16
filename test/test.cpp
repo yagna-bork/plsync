@@ -11,7 +11,7 @@ int main() {
     TestTokenStorage::run();
 
     std::cout << "\n\nPlaylist cache tests\n";
-    std::cout << "-----------------\n";
+    std::cout << "--------------------\n";
     TestPlaylistCache::run();
 
     std::cout << "\n\nUtil tests\n";

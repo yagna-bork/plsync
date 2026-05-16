@@ -77,7 +77,9 @@ public:
     void save();
     void save(const std::string& prev_id_hash, const std::string& next_id_hash);
     void remove();
+
     bool operator==(const Playlist&) const = default;
+    bool operator<(const Playlist&) const;
 
 private:
     static Playlist _load(const std::filesystem::path& path);
@@ -116,6 +118,7 @@ public:
     PlaylistTree pl_tree;
     std::string etag;
     bool was_changed = false;
+    // TODO this has crossed the threshold to become a std::list
     std::forward_list<Playlist> playlists;
 
     PlaylistCache(Platform plat);
@@ -128,6 +131,9 @@ public:
 
 private:
     std::string _next_id_hash(std::forward_list<Playlist>::const_iterator it);
+    bool _was_first_element_reordered(const std::string& head_next);
+    bool _was_reordered(std::forward_list<Playlist>::const_iterator it,
+                        const std::string& prev, const std::string& next);
 };
 
 struct PlaylistDiff;

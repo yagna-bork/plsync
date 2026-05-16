@@ -3,11 +3,13 @@
 #include "../include/util.h"
 #include <algorithm>
 #include <cassert>
+#include <curl/curl.h>
 #include <deque>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <google/protobuf/repeated_field.h>
+#include <ios>
 #include <iostream>
 #include <iterator>
 #include <string>
@@ -226,9 +228,6 @@ void Playlist::save() {
 void Playlist::save(const std::string& prev_id_hash,
                     const std::string& next_id_hash) {
     PlaylistTree pl_tree(plat);
-    if (!was_changed) {
-        return;
-    }
     proto::CacheNode node = _proto_node();
     node.set_prev(prev_id_hash);
     node.set_next(next_id_hash);
@@ -275,6 +274,16 @@ void Playlist::remove() {
         tmp.SerializeToOstream(&file);
     }
     *this = Playlist();
+}
+
+bool Playlist::operator<(const Playlist& rhs) const {
+    std::string lhs_lower;
+    std::string rhs_lower;
+    std::transform(title.begin(), title.end(), std::back_inserter(lhs_lower),
+                   tolower);
+    std::transform(rhs.title.begin(), rhs.title.end(),
+                   std::back_inserter(rhs_lower), tolower);
+    return lhs_lower < rhs_lower;
 }
 
 Playlist Playlist::_load(const std::filesystem::path& path) {
@@ -514,11 +523,6 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
         // case 3: id not found, playlist deleted
         curr->remove();
         curr = this->playlists.erase_after(prev);
-        // force refresh of prev,next in proto::CacheNode
-        prev->was_changed = true;
-        if (curr != this->playlists.end()) {
-            curr->was_changed = true;
-        }
     }
 
     // case 4: playlist not found in cache, new playlist
@@ -527,12 +531,6 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
         if (!is_new[i]) {
             continue;
         }
-        // force refresh of next in proto::CacheNode or proto::CacheHead
-        if (curr != this->playlists.before_begin()) {
-            curr->was_changed = true;
-        } else {
-            was_changed = true;
-        }
         curr = this->playlists.insert_after(curr, std::move(playlists[i]));
         curr->was_changed = true;
     }
@@ -540,21 +538,24 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
 
 void PlaylistCache::save() {
     auto curr = playlists.before_begin();
-    if (was_changed) {
+    std::string next = _next_id_hash(curr);
+    if (was_changed || _was_first_element_reordered(next)) {
         proto::CacheHead proto_head;
-        proto_head.set_next(_next_id_hash(curr));
+        proto_head.set_next(next);
         proto_head.set_etag(etag);
         std::ofstream f(pl_tree.head(), std::ios::binary);
         proto_head.SerializeToOstream(&f);
         was_changed = false;
     }
 
-    // save nodes
     curr++;
-    std::string prev_id_hash = "HEAD";
+    std::string prev = "HEAD";
     while (curr != playlists.end()) {
-        curr->save(prev_id_hash, _next_id_hash(curr));
-        prev_id_hash = curr->id_hash;
+        next = _next_id_hash(curr);
+        if (curr->was_changed || _was_reordered(curr, prev, next)) {
+            curr->save(prev, next);
+        }
+        prev = curr->id_hash;
         curr++;
     }
 }
@@ -564,6 +565,22 @@ PlaylistCache::_next_id_hash(std::forward_list<Playlist>::const_iterator it) {
     auto next = it;
     next++;
     return (next != playlists.end()) ? next->id_hash : "";
+}
+
+bool PlaylistCache::_was_first_element_reordered(const std::string& head_next) {
+    proto::CacheHead head;
+    std::ifstream f(pl_tree.head(), std::ios::binary);
+    head.ParseFromIstream(&f);
+    return head.next() != head_next;
+}
+
+bool PlaylistCache::_was_reordered(
+    std::forward_list<Playlist>::const_iterator it, const std::string& prev,
+    const std::string& next) {
+    proto::CacheNode node;
+    std::ifstream f(pl_tree.search_id_hash(it->id_hash), std::ios::binary);
+    node.ParseFromIstream(&f);
+    return node.prev() != prev || node.next() != next;
 }
 
 inline fs::path PlaylistTracker::dir() {

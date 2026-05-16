@@ -90,27 +90,46 @@ void print_untracked_usage_exit() {
 }
 
 void parse_untracked_args(int argc, char* argv[], Platform& out_plat,
-                          bool& out_force_enabled) {
+                          bool& out_force_enabled, bool& out_sort_enabled) {
     if (argc == 0 || strcmp(argv[0], "-h") == 0 ||
         strcmp(argv[0], "--help") == 0) {
         print_untracked_usage_exit();
     }
 
     out_force_enabled = false;
+    out_sort_enabled = false;
     for (int i = 0; i != argc - 1; i++) {
         const char* opt;
         if (strncmp("-", argv[i], 1) != 0) {
             print_untracked_usage_exit();
         } else if (strncmp("--", argv[i], 2) != 0) {
-            if (strcmp("-f", argv[i]) != 0) {
+            if (strcmp("-f", argv[i]) == 0) {
+                if (out_force_enabled) {
+                    print_untracked_usage_exit();
+                }
+                out_force_enabled = true;
+            } else if (strcmp("-s", argv[i]) == 0) {
+                if (out_sort_enabled) {
+                    print_untracked_usage_exit();
+                }
+                out_sort_enabled = true;
+            } else {
                 print_untracked_usage_exit();
             }
-            out_force_enabled = true;
         } else {
-            if (strcmp("--force", argv[i]) != 0) {
+            if (strcmp("--force", argv[i]) == 0) {
+                if (out_force_enabled) {
+                    print_untracked_usage_exit();
+                }
+                out_force_enabled = true;
+            } else if (strcmp("--sort", argv[i]) == 0) {
+                if (out_sort_enabled) {
+                    print_untracked_usage_exit();
+                }
+                out_sort_enabled = true;
+            } else {
                 print_untracked_usage_exit();
             }
-            out_force_enabled = true;
         }
     }
 
@@ -122,8 +141,8 @@ void parse_untracked_args(int argc, char* argv[], Platform& out_plat,
 
 int untracked(int argc, char* argv[]) {
     Platform plat;
-    bool force_enabled;
-    parse_untracked_args(argc, argv, plat, force_enabled);
+    bool force_enabled, sort_enabled;
+    parse_untracked_args(argc, argv, plat, force_enabled, sort_enabled);
 
     std::string tkn;
     std::shared_ptr<CURL> curl = get_curl();
@@ -134,8 +153,14 @@ int untracked(int argc, char* argv[]) {
     std::string mod_etag = force_enabled ? "" : cache.etag;
     bool is_mod =
         API::get_playlists(plat, curl.get(), tkn, mod_playlists, mod_etag);
+
     if (is_mod) {
         cache.update(std::move(mod_playlists), mod_etag);
+    }
+    if (sort_enabled) {
+        cache.playlists.sort();
+    }
+    if (is_mod || sort_enabled) {
         cache.save();
     }
 
@@ -157,7 +182,6 @@ int untracked(int argc, char* argv[]) {
     std::cout << std::string(heading.size(), '-') << '\n';
 
     std::cout << std::left;
-    // TODO sort
     for (const Playlist& pl : cache.playlists) {
         if (!pl.tracker.empty()) {
             continue;
