@@ -136,6 +136,10 @@ void Playlist::merge(Playlist&& other) {
     } else {
         tmp = std::move(other.tracker);
     }
+
+    if (other.was_changed) {
+        was_changed = true;
+    }
     items.merge(std::move(other.items));
     is_private = (is_private == other.is_private) ? is_private : true;
     num_items = other.num_items != 0 ? other.num_items : num_items;
@@ -210,10 +214,10 @@ void Playlist::add() {
 }
 
 void Playlist::save() {
-    PlaylistTree pl_tree(plat);
     if (!was_changed) {
         return;
     }
+    PlaylistTree pl_tree(plat);
     proto::CacheNode node;
     std::fstream f(_path(), std::ios::binary | std::ios::out | std::ios::in);
     // we need `next` and `prev` from the old node
@@ -688,6 +692,7 @@ void PlaylistTracker::save() {
 }
 
 PlaylistItemsCache::PlaylistItemsCache() {
+    fs::create_directories(PlaylistTracker::dir());
     for (auto it : fs::directory_iterator(PlaylistTracker::dir())) {
         trackers.emplace_front(it.path().filename());
     }
@@ -786,6 +791,7 @@ PlaylistDiff PlaylistDiff::operator-(const PlaylistDiff& rhs) const {
 SongCache::SongCache(Platform plat) {
     dir = fs::path(get_setting("cache_dir")) / "song" /
           platform_title_lower(plat);
+    fs::create_directories(dir);
     proto::PlaylistItemIdToSongMap proto_map;
     {
         auto file = ensure_bin_file<std::ifstream>(dir);

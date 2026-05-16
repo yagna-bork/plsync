@@ -339,6 +339,7 @@ void print_tracked_usage() {
     std::cout << "usage: plsync tracked\n\n" << tracked_description << '\n';
 }
 
+// TODO make all of these just quit right away for consistent and legibility
 bool parse_tracked_args(int argc, char* argv[]) {
     if (argc > 0) {
         print_tracked_usage();
@@ -424,7 +425,7 @@ Playlist parse_untrack_args(int argc, char* argv[]) {
     }
 
     Platform plat = parse_platform(argv[0]);
-    Playlist pl = Playlist::load_from_sid(argv[1], plat);
+    Playlist pl = Playlist::load_from_sid(hex_to_bin(argv[1]), plat);
     if (pl.tracker.empty()) {
         throw std::invalid_argument("");
     }
