@@ -209,6 +209,7 @@ inline void test_playlist_cache_save_sorted() {
     PlaylistCache cache(Platform::TEST);
     cache.playlists.sort();
     cache.save();
+
     bool pass =
         assert_cache_state("cache_etag1", {{"id1", "version1", "title1"},
                                            {"id2", "version2", "title2"},

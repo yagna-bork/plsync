@@ -214,7 +214,8 @@ int run_untracked(int argc, char* argv[]) {
 const std::string track_description = "Start tracking an untracked playlist";
 
 void print_track_usage() {
-    std::cout << "usage: plsync track <platform> <playlist-id>\n\n"
+    std::cout << "usage: plsync track <platform>[,<playlist-id>] "
+                 "[<platform>[,<playlist-id>] ...]\n\n"
               << track_description << "\n\n"
               << "Options:\n"
               << "  platform     Name of platform to view playlists from. Can "
@@ -225,30 +226,20 @@ void print_track_usage() {
 
 std::unordered_map<Platform, std::string> parse_track_args(int argc,
                                                            char* argv[]) {
-    if (argc < 3) {
+    if (argc < 2) {
         throw std::invalid_argument("");
     }
 
-    // TODO change input format to unambiguous plat,[sid]
-    // because an sid could look like a platform e.g. yt
-    // and confuse the parsing algo
     std::unordered_map<Platform, std::string> plat_to_sid;
-    Platform prev_plat = Platform::INVALID;
     for (int i = 0; i != argc; i++) {
-        auto plat = parse_platform(argv[i]);
-        if (plat != Platform::INVALID) {
-            if (plat_to_sid.count(plat)) {
-                throw std::invalid_argument("");
-            }
-            plat_to_sid[plat] = "";
-            prev_plat = plat;
-            continue;
-        }
-        if (prev_plat == Platform::INVALID || !plat_to_sid[prev_plat].empty() ||
-            std::strlen(argv[i]) % 2 != 0) {
+        const char* arg = argv[i];
+        const char* end = arg + strlen(arg);
+        const char* sep = std::find(arg, end, ',');
+        Platform plat = parse_platform(std::string(arg, sep));
+        if (plat == Platform::INVALID) {
             throw std::invalid_argument("");
         }
-        plat_to_sid[prev_plat] = argv[i];
+        plat_to_sid[plat] = (sep != end) ? std::string(sep + 1, end) : "";
     }
 
     auto sid_empty = [](const std::pair<Platform, std::string>& pair) {
