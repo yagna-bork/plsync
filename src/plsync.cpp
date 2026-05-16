@@ -4,6 +4,7 @@
 #include "../include/util.h"
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <iomanip>
@@ -74,42 +75,63 @@ int run_init(bool init_youtube, bool init_spotify) {
 }
 
 /* untracked-start */
-// TODO --force option because a Playlist::num_items can go stale if Playlist is
-// tracked and untracked before every being synced which user may notice
 const std::string untracked_description =
     "Display information about playlists which are not being tracked";
 
-void print_untracked_usage() {
-    std::cout << "usage: plsync untracked <platform>\n\n"
-              << untracked_description << "\n\n"
-              << "Options:\n"
-              << "  platform  Name of platform to view playlists from. Can "
-                 "either be 'yt' or a prefix of 'youtube' and 'spotify'\n";
+void print_untracked_usage_exit() {
+    std::cout
+        << "usage: plsync untracked [--force | -f] <platform>\n\n"
+        << untracked_description << "\n\n"
+        << "Options:\n"
+        << "  platform     Name of platform to view playlists from. Can "
+           "either be 'yt' or a prefix of 'youtube' and 'spotify'\n\n"
+           "  --force, -f  Force fetch playlists from API, bypassing cache\n";
+    exit(1);
 }
 
-Platform parse_untracked_args(int argc, char* argv[]) {
-    if (argc != 1 || strcmp(argv[0], "-h") == 0 ||
+void parse_untracked_args(int argc, char* argv[], Platform& out_plat,
+                          bool& out_force_enabled) {
+    if (argc == 0 || strcmp(argv[0], "-h") == 0 ||
         strcmp(argv[0], "--help") == 0) {
-        print_untracked_usage();
-        exit(1);
+        print_untracked_usage_exit();
     }
-    auto plat = parse_platform(argv[0]);
-    if (plat == Platform::INVALID) {
-        print_untracked_usage();
-        exit(1);
+
+    out_force_enabled = false;
+    for (int i = 0; i != argc - 1; i++) {
+        const char* opt;
+        if (strncmp("-", argv[i], 1) != 0) {
+            print_untracked_usage_exit();
+        } else if (strncmp("--", argv[i], 2) != 0) {
+            if (strcmp("-f", argv[i]) != 0) {
+                print_untracked_usage_exit();
+            }
+            out_force_enabled = true;
+        } else {
+            if (strcmp("--force", argv[i]) != 0) {
+                print_untracked_usage_exit();
+            }
+            out_force_enabled = true;
+        }
     }
-    return plat;
+
+    out_plat = parse_platform(argv[argc - 1]);
+    if (out_plat == Platform::INVALID) {
+        print_untracked_usage_exit();
+    }
 }
 
 int untracked(int argc, char* argv[]) {
-    Platform plat = parse_untracked_args(argc, argv);
+    Platform plat;
+    bool force_enabled;
+    parse_untracked_args(argc, argv, plat, force_enabled);
+
     std::string tkn;
     std::shared_ptr<CURL> curl = get_curl();
-
     get_or_fetch_access_tkn(plat, curl, tkn);
+
     PlaylistCache cache(plat);
     std::vector<Playlist> mod_playlists;
-    std::string mod_etag = cache.etag;
+    std::string mod_etag = force_enabled ? "" : cache.etag;
     bool is_mod =
         API::get_playlists(plat, curl.get(), tkn, mod_playlists, mod_etag);
     if (is_mod) {

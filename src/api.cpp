@@ -360,12 +360,13 @@ long _GET_paginated(CURL* curl, const std::string& url, json& resp,
 }
 
 static long GET_paginated(CURL* curl, const std::string& url, json& resp,
-                          Params& params, const std::string& access_tkn = "",
-                          const std::string& etag = "") {
-    long status_code = GET(curl, url, resp, params, access_tkn, etag);
+                          Params& params, const std::string& access_tkn,
+                          std::string& in_out_etag) {
+    long status_code = GET(curl, url, resp, params, access_tkn, in_out_etag);
     if (status_code != 200L) {
         return status_code;
     }
+    in_out_etag = resp["etag"];
     if (resp.contains("nextPageToken")) {
         params.emplace_back("pageToken", resp["nextPageToken"]);
         return _GET_paginated(curl, url, resp, params, access_tkn);
@@ -437,14 +438,12 @@ bool get_playlists(CURL* curl, const std::string& access_tkn,
          ")"},
         {"maxResults", "50"}};
     json resp;
-    std::string etag_copy = in_out_etag;
     long status_code =
-        GET_paginated(curl, url, resp, params, access_tkn, etag_copy);
+        GET_paginated(curl, url, resp, params, access_tkn, in_out_etag);
 
     if (status_code == 304L) {
         return false;
     } else if (status_code == 200L) {
-        in_out_etag = etag_copy;
         for (json& playlist : resp["items"]) {
             out_playlists.emplace_back(
                 std::move(playlist["id"]),
