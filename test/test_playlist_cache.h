@@ -19,9 +19,10 @@ static Playlist create_playlist(const std::string& id,
     Playlist pl;
     pl.id = id;
     pl.id_hash = sha1(id);
-    pl.version = version;
-    pl.title = title;
+    pl.version(version);
+    pl.title(title);
     pl.plat = Platform::TEST;
+    pl.was_changed(false);
     return pl;
 }
 
@@ -93,8 +94,8 @@ inline void test_playlist_cache_load() {
         create_playlist("id1", "version1", "title1"),
         create_playlist("id2", "version2", "title2"),
         create_playlist("id3", "version3", "title3")};
-    bool pass =
-        (expected_cache == cache.playlists) && (cache.etag == "cache_etag1");
+    bool pass = (expected_cache == cache.playlists()) &&
+                (cache.etag() == "cache_etag1");
     if (pass) {
         std::cout << "test_playlist_cache_load(): PASSED\n";
     } else {
@@ -105,15 +106,14 @@ inline void test_playlist_cache_load() {
 
 inline void test_playlist_cache_save() {
     PlaylistCache cache(Platform::TEST);
-    cache.playlists = {create_playlist("id1", "version1", "title1"),
-                       create_playlist("id2", "version2", "title2"),
-                       create_playlist("id3", "version3", "title3")};
-    cache.etag = "cache_etag1";
+    cache.mutable_playlists() = {create_playlist("id1", "version1", "title1"),
+                                 create_playlist("id2", "version2", "title2"),
+                                 create_playlist("id3", "version3", "title3")};
+    cache.etag("cache_etag1");
 
-    for (Playlist& pl : cache.playlists) {
-        pl.was_changed = true;
+    for (Playlist& pl : cache.mutable_playlists()) {
+        pl.was_changed(true);
     }
-    cache.was_changed = true;
     cache.save();
 
     PlaylistData expected_cache = {{"id1", "version1", "title1"},
@@ -207,7 +207,7 @@ inline void test_playlist_cache_save_sorted() {
                                {"id1", "version1", "title1"},
                                {"id2", "version2", "title2"}});
     PlaylistCache cache(Platform::TEST);
-    cache.playlists.sort();
+    cache.mutable_playlists().sort();
     cache.save();
 
     bool pass =

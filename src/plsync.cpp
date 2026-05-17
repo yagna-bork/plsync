@@ -150,7 +150,7 @@ int untracked(int argc, char* argv[]) {
 
     PlaylistCache cache(plat);
     std::vector<Playlist> mod_playlists;
-    std::string mod_etag = force_enabled ? "" : cache.etag;
+    std::string mod_etag = force_enabled ? "" : cache.etag();
     bool is_mod =
         API::get_playlists(plat, curl.get(), tkn, mod_playlists, mod_etag);
 
@@ -158,15 +158,13 @@ int untracked(int argc, char* argv[]) {
         cache.update(std::move(mod_playlists), mod_etag);
     }
     if (sort_enabled) {
-        cache.playlists.sort();
+        cache.mutable_playlists().sort();
     }
-    if (is_mod || sort_enabled) {
-        cache.save();
-    }
+    cache.save();
 
     size_t longest_title = 0;
-    for (const Playlist& pl : cache.playlists) {
-        longest_title = std::max(longest_title, utf8_len(pl.title));
+    for (const Playlist& pl : cache.playlists()) {
+        longest_title = std::max(longest_title, utf8_len(pl.title()));
     }
 
     int sid_len = PlaylistCache::short_id_len(plat);
@@ -182,18 +180,18 @@ int untracked(int argc, char* argv[]) {
     std::cout << std::string(heading.size(), '-') << '\n';
 
     std::cout << std::left;
-    for (const Playlist& pl : cache.playlists) {
-        if (!pl.tracker.empty()) {
+    for (const Playlist& pl : cache.playlists()) {
+        if (!pl.tracker().empty()) {
             continue;
         }
         std::string sid = bin_to_hex(pl.id_hash.substr(0, sid_len));
         int title_pad =
-            std::max(longest_title, size_t(5)) + 1 - utf8_len(pl.title);
-        std::string privacy_type = pl.is_private ? "private" : "public";
-        int privacy_pad = pl.is_private ? 1 : 2;
-        std::cout << std::setw(id_wd) << sid << std::setw(0) << pl.title
+            std::max(longest_title, size_t(5)) + 1 - utf8_len(pl.title());
+        std::string privacy_type = pl.is_private() ? "private" : "public";
+        int privacy_pad = pl.is_private() ? 1 : 2;
+        std::cout << std::setw(id_wd) << sid << std::setw(0) << pl.title()
                   << std::string(title_pad, ' ') << std::setw(privacy_wd)
-                  << privacy_type << pl.num_items << '\n';
+                  << privacy_type << pl.num_items() << '\n';
     }
     return 0;
 }
@@ -273,15 +271,15 @@ int track(int argc, char* argv[]) {
         }
 
         // check at most one playlist is already tracked
-        if (!pl.tracker.empty()) {
+        if (!pl.tracker().empty()) {
             if (!tracker_id.empty()) {
                 throw std::invalid_argument("");
             } else {
-                tracker_id = pl.tracker;
+                tracker_id = pl.tracker();
             }
         }
         if (playlist_title.empty()) {
-            playlist_title = pl.title;
+            playlist_title = pl.title();
         }
         playlists.push_back(std::move(pl));
     }
@@ -303,16 +301,14 @@ int track(int argc, char* argv[]) {
     auto tracker =
         (!tracker_id.empty()) ? PlaylistTracker(tracker_id) : PlaylistTracker();
     for (Playlist& pl : playlists) {
-        if (!pl.tracker.empty()) {
+        if (!pl.tracker().empty()) {
             continue;
         }
-        pl.tracker = tracker.id;
+        pl.tracker(tracker.id);
         // num_items now represents num of items stored locally in
         // PlaylistItemsCache, not num of items in actual Playlist served by API
-        pl.num_items = 0;
-        pl.was_changed = true;
+        pl.num_items(0);
         tracker.playlists.push_back(std::move(pl));
-        tracker.was_changed = true;
     }
     tracker.save();
     return 0;
@@ -339,7 +335,6 @@ void print_tracked_usage() {
     std::cout << "usage: plsync tracked\n\n" << tracked_description << '\n';
 }
 
-// TODO make all of these just quit right away for consistent and legibility
 bool parse_tracked_args(int argc, char* argv[]) {
     if (argc > 0) {
         print_tracked_usage();
@@ -357,7 +352,7 @@ int run_tracked(int argc, char* argv[]) {
     size_t longest_title = 0;
     for (const PlaylistTracker& t : cache.trackers) {
         for (const Playlist& pl : t.playlists) {
-            longest_title = std::max(longest_title, utf8_len(pl.title));
+            longest_title = std::max(longest_title, utf8_len(pl.title()));
         }
     }
 
@@ -392,10 +387,10 @@ int run_tracked(int argc, char* argv[]) {
             int sid_len = plat_to_sid_len[pl.plat];
             std::string sid = pl.id_hash.substr(0, sid_len);
             std::cout << std::setw(plat_wd) << platform_title(pl.plat)
-                      << std::setw(id_wd) << bin_to_hex(sid) << pl.title
+                      << std::setw(id_wd) << bin_to_hex(sid) << pl.title()
                       << '\n';
         }
-        std::cout << t.playlists[0].num_items << " song(s)\n";
+        std::cout << t.playlists[0].num_items() << " song(s)\n";
     }
     return 0;
 }
@@ -426,7 +421,7 @@ Playlist parse_untrack_args(int argc, char* argv[]) {
 
     Platform plat = parse_platform(argv[0]);
     Playlist pl = Playlist::load_from_sid(hex_to_bin(argv[1]), plat);
-    if (pl.tracker.empty()) {
+    if (pl.tracker().empty()) {
         throw std::invalid_argument("");
     }
     return pl;
@@ -434,7 +429,7 @@ Playlist parse_untrack_args(int argc, char* argv[]) {
 
 int untrack(int argc, char* argv[]) {
     Playlist pl = parse_untrack_args(argc, argv);
-    PlaylistTracker tracker(pl.tracker);
+    PlaylistTracker tracker(pl.tracker());
     tracker.untrack(pl.plat);
     tracker.save();
     return 0;
@@ -476,18 +471,16 @@ void update_tracked_playlists(PlaylistItemsCache& cache,
             Playlist mod_pl;
             bool is_mod =
                 API::get_playlist(pl.plat, curl.get(), plat_to_tkn[pl.plat],
-                                  pl.id, pl.etag, mod_pl);
+                                  pl.id, pl.etag(), mod_pl);
             if (is_mod && mod_pl.id.empty()) {
-                Playlist copy(pl);
                 curr->untrack(pl.plat);
                 pl.remove();
                 continue;
             }
             if (is_mod) {
-                int num_items = pl.num_items;
+                int num_items = pl.num_items();
                 pl.merge(std::move(mod_pl));
-                pl.num_items = num_items;
-                pl.was_changed = true;
+                pl.num_items(num_items);
             }
             i++;
         }
@@ -512,7 +505,7 @@ int sync(PlaylistItemsCache& cache) {
         PlaylistDiff net_diff;
         for (Playlist& pl : tracker.playlists) {
             SongCounts song_cnts;
-            for (const auto& [song, items] : pl.items.data) {
+            for (const auto& [song, items] : pl.items.data()) {
                 song_cnts[song] = items.size();
             }
 
@@ -520,9 +513,8 @@ int sync(PlaylistItemsCache& cache) {
                 pl.plat, curl.get(), plat_to_access_tkn[pl.plat],
                 plat_to_access_tkn[Platform::SPOTIFY], pl);
             if (modified) {
-                pl.items.was_changed = true;
                 SongCounts mod_song_cnts;
-                for (const auto& [song, items] : pl.items.data) {
+                for (const auto& [song, items] : pl.items.data()) {
                     mod_song_cnts[song] = items.size();
                 }
 
@@ -547,18 +539,14 @@ int sync(PlaylistItemsCache& cache) {
             API::playlist_items_remove(pl.plat, curl.get(),
                                        plat_to_access_tkn[pl.plat], pl,
                                        diff.removed);
-            // if one PlaylistItems has changed, then all others tracking it
-            // must change too
-            pl.items.was_changed = true;
         }
 
         int num_items = 0;
-        for (const auto& [_, items] : tracker.playlists[0].items.data) {
+        for (const auto& [_, items] : tracker.playlists[0].items.data()) {
             num_items += items.size();
         }
         for (Playlist& pl : tracker.playlists) {
-            pl.num_items = num_items;
-            pl.was_changed = true;
+            pl.num_items(num_items);
         }
     }
     cache.save();

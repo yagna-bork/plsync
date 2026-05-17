@@ -27,38 +27,31 @@ template <> struct std::hash<Song> {
     size_t operator()(const Song& song) const;
 };
 
-// TODO make was_changed automatic for all classes via getters/setters
 /* This data is stored in PlaylistItemsCache, not PlaylistCache */
 class PlaylistItems {
-public:
-    bool was_changed = false;
-    std::string etag;
-    std::unordered_map<Song, std::vector<std::string>> data;
+    friend class PlaylistTracker;
 
+public:
     void merge(PlaylistItems&& other);
     bool operator==(const PlaylistItems&) const = default;
+
+    const std::string& etag() const;
+    void etag(const std::string& etag);
+
+    const std::unordered_map<Song, std::vector<std::string>>& data() const;
+    std::unordered_map<Song, std::vector<std::string>>& mutable_data();
+
+private:
+    std::string _etag;
+    std::unordered_map<Song, std::vector<std::string>> _data;
+    bool _was_changed = false;
 };
 
 class Playlist {
 public:
     std::string id;
     std::string id_hash;
-    std::string title;
     Platform plat = Platform::INVALID;
-    bool is_private = false;
-    /* Stores the etag for an api response containing only this playlist. Used
-     * in GET requests for caching. */
-    std::string etag;
-    /*
-     * Stores the version specific id that's stored on a playlist resource
-     * itself by a platform. This is Playlist.etag on Youtube and
-     * Playlist.snapshot_id on spotify. Used to check if a Playlist has been
-     * changed during update to PlaylistCache.
-     */
-    std::string version;
-    std::size_t num_items = 0;
-    std::string tracker;
-    bool was_changed = false;
     PlaylistItems items;
 
     Playlist() : plat(Platform::INVALID) {}
@@ -81,7 +74,46 @@ public:
     bool operator==(const Playlist&) const = default;
     bool operator<(const Playlist&) const;
 
+    const std::string& title() const;
+    void title(const std::string& title);
+
+    bool is_private() const;
+    void is_private(bool is_private);
+
+    const std::string& etag() const;
+    void etag(const std::string& etag);
+
+    const std::string& version() const;
+    void version(const std::string& version);
+
+    size_t num_items() const;
+    void num_items(size_t num_items);
+
+    const std::string& tracker() const;
+    void tracker(const std::string& tracked);
+
+    bool was_changed() const;
+#ifndef NDEBUG
+    void was_changed(bool was_changed);
+#endif // !NDEBUG
+
 private:
+    std::string _title;
+    bool _is_private = false;
+    /* Stores the etag for an api response containing only this playlist. Used
+     * in GET requests for caching. */
+    std::string _etag;
+    /*
+     * Stores the version specific id that's stored on a playlist resource
+     * itself by a platform. This is Playlist.etag on Youtube and
+     * Playlist.snapshot_id on spotify. Used to check if a Playlist has been
+     * changed during update to PlaylistCache.
+     */
+    std::string _version;
+    std::size_t _num_items = 0;
+    std::string _tracker;
+    bool _was_changed = false;
+
     static Playlist _load(const std::filesystem::path& path);
     proto::CacheNode _proto_node();
     std::filesystem::path _path();
@@ -116,10 +148,6 @@ class PlaylistCache {
 public:
     Platform plat;
     PlaylistTree pl_tree;
-    std::string etag;
-    bool was_changed = false;
-    // TODO this has crossed the threshold to become a std::list
-    std::forward_list<Playlist> playlists;
 
     PlaylistCache(Platform plat);
     void update(std::vector<Playlist>&& playlists, const std::string& etag);
@@ -129,7 +157,18 @@ public:
         return PlaylistTree(plat).height();
     }
 
+    const std::string& etag() const;
+    void etag(const std::string& etag);
+
+    const std::forward_list<Playlist>& playlists() const;
+    std::forward_list<Playlist>& mutable_playlists();
+
 private:
+    std::string _etag;
+    // TODO this has crossed the threshold to become a std::list
+    std::forward_list<Playlist> _playlists;
+    bool _was_changed = false;
+
     std::string _next_id_hash(std::forward_list<Playlist>::const_iterator it);
     bool _was_first_element_reordered(const std::string& head_next);
     bool _was_reordered(std::forward_list<Playlist>::const_iterator it,
@@ -152,17 +191,16 @@ struct PlaylistDiff {
 class PlaylistTracker {
 public:
     std::string id;
-    std::vector<Playlist> playlists;
-    bool was_changed = false;
     std::filesystem::path path;
-
-    static std::filesystem::path dir();
+    std::vector<Playlist> playlists;
 
     PlaylistTracker() : id(bin_to_hex(rndstr(16))), path(dir() / id) {}
     PlaylistTracker(const std::string& id);
     void untrack(Platform plat);
     void remove();
     void save();
+
+    static std::filesystem::path dir();
 
 private:
     std::filesystem::path _playlist_items_dir(Platform plat);

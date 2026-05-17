@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cassert>
 #include <curl/curl.h>
-#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -13,7 +12,6 @@
 #include <iostream>
 #include <iterator>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -107,22 +105,22 @@ void Playlist::merge(Playlist&& other) {
         tmp = std::move(other.id_hash);
     }
 
-    if (!other.etag.empty()) {
-        etag = std::move(other.etag);
+    if (!other._etag.empty()) {
+        _etag = std::move(other._etag);
     } else {
-        tmp = std::move(other.etag);
+        tmp = std::move(other._etag);
     }
 
-    if (!other.version.empty()) {
-        version = std::move(other.version);
+    if (!other._version.empty()) {
+        _version = std::move(other._version);
     } else {
-        tmp = std::move(other.version);
+        tmp = std::move(other._version);
     }
 
-    if (!other.title.empty()) {
-        title = std::move(other.title);
+    if (!other._title.empty()) {
+        _title = std::move(other._title);
     } else {
-        tmp = std::move(other.title);
+        tmp = std::move(other._title);
     }
 
     if (other.plat != Platform::INVALID) {
@@ -131,45 +129,59 @@ void Playlist::merge(Playlist&& other) {
         Platform plat = std::move(other.plat);
     }
 
-    if (!other.tracker.empty()) {
-        tracker = std::move(other.tracker);
+    if (!other._tracker.empty()) {
+        _tracker = std::move(other._tracker);
     } else {
-        tmp = std::move(other.tracker);
+        tmp = std::move(other._tracker);
     }
 
-    if (other.was_changed) {
-        was_changed = true;
-    }
     items.merge(std::move(other.items));
-    is_private = (is_private == other.is_private) ? is_private : true;
-    num_items = other.num_items != 0 ? other.num_items : num_items;
+    _is_private = (_is_private == other._is_private) ? _is_private : true;
+    _num_items = other._num_items != 0 ? other._num_items : _num_items;
+    _was_changed = true;
 }
 
 void PlaylistItems::merge(PlaylistItems&& other) {
-    if (other.etag.empty()) {
-        auto etag = std::move(other.etag);
-        auto data = std::move(other.data);
+    if (other._etag.empty()) {
+        auto etag = std::move(other._etag);
+        auto data = std::move(other._data);
     } else {
-        was_changed = other.was_changed;
-        etag = std::move(other.etag);
-        data = std::move(other.data);
+        _was_changed = true;
+        _etag = std::move(other._etag);
+        _data = std::move(other._data);
     }
+}
+
+const std::string& PlaylistItems::etag() const { return _etag; }
+void PlaylistItems::etag(const std::string& etag) {
+    _etag = etag;
+    _was_changed = true;
+}
+
+const std::unordered_map<Song, std::vector<std::string>>&
+PlaylistItems::data() const {
+    return _data;
+}
+std::unordered_map<Song, std::vector<std::string>>&
+PlaylistItems::mutable_data() {
+    _was_changed = true;
+    return _data;
 }
 
 Playlist::Playlist(const proto::Playlist& proto_pl)
     : id(std::string(proto_pl.id())), id_hash(std::string(proto_pl.id_hash())),
-      title(std::string(proto_pl.title())),
-      plat(_get_platform(proto_pl.plat())), is_private(proto_pl.is_private()),
-      etag(std::string(proto_pl.etag())),
-      version(std::string(proto_pl.version())), num_items(proto_pl.num_items()),
-      tracker(proto_pl.tracker()) {}
+      _title(std::string(proto_pl.title())),
+      plat(_get_platform(proto_pl.plat())), _is_private(proto_pl.is_private()),
+      _etag(std::string(proto_pl.etag())),
+      _version(std::string(proto_pl.version())),
+      _num_items(proto_pl.num_items()), _tracker(proto_pl.tracker()) {}
 
 Playlist::Playlist(std::string&& id, std::string&& etag, std::string&& version,
                    std::string&& title, Platform plat, bool is_private,
                    size_t num_items)
-    : id(std::move(id)), etag(std::move(etag)), version(std::move(version)),
-      title(std::move(title)), plat(plat), is_private(is_private),
-      num_items(num_items) {
+    : id(std::move(id)), _etag(std::move(etag)), _version(std::move(version)),
+      _title(std::move(title)), plat(plat), _is_private(is_private),
+      _num_items(num_items) {
     id_hash = sha1(this->id);
 }
 
@@ -214,7 +226,7 @@ void Playlist::add() {
 }
 
 void Playlist::save() {
-    if (!was_changed) {
+    if (!_was_changed) {
         return;
     }
     PlaylistTree pl_tree(plat);
@@ -226,7 +238,7 @@ void Playlist::save() {
     f.clear();
     f.seekp(0);
     node.SerializeToOstream(&f);
-    was_changed = false;
+    _was_changed = false;
 }
 
 void Playlist::save(const std::string& prev_id_hash,
@@ -238,7 +250,7 @@ void Playlist::save(const std::string& prev_id_hash,
 
     std::ofstream f(_path(), std::ios::binary);
     node.SerializeToOstream(&f);
-    was_changed = false;
+    _was_changed = false;
 }
 
 void Playlist::remove() {
@@ -283,12 +295,53 @@ void Playlist::remove() {
 bool Playlist::operator<(const Playlist& rhs) const {
     std::string lhs_lower;
     std::string rhs_lower;
-    std::transform(title.begin(), title.end(), std::back_inserter(lhs_lower),
+    std::transform(_title.begin(), _title.end(), std::back_inserter(lhs_lower),
                    tolower);
-    std::transform(rhs.title.begin(), rhs.title.end(),
+    std::transform(rhs._title.begin(), rhs._title.end(),
                    std::back_inserter(rhs_lower), tolower);
     return lhs_lower < rhs_lower;
 }
+
+const std::string& Playlist::title() const { return _title; }
+void Playlist::title(const std::string& title) {
+    _title = title;
+    _was_changed = true;
+};
+
+bool Playlist::is_private() const { return _is_private; }
+void Playlist::is_private(bool is_private) {
+    _is_private = is_private;
+    _was_changed = true;
+}
+
+const std::string& Playlist::etag() const { return _etag; }
+void Playlist::etag(const std::string& etag) {
+    _etag = etag;
+    _was_changed = true;
+}
+
+const std::string& Playlist::version() const { return _version; }
+void Playlist::version(const std::string& version) {
+    _version = version;
+    _was_changed = true;
+}
+
+size_t Playlist::num_items() const { return _num_items; }
+void Playlist::num_items(size_t num_items) {
+    _num_items = num_items;
+    _was_changed = true;
+}
+
+const std::string& Playlist::tracker() const { return _tracker; }
+void Playlist::tracker(const std::string& tracked) {
+    _tracker = tracked;
+    _was_changed = true;
+}
+
+bool Playlist::was_changed() const { return _was_changed; }
+#ifndef NDEBUG
+void Playlist::was_changed(bool was_changed) { _was_changed = was_changed; }
+#endif // !NDEBUG
 
 Playlist Playlist::_load(const std::filesystem::path& path) {
     if (!fs::exists(path)) {
@@ -305,13 +358,13 @@ proto::CacheNode Playlist::_proto_node() {
     auto* proto_pl = node.mutable_playlist();
     proto_pl->set_id(id);
     proto_pl->set_id_hash(id_hash);
-    proto_pl->set_title(title);
+    proto_pl->set_title(_title);
     proto_pl->set_plat(_get_proto_platform(plat));
-    proto_pl->set_is_private(is_private);
-    proto_pl->set_etag(etag);
-    proto_pl->set_version(version);
-    proto_pl->set_num_items(num_items);
-    proto_pl->set_tracker(tracker);
+    proto_pl->set_is_private(_is_private);
+    proto_pl->set_etag(_etag);
+    proto_pl->set_version(_version);
+    proto_pl->set_num_items(_num_items);
+    proto_pl->set_tracker(_tracker);
     return node;
 }
 
@@ -463,25 +516,25 @@ void PlaylistTree::erase(const std::string& id_hash) {
 }
 
 PlaylistCache::PlaylistCache(Platform plat)
-    : plat(plat), pl_tree(plat), was_changed(false) {
+    : plat(plat), pl_tree(plat), _was_changed(false) {
     proto::CacheHead proto_head;
     {
         auto f = ensure_bin_file<std::ifstream>(pl_tree.head());
         proto_head.ParseFromIstream(&f);
     }
-    etag = proto_head.etag();
+    _etag = proto_head.etag();
     std::string next(proto_head.next());
     if (next.empty()) {
         return;
     }
 
-    auto curr = playlists.before_begin();
+    auto curr = _playlists.before_begin();
     while (!next.empty()) {
         proto::CacheNode proto_node;
         fs::path p = pl_tree.search_id_hash(next);
         std::ifstream f(p, std::ios::binary);
         proto_node.ParseFromIstream(&f);
-        curr = playlists.emplace_after(curr, proto_node.playlist());
+        curr = _playlists.emplace_after(curr, proto_node.playlist());
         next = std::string(proto_node.next());
     }
 }
@@ -493,17 +546,16 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
     std::unordered_map<std::string, std::size_t> version_to_idx;
     std::unordered_map<std::string, std::size_t> id_to_idx;
     for (std::size_t i = 0; i != n; i++) {
-        version_to_idx[playlists[i].version] = i;
+        version_to_idx[playlists[i].version()] = i;
         id_to_idx[playlists[i].id] = i;
     }
 
-    this->etag = etag;
-    was_changed = true;
-    auto prev = this->playlists.before_begin();
-    auto curr = this->playlists.begin();
-    while (curr != this->playlists.end()) {
+    this->etag(etag);
+    auto prev = mutable_playlists().before_begin();
+    auto curr = mutable_playlists().begin();
+    while (curr != this->playlists().end()) {
         // case 1: version unchanged, playlist unchanged
-        std::string version(curr->version);
+        std::string version(curr->version());
         if (version_to_idx.count(version)) {
             std::size_t i = version_to_idx[version];
             is_new[i] = false;
@@ -518,7 +570,6 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
             std::size_t i = id_to_idx[id];
             is_new[i] = false;
             curr->merge(std::move(playlists[i]));
-            curr->was_changed = true;
             ++prev;
             ++curr;
             continue;
@@ -526,7 +577,7 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
 
         // case 3: id not found, playlist deleted
         curr->remove();
-        curr = this->playlists.erase_after(prev);
+        curr = mutable_playlists().erase_after(prev);
     }
 
     // case 4: playlist not found in cache, new playlist
@@ -535,28 +586,28 @@ void PlaylistCache::update(std::vector<Playlist>&& playlists,
         if (!is_new[i]) {
             continue;
         }
-        curr = this->playlists.insert_after(curr, std::move(playlists[i]));
-        curr->was_changed = true;
+        curr = mutable_playlists().insert_after(curr, std::move(playlists[i]));
     }
 }
 
 void PlaylistCache::save() {
-    auto curr = playlists.before_begin();
-    std::string next = _next_id_hash(curr);
-    if (was_changed || _was_first_element_reordered(next)) {
-        proto::CacheHead proto_head;
-        proto_head.set_next(next);
-        proto_head.set_etag(etag);
-        std::ofstream f(pl_tree.head(), std::ios::binary);
-        proto_head.SerializeToOstream(&f);
-        was_changed = false;
+    if (!_was_changed) {
+        return;
     }
+    auto curr = mutable_playlists().before_begin();
+    std::string next = _next_id_hash(curr);
+    proto::CacheHead proto_head;
+    proto_head.set_next(next);
+    proto_head.set_etag(etag());
+    std::ofstream f(pl_tree.head(), std::ios::binary);
+    proto_head.SerializeToOstream(&f);
+    _was_changed = false;
 
     curr++;
     std::string prev = "HEAD";
-    while (curr != playlists.end()) {
+    while (curr != playlists().end()) {
         next = _next_id_hash(curr);
-        if (curr->was_changed || _was_reordered(curr, prev, next)) {
+        if (curr->was_changed() || _was_reordered(curr, prev, next)) {
             curr->save(prev, next);
         }
         prev = curr->id_hash;
@@ -564,11 +615,25 @@ void PlaylistCache::save() {
     }
 }
 
+const std::string& PlaylistCache::etag() const { return _etag; }
+void PlaylistCache::etag(const std::string& etag) {
+    _etag = etag;
+    _was_changed = true;
+}
+
+const std::forward_list<Playlist>& PlaylistCache::playlists() const {
+    return _playlists;
+}
+
+std::forward_list<Playlist>& PlaylistCache::mutable_playlists() {
+    return _playlists;
+}
+
 std::string
 PlaylistCache::_next_id_hash(std::forward_list<Playlist>::const_iterator it) {
     auto next = it;
     next++;
-    return (next != playlists.end()) ? next->id_hash : "";
+    return (next != playlists().end()) ? next->id_hash : "";
 }
 
 bool PlaylistCache::_was_first_element_reordered(const std::string& head_next) {
@@ -597,7 +662,7 @@ inline fs::path PlaylistTracker::_playlist_items_dir(Platform plat) {
 }
 
 PlaylistTracker::PlaylistTracker(const std::string& id)
-    : id(id), was_changed(false), path(dir() / id) {
+    : id(id), path(dir() / id) {
     assert(fs::exists(path));
     proto::PlaylistTracker proto_tracker;
     {
@@ -615,19 +680,18 @@ PlaylistTracker::PlaylistTracker(const std::string& id)
             proto_items.ParseFromIstream(&f);
         }
 
-        pl.items.etag = std::string(proto_items.etag());
+        pl.items._etag = std::string(proto_items.etag());
         for (const auto& p2 : proto_items.song_items_pairs()) {
             Song song = _get_song(p2.song());
             std::copy(p2.items().begin(), p2.items().end(),
-                      std::back_inserter(pl.items.data[song]));
+                      std::back_inserter(pl.items._data[song]));
         }
         playlists.push_back(std::move(pl));
     }
 }
 
 inline void PlaylistTracker::_untrack(Playlist& pl) {
-    pl.tracker.clear();
-    pl.was_changed = true;
+    pl.tracker("");
     pl.save();
 }
 
@@ -638,7 +702,6 @@ void PlaylistTracker::untrack(Platform plat) {
 
     _untrack(*it);
     playlists.erase(it);
-    was_changed = true;
     if (playlists.size() < 2) {
         remove();
     }
@@ -650,10 +713,34 @@ void PlaylistTracker::remove() {
                   PlaylistTracker::_untrack);
     id.clear();
     playlists.clear();
-    was_changed = false;
 }
 
 void PlaylistTracker::save() {
+    bool was_changed = false;
+    for (Playlist& pl : playlists) {
+        was_changed = pl.was_changed() ? true : was_changed;
+        pl.save();
+        if (!pl.items._was_changed) {
+            continue;
+        }
+
+        // save PlaylistItems
+        proto::PlaylistItems proto_items;
+        proto_items.set_id(pl.id);
+        proto_items.set_etag(pl.items.etag());
+        for (const auto& [song, items] : pl.items.data()) {
+            auto* p = proto_items.add_song_items_pairs();
+            *p->mutable_song() = _get_proto_song(song);
+            for (const std::string& i : items) {
+                p->add_items(i);
+            }
+        }
+        auto f = ensure_bin_file<std::ofstream, class Types>(
+            _playlist_items_dir(pl.plat) / pl.id);
+        proto_items.SerializeToOstream(&f);
+        pl.items._was_changed = false;
+    }
+
     if (was_changed) {
         // save PlaylistTracker
         proto::PlaylistTracker proto_tracker;
@@ -664,30 +751,6 @@ void PlaylistTracker::save() {
         }
         auto f = ensure_bin_file<std::ofstream>(path);
         proto_tracker.SerializeToOstream(&f);
-        was_changed = false;
-    }
-
-    for (Playlist& pl : playlists) {
-        pl.save();
-        if (!pl.items.was_changed) {
-            continue;
-        }
-
-        // save PlaylistItems
-        proto::PlaylistItems proto_items;
-        proto_items.set_id(pl.id);
-        proto_items.set_etag(pl.items.etag);
-        for (const auto& [song, items] : pl.items.data) {
-            auto* p = proto_items.add_song_items_pairs();
-            *p->mutable_song() = _get_proto_song(song);
-            for (const std::string& i : items) {
-                p->add_items(i);
-            }
-        }
-        auto f = ensure_bin_file<std::ofstream, class Types>(
-            _playlist_items_dir(pl.plat) / pl.id);
-        proto_items.SerializeToOstream(&f);
-        pl.items.was_changed = false;
     }
 }
 
