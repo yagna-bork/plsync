@@ -1,28 +1,30 @@
 #include "../include/platform.h"
 
-static const std::vector<std::string> titles = {"YouTube", "Spotify"
+std::string platform_title(Platform p) {
+    static const std::vector<std::string> titles = {"YouTube", "Spotify"
 #ifndef NDEBUG
-                                                ,
-                                                "Test"
+                                                    ,
+                                                    "Test"
 #endif
+    };
+    return titles[p];
 };
-
-static const std::vector<std::string> abbrevs = {"yt", "sp"
-#ifndef NDEBUG
-                                                 ,
-                                                 "tt"
-#endif
-};
-
-std::string platform_title(Platform p) { return titles[p]; };
 
 std::string platform_title_lower(Platform p) {
-    std::string t = titles[p];
+    std::string t = platform_title(p);
     std::transform(t.begin(), t.end(), t.begin(), tolower);
     return t;
 };
 
-std::string platform_abbrev(Platform p) { return abbrevs[p]; }
+std::string platform_abbrev(Platform p) {
+    static const std::vector<std::string> abbrevs = {"yt", "sp"
+#ifndef NDEBUG
+                                                     ,
+                                                     "tt"
+#endif
+    };
+    return abbrevs[p];
+}
 
 Platform parse_platform(const std::string& s) {
     if (s == "yt") {

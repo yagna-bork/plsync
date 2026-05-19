@@ -160,19 +160,18 @@ public:
     const std::string& etag() const;
     void etag(const std::string& etag);
 
-    const std::forward_list<Playlist>& playlists() const;
-    std::forward_list<Playlist>& mutable_playlists();
+    const std::list<Playlist>& playlists() const;
+    std::list<Playlist>& mutable_playlists();
 
 private:
     std::string _etag;
-    // TODO this has crossed the threshold to become a std::list
-    std::forward_list<Playlist> _playlists;
+    std::list<Playlist> _playlists;
     bool _was_changed = false;
 
-    std::string _next_id_hash(std::forward_list<Playlist>::const_iterator it);
-    bool _was_first_element_reordered(const std::string& head_next);
-    bool _was_reordered(std::forward_list<Playlist>::const_iterator it,
-                        const std::string& prev, const std::string& next);
+    std::string _get_id_hash(std::list<Playlist>::const_iterator it);
+    bool _was_reordered(std::list<Playlist>::const_iterator it,
+                        const std::string& prev_id_hash,
+                        const std::string& next_id_hash);
 };
 
 struct PlaylistDiff;

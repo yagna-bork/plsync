@@ -1,10 +1,11 @@
 #include "../include/cache.h"
+#include "../include/platform.h"
 #include "../include/util.h"
 #include <array>
 #include <cassert>
 #include <filesystem>
-#include <forward_list>
 #include <iostream>
+#include <list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -90,7 +91,7 @@ inline void test_playlist_cache_load() {
                                {"id3", "version3", "title3"}});
     PlaylistCache cache(Platform::TEST);
 
-    std::forward_list<Playlist> expected_cache = {
+    std::list<Playlist> expected_cache = {
         create_playlist("id1", "version1", "title1"),
         create_playlist("id2", "version2", "title2"),
         create_playlist("id3", "version3", "title3")};
